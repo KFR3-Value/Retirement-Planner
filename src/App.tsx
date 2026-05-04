@@ -1,8 +1,12 @@
-import React from 'react';
-import { Dashboard } from './components/Dashboard';
+import { PlanningProvider } from './context/PlanningContext';
+import { MainLayout } from './MainLayout';
 
 function App() {
-  return <Dashboard />;
+  return (
+    <PlanningProvider>
+      <MainLayout />
+    </PlanningProvider>
+  );
 }
 
 export default App;
