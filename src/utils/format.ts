@@ -3,13 +3,13 @@ export const formatCHF = (value: number): string => {
     style: 'decimal',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(value) + ' CHF';
+  }).format(value) + " CHF";
 };
 
 export const formatPercent = (value: number): string => {
   return new Intl.NumberFormat('de-CH', {
-    style: 'decimal',
+    style: 'percent',
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(value) + '%';
+  }).format(value / 100);
 };
