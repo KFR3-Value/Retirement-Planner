@@ -15,6 +15,8 @@ export interface PlanningState {
     fullPensionCouple: number;
   };
   pensionskasse: {
+    startYear: number;
+    startMonth: number;
     totalCapital: number;
     renteSplit: number; // 0 to 100
     umwandlungssatz: number; // percentage
@@ -68,6 +70,8 @@ const defaultState: PlanningState = {
     fullPensionCouple: 44100, // Reasonable max approximation
   },
   pensionskasse: {
+    startYear: 2026,
+    startMonth: 0,
     totalCapital: 1200000,
     renteSplit: 50, // Default to 50% Rente, 50% Kapital
     umwandlungssatz: 5.0,
@@ -114,6 +118,7 @@ interface PlanningContextType {
   updateState: (section: keyof PlanningState, updates: any) => void;
   updateCapEx: (year: YearKey, value: number) => void;
   updateOtherIncome: (year: YearKey, value: number) => void;
+  loadState: (newState: PlanningState) => void;
 }
 
 const PlanningContext = createContext<PlanningContextType | undefined>(undefined);
@@ -142,8 +147,12 @@ export const PlanningProvider: React.FC<{ children: ReactNode }> = ({ children }
     }));
   };
 
+  const loadState = (newState: PlanningState) => {
+    setState(newState);
+  };
+
   return (
-    <PlanningContext.Provider value={{ state, updateState, updateCapEx, updateOtherIncome }}>
+    <PlanningContext.Provider value={{ state, updateState, updateCapEx, updateOtherIncome, loadState }}>
       {children}
     </PlanningContext.Provider>
   );

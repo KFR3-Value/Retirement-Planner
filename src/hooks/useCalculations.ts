@@ -72,8 +72,8 @@ export const useCalculations = () => {
     let current3a = state.assets.saeule3a.balance;
     let pkCapitalWithdrawn = false; // assumes we withdraw all in 2026 for now, or just track it
 
-    // Calculate constant PK Rente
-    const pkRenteTotal = state.pensionskasse.totalCapital * (state.pensionskasse.renteSplit / 100) * (state.pensionskasse.umwandlungssatz / 100);
+    // Calculate PK Rente (Full Year)
+    const pkRenteFullYear = state.pensionskasse.totalCapital * (state.pensionskasse.renteSplit / 100) * (state.pensionskasse.umwandlungssatz / 100);
     const pkCapital = state.pensionskasse.totalCapital * ((100 - state.pensionskasse.renteSplit) / 100);
 
     YEARS.forEach((yearKey, index) => {
@@ -101,7 +101,15 @@ export const useCalculations = () => {
       ahvIncome += calcAhvForPerson(state.ahv.markusStartYear, state.ahv.markusStartMonth);
       ahvIncome += calcAhvForPerson(state.ahv.moniqueStartYear, state.ahv.moniqueStartMonth);
 
-      const pkRenteIncome = pkRenteTotal;
+      const calcPkForYear = (startYear: number, startMonth: number) => {
+        if (yearNum < startYear) return 0;
+        if (yearNum > startYear) return pkRenteFullYear;
+        // Prorated year
+        const monthsActive = 12 - startMonth;
+        return pkRenteFullYear * (monthsActive / 12);
+      };
+
+      const pkRenteIncome = calcPkForYear(state.pensionskasse.startYear, state.pensionskasse.startMonth);
       const wealthYieldIncome = currentLiquidWealth * 0.02; // Assuming a 2% default yield
       const otherIncome = state.otherIncome[yearKey] || 0;
 
@@ -140,7 +148,7 @@ export const useCalculations = () => {
       let capitalWithdrawalTax = 0;
 
       // Capital withdrawal logic (simplified for 2026 or designated year)
-      if (yearKey === '2026' && pkCapital > 0 && !pkCapitalWithdrawn) {
+      if (yearNum === state.pensionskasse.startYear && pkCapital > 0 && !pkCapitalWithdrawn) {
         currentLiquidWealth += pkCapital;
         capitalWithdrawalTax += calculateCapitalWithdrawalTax(pkCapital);
         pkCapitalWithdrawn = true;
