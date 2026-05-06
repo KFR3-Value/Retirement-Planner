@@ -21,6 +21,14 @@ export interface PlanningState {
     renteSplit: number; // 0 to 100
     umwandlungssatz: number; // percentage
   };
+  salary: {
+    monthlyGross: number;
+    startYear: number;
+    startMonth: number;
+    endYear: number;
+    endMonth: number;
+    deductionRate: number; // percentage
+  };
   otherIncome: Record<YearKey, number>;
 
   // Section 2: Ausgaben
@@ -75,6 +83,14 @@ const defaultState: PlanningState = {
     totalCapital: 1200000,
     renteSplit: 50, // Default to 50% Rente, 50% Kapital
     umwandlungssatz: 5.0,
+  },
+  salary: {
+    monthlyGross: 10000,
+    startYear: 2026,
+    startMonth: 0,
+    endYear: 2027,
+    endMonth: 1, // Jan 2027
+    deductionRate: 15, // Default 15% standard deductions
   },
   otherIncome: {
     '2026': 0, '2027': 0, '2028': 0, '2029': 0, '2030': 0, '2031+': 0

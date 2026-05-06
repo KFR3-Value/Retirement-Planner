@@ -93,7 +93,7 @@ export const Engine = () => {
         <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">Parameter: AHV & Pensionskasse</h2>
+              <h2 className="text-xl font-bold text-gray-900">Parameter: Einkommen & Vorsorge</h2>
               <button onClick={() => setIsAhvModalOpen(false)} className="text-gray-400 hover:text-gray-500">
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -139,6 +139,38 @@ export const Engine = () => {
                     <div>
                       <span className="text-xs text-gray-500 block mb-1">UWS %</span>
                       <input type="number" step="0.1" value={state.pensionskasse.umwandlungssatz} onChange={(e) => updateState('pensionskasse', { umwandlungssatz: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Temporäres Erwerbseinkommen (Lohn)</label>
+                  
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Bruttolohn pro Monat</span>
+                      <input type="number" value={state.salary.monthlyGross} onChange={(e) => updateState('salary', { monthlyGross: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Sozialabzüge (%)</span>
+                      <input type="number" value={state.salary.deductionRate} onChange={(e) => updateState('salary', { deductionRate: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" step="0.1" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Start (Jahr / Monat 0=Jan)</span>
+                      <div className="flex space-x-2">
+                        <input type="number" value={state.salary.startYear} onChange={(e) => updateState('salary', { startYear: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="number" value={state.salary.startMonth} onChange={(e) => updateState('salary', { startMonth: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Ende (Jahr / Monat 0=Jan)</span>
+                      <div className="flex space-x-2">
+                        <input type="number" value={state.salary.endYear} onChange={(e) => updateState('salary', { endYear: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="number" value={state.salary.endMonth} onChange={(e) => updateState('salary', { endMonth: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -213,6 +245,7 @@ export const Engine = () => {
           </tr>
 
           {/* Time Series Income */}
+          <DataRow label="Lohn (Netto)" dataKey="salaryIncome" onClickLabel={() => setIsAhvModalOpen(true)} />
           <DataRow label="AHV Rente" dataKey="ahvIncome" onClickLabel={() => setIsAhvModalOpen(true)} />
           <DataRow label="Pensionskassen-Rente" dataKey="pkRenteIncome" onClickLabel={() => setIsAhvModalOpen(true)} />
           <DataRow label="Vermögensertrag (2% auf Liquides)" dataKey="wealthYieldIncome" />

@@ -7,6 +7,7 @@ export interface YearData {
   // Income
   ahvIncome: number;
   pkRenteIncome: number;
+  salaryIncome: number;
   wealthYieldIncome: number; // calculated dynamically
   otherIncome: number;
   totalGrossIncome: number;
@@ -110,10 +111,32 @@ export const useCalculations = () => {
       };
 
       const pkRenteIncome = calcPkForYear(state.pensionskasse.startYear, state.pensionskasse.startMonth);
+      
+      const calcSalaryForYear = () => {
+        const { startYear, startMonth, endYear, endMonth, monthlyGross, deductionRate } = state.salary;
+        if (yearNum < startYear || yearNum > endYear) return 0;
+
+        let activeMonths = 0;
+        if (yearNum === startYear && yearNum === endYear) {
+          activeMonths = endMonth - startMonth + 1; // inclusive
+        } else if (yearNum === startYear) {
+          activeMonths = 12 - startMonth;
+        } else if (yearNum === endYear) {
+          activeMonths = endMonth + 1;
+        } else {
+          activeMonths = 12; // full year
+        }
+
+        const grossAnnual = activeMonths * monthlyGross;
+        const netAnnual = grossAnnual * (1 - (deductionRate / 100));
+        return Math.max(0, netAnnual);
+      };
+      const salaryIncome = calcSalaryForYear();
+
       const wealthYieldIncome = currentLiquidWealth * 0.02; // Assuming a 2% default yield
       const otherIncome = state.otherIncome[yearKey] || 0;
 
-      const totalGrossIncome = ahvIncome + pkRenteIncome + wealthYieldIncome + otherIncome;
+      const totalGrossIncome = ahvIncome + pkRenteIncome + salaryIncome + wealthYieldIncome + otherIncome;
 
       // --- EXPENSES ---
       const mortgageInterest =
@@ -184,6 +207,7 @@ export const useCalculations = () => {
         year: yearKey,
         ahvIncome,
         pkRenteIncome,
+        salaryIncome,
         wealthYieldIncome,
         otherIncome,
         totalGrossIncome,
