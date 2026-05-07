@@ -34,6 +34,7 @@ export interface YearData {
   surplusDeficit: number; // Income - Outflow - Taxes
   liquidWealthEnd: number;
   saeule3aEnd: number;
+  fzkEnd: number;
   totalWealthEnd: number;
 
   // Dashboard Metrics
@@ -71,6 +72,7 @@ export const useCalculations = () => {
 
     let currentLiquidWealth = state.assets.startingLiquidWealth;
     let current3a = state.assets.saeule3a.balance;
+    let currentFzk = state.assets.freizuegigkeitskonto.balance;
     let pkCapitalWithdrawn = false; // assumes we withdraw all in 2026 for now, or just track it
 
     // Calculate PK Rente (Full Year)
@@ -133,39 +135,42 @@ export const useCalculations = () => {
       };
       const salaryIncome = calcSalaryForYear();
 
-      const wealthYieldIncome = currentLiquidWealth * 0.02; // Assuming a 2% default yield
+      const wealthYieldIncome = currentLiquidWealth * (state.baseline.liquidYieldRate / 100);
       const otherIncome = state.otherIncome[yearKey] || 0;
 
       const totalGrossIncome = ahvIncome + pkRenteIncome + salaryIncome + wealthYieldIncome + otherIncome;
 
       // --- EXPENSES ---
       const mortgageInterest =
-        (state.fixeKosten.hypothek.saronAmount * (state.fixeKosten.hypothek.saronRate / 100)) +
-        (state.fixeKosten.hypothek.festAmount * (state.fixeKosten.hypothek.festRate / 100));
+        ((Number(state.fixeKosten.hypothek.saronAmount) || 0) * ((Number(state.fixeKosten.hypothek.saronRate) || 0) / 100)) +
+        ((Number(state.fixeKosten.hypothek.festAmount) || 0) * ((Number(state.fixeKosten.hypothek.festRate) || 0) / 100));
 
-      const propertyMaintenance = state.assets.efhTaxValue * (state.fixeKosten.unterhaltRate / 100);
+      const propertyMaintenance = (Number(state.assets.efhTaxValue) || 0) * ((Number(state.fixeKosten.unterhaltRate) || 0) / 100);
 
       // Krankenkasse age increase (3% per year starting from 2027)
-      let krankenkasse = state.fixeKosten.krankenkasse.base;
+      let krankenkasse = Number(state.fixeKosten.krankenkasse.base) || 0;
       if (state.fixeKosten.krankenkasse.applyAgeIncrease && index > 0) {
-        krankenkasse = krankenkasse * Math.pow(1 + (state.fixeKosten.krankenkasse.ageIncreaseRate / 100), index);
+        krankenkasse = krankenkasse * Math.pow(1 + ((Number(state.fixeKosten.krankenkasse.ageIncreaseRate) || 0) / 100), index);
       }
 
-      const mobilitaet = state.fixeKosten.mobilitaet;
-      const variableKosten = state.variableKosten;
-      const capEx = state.capEx[yearKey] || 0;
+      const mobilitaet = Number(state.fixeKosten.mobilitaet) || 0;
+      const variableKosten = Number(state.variableKosten) || 0;
+      const capEx = state.capExEvents
+        .filter(event => event.year === yearKey)
+        .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
+      const amortisation = Number(state.fixeKosten.amortisation) || 0;
 
       // Apply inflation to 2031+ expenses
       const totalOutflowExclTaxes = (
         mortgageInterest +
-        state.fixeKosten.amortisation +
+        amortisation +
         propertyMaintenance +
         krankenkasse +
         mobilitaet +
         variableKosten
       ) * inflationFactor + capEx; // capEx in 2031+ acts as an annualized reserve
 
-      const fixedCosts = (mortgageInterest + state.fixeKosten.amortisation + propertyMaintenance + krankenkasse + mobilitaet) * inflationFactor;
+      const fixedCosts = (mortgageInterest + amortisation + propertyMaintenance + krankenkasse + mobilitaet) * inflationFactor;
 
       // --- WITHDRAWALS & TAXES ---
       let capitalWithdrawalTax = 0;
@@ -183,14 +188,25 @@ export const useCalculations = () => {
         current3a = 0;
       }
 
+      if (state.assets.freizuegigkeitskonto.withdrawalYear === yearKey) {
+        currentLiquidWealth += currentFzk;
+        capitalWithdrawalTax += calculateCapitalWithdrawalTax(currentFzk);
+        currentFzk = 0;
+      }
+
       // Income Tax
-      // Deductions: Krankenkasse, Schuldzinsen (mortgage interest)
-      const taxableIncome = Math.max(0, totalGrossIncome - krankenkasse - mortgageInterest);
+      // Deductions: Krankenkasse, Schuldzinsen (mortgage interest), deductible CapEx
+      const deductibleCapEx = state.capExEvents
+        .filter(event => event.year === yearKey && event.isTaxDeductible)
+        .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
+
+      const taxableIncome = Math.max(0, totalGrossIncome - krankenkasse - mortgageInterest - propertyMaintenance - deductibleCapEx);
       const incomeTax = calculateIncomeTax(taxableIncome);
 
       // Wealth Tax
-      const mortgageDebt = state.fixeKosten.hypothek.saronAmount + state.fixeKosten.hypothek.festAmount;
-      const taxableWealth = Math.max(0, currentLiquidWealth + current3a + state.assets.efhTaxValue - mortgageDebt);
+      const mortgageDebt = (Number(state.fixeKosten.hypothek.saronAmount) || 0) + (Number(state.fixeKosten.hypothek.festAmount) || 0);
+      const efhTaxValue = Number(state.assets.efhTaxValue) || 0;
+      const taxableWealth = Math.max(0, currentLiquidWealth + current3a + efhTaxValue - mortgageDebt);
       const wealthTax = calculateWealthTax(taxableWealth);
 
       const totalTaxBurden = incomeTax + wealthTax + capitalWithdrawalTax;
@@ -212,7 +228,7 @@ export const useCalculations = () => {
         otherIncome,
         totalGrossIncome,
         mortgageInterest,
-        amortisation: state.fixeKosten.amortisation,
+        amortisation,
         propertyMaintenance,
         krankenkasse,
         mobilitaet,
@@ -228,7 +244,8 @@ export const useCalculations = () => {
         surplusDeficit,
         liquidWealthEnd: currentLiquidWealth,
         saeule3aEnd: current3a,
-        totalWealthEnd: currentLiquidWealth + current3a + (state.assets.efhTaxValue - mortgageDebt),
+        fzkEnd: currentFzk,
+        totalWealthEnd: currentLiquidWealth + current3a + currentFzk + (efhTaxValue - mortgageDebt),
         fixedCosts,
         guaranteedIncome,
         coverageRatio
@@ -243,6 +260,7 @@ export const useCalculations = () => {
     const points = [];
     let currentWealth = data['2031+'].liquidWealthEnd;
     const current3a = data['2031+'].saeule3aEnd;
+    const currentFzk = data['2031+'].fzkEnd;
     const mortgageDebt = state.fixeKosten.hypothek.saronAmount + state.fixeKosten.hypothek.festAmount;
     const realEstateEquity = state.assets.efhTaxValue - mortgageDebt; // using tax value for equity approximation
 
@@ -253,7 +271,7 @@ export const useCalculations = () => {
     YEARS.filter(y => y !== '2031+').forEach(year => {
        points.push({
          year: parseInt(year),
-         liquidWealth: data[year].liquidWealthEnd + data[year].saeule3aEnd,
+         liquidWealth: data[year].liquidWealthEnd + data[year].saeule3aEnd + data[year].fzkEnd,
          realEstateEquity,
          totalWealth: data[year].totalWealthEnd
        });
@@ -265,9 +283,9 @@ export const useCalculations = () => {
 
       points.push({
          year: y,
-         liquidWealth: currentWealth + current3a,
+         liquidWealth: currentWealth + current3a + currentFzk,
          realEstateEquity,
-         totalWealth: currentWealth + current3a + realEstateEquity
+         totalWealth: currentWealth + current3a + currentFzk + realEstateEquity
       });
     }
 

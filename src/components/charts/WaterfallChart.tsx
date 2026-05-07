@@ -6,42 +6,65 @@ import { formatCHF } from '../../utils/format';
 export const WaterfallChart = ({ data }: { data: YearData }) => {
   const chartData = useMemo(() => {
     // We build a step-by-step waterfall.
+    let current = 0;
+
     // 1. Income (Positive)
+    const incomeStart = current;
+    const incomeEnd = current + data.totalGrossIncome;
+    current = incomeEnd;
+
     // 2. Taxes (Negative)
-    // 3. Fixed Costs (Negative)
-    // 4. Variable & CapEx (Negative)
-    // 5. Surplus/Deficit (Result)
+    const taxStart = current;
+    const taxEnd = current - data.totalTaxBurden;
+    current = taxEnd;
+
+    // 3. Fixe Kosten (Negative)
+    const fixedCostsValue = data.mortgageInterest + data.amortisation + data.propertyMaintenance + data.krankenkasse + data.mobilitaet;
+    const fixedStart = current;
+    const fixedEnd = current - fixedCostsValue;
+    current = fixedEnd;
+
+    // 4. Var. Kosten & CapEx (Negative)
+    const varCostsValue = data.variableKosten + data.capEx;
+    const varStart = current;
+    const varEnd = current - varCostsValue;
+    current = varEnd;
+
+    // 5. Überschuss / Defizit (Total)
+    // The final column anchors to 0 to show the net result.
+    const surplusStart = 0;
+    const surplusEnd = current;
 
     return [
       {
         name: 'Bruttoeinkommen',
-        value: data.totalGrossIncome,
+        value: [incomeStart, incomeEnd],
         displayValue: data.totalGrossIncome,
         fill: '#3b82f6' // Blue
       },
       {
         name: 'Steuern',
-        value: -data.totalTaxBurden,
-        displayValue: data.totalTaxBurden,
+        value: [taxStart, taxEnd],
+        displayValue: -data.totalTaxBurden,
         fill: '#ef4444' // Red
       },
       {
         name: 'Fixe Kosten',
-        value: -(data.mortgageInterest + data.amortisation + data.propertyMaintenance + data.krankenkasse + data.mobilitaet),
-        displayValue: (data.mortgageInterest + data.amortisation + data.propertyMaintenance + data.krankenkasse + data.mobilitaet),
+        value: [fixedStart, fixedEnd],
+        displayValue: -fixedCostsValue,
         fill: '#f97316' // Orange
       },
       {
         name: 'Var. Kosten & CapEx',
-        value: -(data.variableKosten + data.capEx),
-        displayValue: (data.variableKosten + data.capEx),
+        value: [varStart, varEnd],
+        displayValue: -varCostsValue,
         fill: '#eab308' // Yellow
       },
       {
         name: 'Überschuss / Defizit',
-        value: data.surplusDeficit,
-        displayValue: data.surplusDeficit,
-        fill: data.surplusDeficit >= 0 ? '#10b981' : '#dc2626' // Green if surplus, dark red if deficit
+        value: [surplusStart, surplusEnd],
+        displayValue: surplusEnd,
+        fill: surplusEnd >= 0 ? '#10b981' : '#dc2626' // Green if surplus, dark red if deficit
       }
     ];
   }, [data]);

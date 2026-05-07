@@ -4,6 +4,14 @@ export type YearKey = '2026' | '2027' | '2028' | '2029' | '2030' | '2031+';
 
 export const YEARS: YearKey[] = ['2026', '2027', '2028', '2029', '2030', '2031+'];
 
+export interface CapExEvent {
+  id: string;
+  description: string;
+  amount: number;
+  year: YearKey | string;
+  isTaxDeductible?: boolean;
+}
+
 export interface PlanningState {
   // Section 1: Einkünfte
   ahv: {
@@ -49,7 +57,7 @@ export interface PlanningState {
     mobilitaet: number;
   };
   variableKosten: number;
-  capEx: Record<YearKey, number>;
+  capExEvents: CapExEvent[];
 
   // Section 3: Vermögen
   assets: {
@@ -58,6 +66,10 @@ export interface PlanningState {
       balance: number;
       withdrawalYear: string; // e.g. "2028" or ""
     };
+    freizuegigkeitskonto: {
+      balance: number;
+      withdrawalYear: string;
+    };
     startingLiquidWealth: number;
   };
 
@@ -65,6 +77,7 @@ export interface PlanningState {
   baseline: {
     inflationRate: number; // percentage
     applyInflation: boolean;
+    liquidYieldRate: number; // percentage
   };
 }
 
@@ -112,27 +125,33 @@ const defaultState: PlanningState = {
     mobilitaet: 8000, // Default estimate
   },
   variableKosten: 36000, // Default estimate (3k/mo)
-  capEx: {
-    '2026': 0, '2027': 0, '2028': 0, '2029': 0, '2030': 0, '2031+': 0
-  },
+  capExEvents: [
+    { id: '1', description: 'Kauf Firmenfahrzeug Skoda (AG 341628)', amount: 20000, year: '2026', isTaxDeductible: false },
+    { id: '2', description: 'Renovation: OG Böden & Elternschlafzimmer', amount: 30000, year: '2026', isTaxDeductible: true },
+    { id: '3', description: 'Umgebung & Garten', amount: 40000, year: '2027', isTaxDeductible: true }
+  ],
   assets: {
     efhTaxValue: 810000,
     saeule3a: {
       balance: 0,
       withdrawalYear: '',
     },
+    freizuegigkeitskonto: {
+      balance: 40000,
+      withdrawalYear: '2027',
+    },
     startingLiquidWealth: 450000,
   },
   baseline: {
     inflationRate: 1.5,
     applyInflation: true,
+    liquidYieldRate: 2.0,
   }
 };
 
 interface PlanningContextType {
   state: PlanningState;
   updateState: (section: keyof PlanningState, updates: any) => void;
-  updateCapEx: (year: YearKey, value: number) => void;
   updateOtherIncome: (year: YearKey, value: number) => void;
   loadState: (newState: PlanningState) => void;
 }
@@ -143,17 +162,14 @@ export const PlanningProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [state, setState] = useState<PlanningState>(defaultState);
 
   const updateState = (section: keyof PlanningState, updates: any) => {
-    setState(prev => ({
-      ...prev,
-      [section]: { ...(prev[section] as any), ...updates }
-    }));
-  };
-
-  const updateCapEx = (year: YearKey, value: number) => {
-    setState(prev => ({
-      ...prev,
-      capEx: { ...prev.capEx, [year]: value }
-    }));
+    setState(prev => {
+      const prevSection = prev[section];
+      const isObject = typeof prevSection === 'object' && prevSection !== null && !Array.isArray(prevSection);
+      return {
+        ...prev,
+        [section]: isObject ? { ...prevSection, ...updates } : updates
+      };
+    });
   };
 
   const updateOtherIncome = (year: YearKey, value: number) => {
@@ -168,7 +184,7 @@ export const PlanningProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   return (
-    <PlanningContext.Provider value={{ state, updateState, updateCapEx, updateOtherIncome, loadState }}>
+    <PlanningContext.Provider value={{ state, updateState, updateOtherIncome, loadState }}>
       {children}
     </PlanningContext.Provider>
   );
