@@ -7,7 +7,7 @@ import { WealthTrajectoryChart } from './charts/WealthTrajectoryChart';
 
 export const Dashboard = () => {
   const [selectedYear, setSelectedYear] = useState<YearKey>('2026');
-  const { data, trajectory } = useCalculations();
+  const { data, trajectory, cumulativeKPIs } = useCalculations();
   const { state, updateState } = usePlanning();
 
   const activeData = data[selectedYear];
@@ -30,6 +30,24 @@ export const Dashboard = () => {
                <option key={y} value={y}>{y}</option>
              ))}
            </select>
+        </div>
+      </div>
+
+      {/* KPI Row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-red-500 flex flex-col justify-center">
+          <p className="text-sm text-gray-500 font-medium">Summe bezahlte Steuern (2026-2045)</p>
+          <p className="text-xl font-bold text-gray-800">{Math.round(cumulativeKPIs.totalTaxPaid).toLocaleString("de-CH")} CHF</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 flex flex-col justify-center">
+          <p className="text-sm text-gray-500 font-medium">Netto Vermögen per 2045</p>
+          <p className="text-xl font-bold text-gray-800">{Math.round(cumulativeKPIs.netWealth2045).toLocaleString("de-CH")} CHF</p>
+        </div>
+        <div className={`bg-white p-4 rounded-lg shadow border-l-4 flex flex-col justify-center ${cumulativeKPIs.totalSavings >= 0 ? 'border-green-500' : 'border-orange-500'}`}>
+          <p className="text-sm text-gray-500 font-medium">Ersparnisse / Verzehr (2026-2045)</p>
+          <p className={`text-xl font-bold ${cumulativeKPIs.totalSavings >= 0 ? 'text-green-700' : 'text-orange-700'}`}>
+            {cumulativeKPIs.totalSavings > 0 ? '+' : ''}{Math.round(cumulativeKPIs.totalSavings).toLocaleString("de-CH")} CHF
+          </p>
         </div>
       </div>
 

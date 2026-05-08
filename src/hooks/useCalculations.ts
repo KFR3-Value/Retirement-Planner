@@ -11,6 +11,7 @@ export interface YearData {
   wealthYieldIncome: number; // calculated dynamically
   otherIncome: number;
   totalGrossIncome: number;
+  capitalWithdrawalAmount: number; // Exceptional income
 
   // Expenses (Ausgaben)
   mortgageInterest: number;
@@ -29,6 +30,28 @@ export interface YearData {
   wealthTax: number;
   capitalWithdrawalTax: number;
   totalTaxBurden: number;
+  taxBreakdown?: {
+    cantonal: number;
+    municipal: number;
+    federal: number;
+    church: number;
+  };
+  ordinaryBreakdown?: {
+    cantonal: number;
+    municipal: number;
+    federal: number;
+    church: number;
+  };
+  withdrawalBreakdown?: {
+    cantonal: number;
+    municipal: number;
+    federal: number;
+    church: number;
+  };
+  marginalRateInfo?: {
+    simpleIncomeRate: number;
+    federalRate: number;
+  };
 
   // Totals & Assets
   surplusDeficit: number; // Income - Outflow - Taxes
@@ -43,27 +66,7 @@ export interface YearData {
   coverageRatio: number;
 }
 
-// Simple tax approximations for Aargau (Bettwil)
-const calculateIncomeTax = (taxableIncome: number): number => {
-  if (taxableIncome <= 0) return 0;
-  // Very rough approximation of a progressive curve
-  if (taxableIncome < 50000) return taxableIncome * 0.05;
-  if (taxableIncome < 100000) return 2500 + (taxableIncome - 50000) * 0.12;
-  return 8500 + (taxableIncome - 100000) * 0.18;
-};
-
-const calculateWealthTax = (taxableWealth: number): number => {
-  if (taxableWealth <= 100000) return 0;
-  // Simplified Aargau wealth tax
-  return (taxableWealth - 100000) * 0.003;
-};
-
-const calculateCapitalWithdrawalTax = (amount: number): number => {
-  if (amount <= 0) return 0;
-  // Special reduced rate for capital withdrawals
-  return amount * 0.05;
-};
-
+import { calculateTotalTax } from '../utils/taxCalculations';
 export const useCalculations = () => {
   const { state } = usePlanning();
 
@@ -173,24 +176,24 @@ export const useCalculations = () => {
       const fixedCosts = (mortgageInterest + amortisation + propertyMaintenance + krankenkasse + mobilitaet) * inflationFactor;
 
       // --- WITHDRAWALS & TAXES ---
-      let capitalWithdrawalTax = 0;
+      let capitalWithdrawalAmount = 0;
 
       // Capital withdrawal logic (simplified for 2026 or designated year)
       if (yearNum === state.pensionskasse.startYear && pkCapital > 0 && !pkCapitalWithdrawn) {
         currentLiquidWealth += pkCapital;
-        capitalWithdrawalTax += calculateCapitalWithdrawalTax(pkCapital);
+        capitalWithdrawalAmount += pkCapital;
         pkCapitalWithdrawn = true;
       }
 
       if (state.assets.saeule3a.withdrawalYear === yearKey) {
         currentLiquidWealth += current3a;
-        capitalWithdrawalTax += calculateCapitalWithdrawalTax(current3a);
+        capitalWithdrawalAmount += current3a;
         current3a = 0;
       }
 
       if (state.assets.freizuegigkeitskonto.withdrawalYear === yearKey) {
         currentLiquidWealth += currentFzk;
-        capitalWithdrawalTax += calculateCapitalWithdrawalTax(currentFzk);
+        capitalWithdrawalAmount += currentFzk;
         currentFzk = 0;
       }
 
@@ -201,15 +204,20 @@ export const useCalculations = () => {
         .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
 
       const taxableIncome = Math.max(0, totalGrossIncome - krankenkasse - mortgageInterest - propertyMaintenance - deductibleCapEx);
-      const incomeTax = calculateIncomeTax(taxableIncome);
 
       // Wealth Tax
       const mortgageDebt = (Number(state.fixeKosten.hypothek.saronAmount) || 0) + (Number(state.fixeKosten.hypothek.festAmount) || 0);
       const efhTaxValue = Number(state.assets.efhTaxValue) || 0;
       const taxableWealth = Math.max(0, currentLiquidWealth + current3a + efhTaxValue - mortgageDebt);
-      const wealthTax = calculateWealthTax(taxableWealth);
 
-      const totalTaxBurden = incomeTax + wealthTax + capitalWithdrawalTax;
+      // Calculate taxes using exact Aargau Tarif B logic (Bettwil Steuerfuss)
+      // Assuming multipliers: Canton 1.11, Bettwil 1.02, Church 0.19 (average)
+      const taxResult = calculateTotalTax(taxableIncome, taxableWealth, capitalWithdrawalAmount, { cantonal: 1.11, municipal: 1.02, church: 0.19 });
+      
+      const incomeTax = taxResult.incomeTax;
+      const wealthTax = taxResult.wealthTax;
+      const capitalWithdrawalTax = taxResult.capitalWithdrawalTax;
+      const totalTaxBurden = taxResult.totalTaxBurden;
 
       // --- SURPLUS & WEALTH UPDATE ---
       const surplusDeficit = totalGrossIncome - totalOutflowExclTaxes - totalTaxBurden;
@@ -227,6 +235,7 @@ export const useCalculations = () => {
         wealthYieldIncome,
         otherIncome,
         totalGrossIncome,
+        capitalWithdrawalAmount,
         mortgageInterest,
         amortisation,
         propertyMaintenance,
@@ -241,6 +250,10 @@ export const useCalculations = () => {
         wealthTax,
         capitalWithdrawalTax,
         totalTaxBurden,
+        taxBreakdown: taxResult.breakdown,
+        ordinaryBreakdown: taxResult.ordinaryBreakdown,
+        withdrawalBreakdown: taxResult.withdrawalBreakdown,
+        marginalRateInfo: taxResult.marginalRateInfo,
         surplusDeficit,
         liquidWealthEnd: currentLiquidWealth,
         saeule3aEnd: current3a,
@@ -292,5 +305,30 @@ export const useCalculations = () => {
     return points;
   }, [data, state]);
 
-  return { data, trajectory };
+  // Calculate Cumulative KPIs
+  const cumulativeKPIs = useMemo(() => {
+    let totalTaxPaid = 0;
+    let totalSavings = 0;
+    
+    // Sum explicit years 2026-2030
+    YEARS.filter(y => y !== '2031+').forEach(year => {
+      totalTaxPaid += data[year].totalTaxBurden;
+      totalSavings += data[year].surplusDeficit;
+    });
+
+    // Sum projection period 2031-2045 (15 years)
+    const projectedYears = 15;
+    totalTaxPaid += data['2031+'].totalTaxBurden * projectedYears;
+    totalSavings += data['2031+'].surplusDeficit * projectedYears;
+
+    const netWealth2045 = trajectory[trajectory.length - 1]?.totalWealth || 0;
+
+    return {
+      totalTaxPaid,
+      totalSavings,
+      netWealth2045
+    };
+  }, [data, trajectory]);
+
+  return { data, trajectory, cumulativeKPIs };
 };

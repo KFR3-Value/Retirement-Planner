@@ -87,6 +87,35 @@ export const Engine = () => {
     );
   };
 
+  const CustomRow = ({ label, valueFn, isSub = false }: { label: string, valueFn: (year: YearKey) => number, isSub?: boolean }) => (
+    <tr className="border-b border-gray-200 hover:bg-gray-50">
+      <td className={`py-2 px-4 text-sm text-gray-800 ${isSub ? 'pl-8 text-gray-500' : ''}`}>
+        {label}
+      </td>
+      {YEARS.map(year => (
+        <td key={year} className="py-2 px-4 text-right text-sm whitespace-nowrap">
+          {formatCHF(valueFn(year))}
+        </td>
+      ))}
+    </tr>
+  );
+
+  const RateRow = ({ label, valueFn }: { label: string, valueFn: (year: YearKey) => number }) => (
+    <tr className="border-b border-gray-200 hover:bg-gray-50 bg-blue-50/30">
+      <td className="py-2 px-4 text-xs text-gray-700 italic pl-8">
+        {label}
+      </td>
+      {YEARS.map(year => {
+        const rate = valueFn(year);
+        return (
+          <td key={year} className="py-2 px-4 text-right text-xs whitespace-nowrap text-gray-600">
+            {rate > 0 ? (rate * 100).toFixed(1) + '%' : '-'}
+          </td>
+        );
+      })}
+    </tr>
+  );
+
   return (
     <>
 
@@ -125,7 +154,13 @@ export const Engine = () => {
             onChange={updateOtherIncome}
           />
 
-          <DataRow label="Total Bruttoeinkünfte" dataKey="totalGrossIncome" isTotal={true} />
+          <DataRow label="Total Ordentliche Bruttoeinkünfte" dataKey="totalGrossIncome" isTotal={true} />
+
+          {/* Kapitalbezüge (Ausserordentlich) */}
+          <tr className="bg-orange-50/50">
+             <td colSpan={7} className="py-2 px-4 font-semibold text-orange-800 text-sm border-b border-orange-200 mt-4">Ausserordentliche Zuflüsse (separat besteuert)</td>
+          </tr>
+          <DataRow label="Kapitalbezüge (PK / Säule 3a)" dataKey="capitalWithdrawalAmount" />
 
 
           {/* SECTION 2: AUSGABEN */}
@@ -149,16 +184,36 @@ export const Engine = () => {
           {/* SECTION 4: STEUERN */}
           <tr>
             <td colSpan={7} className="py-4 px-4 bg-gray-100 font-bold text-gray-900 text-lg uppercase mt-8 border-t-4 border-gray-300">
-              3. Steuern (Aargau - Approximativ)
+              3. Steuern (Tarif B - Verheiratete)
             </td>
           </tr>
           <DataRow label="Steuerbares Einkommen (nach Abzügen)" dataKey="taxableIncome" />
-          <DataRow label="Einkommenssteuer" dataKey="incomeTax" />
           <DataRow label="Steuerbares Vermögen" dataKey="taxableWealth" />
-          <DataRow label="Vermögenssteuer" dataKey="wealthTax" />
-          <DataRow label="Kapitalbezugssteuer (PK/3a)" dataKey="capitalWithdrawalTax" />
+          
+          <tr className="bg-gray-50">
+             <td colSpan={7} className="py-2 px-4 font-semibold text-gray-800 text-sm border-b">A. Ordentliche Steuern (Einkommen & Vermögen)</td>
+          </tr>
+          <CustomRow label="Kantonssteuern (111%)" valueFn={(y) => data[y].ordinaryBreakdown?.cantonal || 0} isSub={true} />
+          <CustomRow label="Gemeindesteuern Bettwil (102%)" valueFn={(y) => data[y].ordinaryBreakdown?.municipal || 0} isSub={true} />
+          <CustomRow label="Kirchensteuern (19%)" valueFn={(y) => data[y].ordinaryBreakdown?.church || 0} isSub={true} />
+          <CustomRow label="Direkte Bundessteuer" valueFn={(y) => data[y].ordinaryBreakdown?.federal || 0} isSub={true} />
+          
+          <tr className="bg-orange-50/50">
+             <td colSpan={7} className="py-2 px-4 font-semibold text-orange-800 text-sm border-b border-t border-orange-200">B. Sondersteuern auf Kapitalbezüge</td>
+          </tr>
+          <CustomRow label="Kantonssteuern (1/3 Tarif)" valueFn={(y) => data[y].withdrawalBreakdown?.cantonal || 0} isSub={true} />
+          <CustomRow label="Gemeindesteuern Bettwil (1/3 Tarif)" valueFn={(y) => data[y].withdrawalBreakdown?.municipal || 0} isSub={true} />
+          <CustomRow label="Kirchensteuern (1/3 Tarif)" valueFn={(y) => data[y].withdrawalBreakdown?.church || 0} isSub={true} />
+          <CustomRow label="Direkte Bundessteuer (1/5 Tarif)" valueFn={(y) => data[y].withdrawalBreakdown?.federal || 0} isSub={true} />
 
-          <DataRow label="Total Steuerbelastung" dataKey="totalTaxBurden" isTotal={true} />
+          <tr className="bg-gray-50">
+             <td colSpan={7} className="py-2 px-4 font-semibold text-gray-700 text-sm border-b border-t mt-2">Grenzsteuersätze (Marginal Rates auf Einfache Steuer)</td>
+          </tr>
+          <RateRow label="Einkommenssteuer (Kantonal Einfach)" valueFn={(y) => data[y].marginalRateInfo?.simpleIncomeRate || 0} />
+          <RateRow label="Direkte Bundessteuer (Einkommen)" valueFn={(y) => data[y].marginalRateInfo?.federalRate || 0} />
+          <RateRow label="Effektive Gesamtsteuerbelastung (Ordentlich)" valueFn={(y) => ((data[y].incomeTax + data[y].wealthTax) / (data[y].totalGrossIncome || 1))} />
+
+          <DataRow label="Total Steuerbelastung (A + B)" dataKey="totalTaxBurden" isTotal={true} />
 
 
           {/* SECTION 5: CASH FLOW & WEALTH */}
