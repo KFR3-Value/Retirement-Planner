@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-export type ModalTab = 1 | 2 | 3 | 4 | 'all' | null;
+export type ModalTab = 1 | 2 | 3 | 4 | 5 | 'all' | null;
 
 interface UIContextType {
   activeModalTab: ModalTab;

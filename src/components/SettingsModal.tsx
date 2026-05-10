@@ -126,31 +126,6 @@ export const SettingsModal = () => {
             <section>
               <h3 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">2. Ausgaben & Hypotheken</h3>
               <div className="grid grid-cols-2 gap-6">
-                {/* Hypotheken */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-700">Hypotheken</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-gray-500 block mb-1">Saron Betrag</span>
-                      <input type="number" value={state.fixeKosten.hypothek.saronAmount} onChange={(e) => updateState('fixeKosten', { hypothek: { ...state.fixeKosten.hypothek, saronAmount: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-gray-500 block mb-1">Saron Zins (%)</span>
-                      <input type="number" step="0.01" value={state.fixeKosten.hypothek.saronRate} onChange={(e) => updateState('fixeKosten', { hypothek: { ...state.fixeKosten.hypothek, saronRate: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-gray-500 block mb-1">Fest Betrag</span>
-                      <input type="number" value={state.fixeKosten.hypothek.festAmount} onChange={(e) => updateState('fixeKosten', { hypothek: { ...state.fixeKosten.hypothek, festAmount: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-gray-500 block mb-1">Fest Zins (%)</span>
-                      <input type="number" step="0.01" value={state.fixeKosten.hypothek.festRate} onChange={(e) => updateState('fixeKosten', { hypothek: { ...state.fixeKosten.hypothek, festRate: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Other Expenses */}
                 <div className="space-y-4">
                   <h4 className="font-medium text-gray-700">Weitere Fixkosten</h4>
@@ -184,10 +159,6 @@ export const SettingsModal = () => {
                   <div>
                     <span className="text-xs text-gray-500 block mb-1">Startvermögen Liquide (CHF)</span>
                     <input type="number" value={state.assets.startingLiquidWealth} onChange={(e) => updateState('assets', { startingLiquidWealth: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                  </div>
-                  <div>
-                    <span className="text-xs text-gray-500 block mb-1">EFH Steuerwert (CHF)</span>
-                    <input type="number" value={state.assets.efhTaxValue} onChange={(e) => updateState('assets', { efhTaxValue: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
                   </div>
                   <div>
                     <span className="text-xs text-gray-500 block mb-1">Rendite auf Liquides (%)</span>
@@ -293,6 +264,58 @@ export const SettingsModal = () => {
                     <p className="text-gray-500 text-sm text-center py-4">Keine Investitionen geplant.</p>
                   )}
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* SECTION 5: Immobilien */}
+          {(activeModalTab === 'all' || activeModalTab === 5) && (
+            <section>
+              <h3 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">5. Immobilien (Eigenheim)</h3>
+              <div className="grid grid-cols-2 gap-6">
+                
+                {/* Steuerwerte */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-700">Werte & Steuern</h4>
+                  <div>
+                    <span className="text-xs text-gray-500 block mb-1">Steuerwert Liegenschaft (CHF)</span>
+                    <input type="number" value={state.immobilie.efhTaxValue} onChange={(e) => updateState('immobilie', { efhTaxValue: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500 block mb-1">Eigenmietwert (CHF)</span>
+                    <input type="number" value={state.immobilie.eigenmietwert} onChange={(e) => updateState('immobilie', { eigenmietwert: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <span className="text-xs text-gray-500 block mb-1">Liegenschaftsunterhalt (als % vom Steuerwert)</span>
+                    <input type="number" step="0.1" value={state.immobilie.unterhaltRate} onChange={(e) => updateState('immobilie', { unterhaltRate: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                  </div>
+                </div>
+
+                {/* Hypotheken */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-700">Hypotheken</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Saron Betrag</span>
+                      <input type="number" value={state.immobilie.hypothek.saronAmount} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, saronAmount: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Saron Zins (%)</span>
+                      <input type="number" step="0.01" value={state.immobilie.hypothek.saronRate} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, saronRate: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Fest Betrag</span>
+                      <input type="number" value={state.immobilie.hypothek.festAmount} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, festAmount: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Fest Zins (%)</span>
+                      <input type="number" step="0.01" value={state.immobilie.hypothek.festRate} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, festRate: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </section>
           )}

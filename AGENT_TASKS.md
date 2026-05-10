@@ -32,6 +32,21 @@ This file manages asynchronous workflows between the human user and AI agents. A
 - `[x]` **2.5 Implementation**: Execute the approved tax logic/visualization changes and dashboard updates.
 - `[x]` **2.6 Review & Verification**: Test the new tax module outputs and dashboard variables for accuracy.
 
+### 3. Master Task: Income Variables & AHV Scenarios
+**Goal**: Enhance income planning with precise temporal controls and implement multiple AHV withdrawal scenarios.
+
+- `[ ]` **3.1 Detailed Income Phasing**: Implement detailed month inputs for all income variables to specify exactly when they start and end.
+- `[ ]` **3.2 Rente End Dates**: Add the option to specify an end date for any Rente (pension) stream.
+- `[ ]` **3.3 AHV Scenarios**: Implement 3 distinct AHV scenarios (Monique drawing 3 years prior, User on 64th birthday, User 1 year later) and accurately reflect their impact on the AHV rent as specified in the underlying data.
+- `[ ]` **3.4 Tragbarkeitsrechner**: Implement a mortgage affordability calculator (Tragbarkeitsrechner) to display year-by-year whether bank affordability criteria are met.
+
+### 4. Master Task: Scenario & Sensitivity Analysis
+**Goal**: Build advanced analytical capabilities to simulate different pension withdrawal strategies and track specific wealth KPIs under varying conditions.
+
+- `[ ]` **4.1 Wealth Definitions Refactoring**: Implement two explicit definitions of wealth across the platform: "Total Vermögen" (including pension fund capital) and "Liquid Vermögen" (strictly liquid assets).
+- `[ ]` **4.2 Sensitivity Analysis Module**: Build a sensitivity analysis tool to evaluate the impact of different Pensionskasse Rente vs. Kapital splits.
+- `[ ]` **4.3 Scenario KPIs**: Implement comparative KPIs for the analysis, specifically tracking "Net Wealth per 2045" (for both wealth definitions) and the "Risk/Probability of dropping below starting wealth".
+
 ---
 
 ## Archive (Completed Master Tasks)

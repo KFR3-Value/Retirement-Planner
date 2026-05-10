@@ -10,6 +10,7 @@ export interface YearData {
   salaryIncome: number;
   wealthYieldIncome: number; // calculated dynamically
   otherIncome: number;
+  eigenmietwert: number; // Fictitious tax income
   totalGrossIncome: number;
   capitalWithdrawalAmount: number; // Exceptional income
 
@@ -21,6 +22,7 @@ export interface YearData {
   mobilitaet: number;
   variableKosten: number;
   capEx: number;
+  deductibleCapEx: number; // For tax deductions
   totalOutflowExclTaxes: number;
 
   // Taxes
@@ -59,6 +61,9 @@ export interface YearData {
   saeule3aEnd: number;
   fzkEnd: number;
   totalWealthEnd: number;
+  efhTaxValue: number;
+  mortgageDebt: number;
+  wealthTaxableBase: { liquid: number, pillar3a: number };
 
   // Dashboard Metrics
   fixedCosts: number;
@@ -141,14 +146,19 @@ export const useCalculations = () => {
       const wealthYieldIncome = currentLiquidWealth * (state.baseline.liquidYieldRate / 100);
       const otherIncome = state.otherIncome[yearKey] || 0;
 
-      const totalGrossIncome = ahvIncome + pkRenteIncome + salaryIncome + wealthYieldIncome + otherIncome;
+      const totalGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + wealthYieldIncome + otherIncome;
+      
+      // Eigenmietwert only up until 2028 (inclusive)
+      const isUpTo2028 = ['2026', '2027', '2028'].includes(yearKey);
+      const eigenmietwert = isUpTo2028 ? (Number(state.immobilie.eigenmietwert) || 0) : 0;
 
       // --- EXPENSES ---
       const mortgageInterest =
-        ((Number(state.fixeKosten.hypothek.saronAmount) || 0) * ((Number(state.fixeKosten.hypothek.saronRate) || 0) / 100)) +
-        ((Number(state.fixeKosten.hypothek.festAmount) || 0) * ((Number(state.fixeKosten.hypothek.festRate) || 0) / 100));
+        (Number(state.immobilie.hypothek.saronAmount) || 0) * ((Number(state.immobilie.hypothek.saronRate) || 0) / 100) +
+        (Number(state.immobilie.hypothek.festAmount) || 0) * ((Number(state.immobilie.hypothek.festRate) || 0) / 100);
 
-      const propertyMaintenance = (Number(state.assets.efhTaxValue) || 0) * ((Number(state.fixeKosten.unterhaltRate) || 0) / 100);
+      const amortisation = Number(state.fixeKosten.amortisation) || 0;
+      const propertyMaintenance = (Number(state.immobilie.efhTaxValue) || 0) * ((Number(state.immobilie.unterhaltRate) || 0) / 100);
 
       // Krankenkasse age increase (3% per year starting from 2027)
       let krankenkasse = Number(state.fixeKosten.krankenkasse.base) || 0;
@@ -161,7 +171,6 @@ export const useCalculations = () => {
       const capEx = state.capExEvents
         .filter(event => event.year === yearKey)
         .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
-      const amortisation = Number(state.fixeKosten.amortisation) || 0;
 
       // Apply inflation to 2031+ expenses
       const totalOutflowExclTaxes = (
@@ -203,11 +212,11 @@ export const useCalculations = () => {
         .filter(event => event.year === yearKey && event.isTaxDeductible)
         .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
 
-      const taxableIncome = Math.max(0, totalGrossIncome - krankenkasse - mortgageInterest - propertyMaintenance - deductibleCapEx);
+      const taxableIncome = Math.max(0, totalGrossIncome + eigenmietwert - krankenkasse - mortgageInterest - propertyMaintenance - deductibleCapEx);
 
       // Wealth Tax
-      const mortgageDebt = (Number(state.fixeKosten.hypothek.saronAmount) || 0) + (Number(state.fixeKosten.hypothek.festAmount) || 0);
-      const efhTaxValue = Number(state.assets.efhTaxValue) || 0;
+      const mortgageDebt = (Number(state.immobilie.hypothek.saronAmount) || 0) + (Number(state.immobilie.hypothek.festAmount) || 0);
+      const efhTaxValue = Number(state.immobilie.efhTaxValue) || 0;
       const taxableWealth = Math.max(0, currentLiquidWealth + current3a + efhTaxValue - mortgageDebt);
 
       // Calculate taxes using exact Aargau Tarif B logic (Bettwil Steuerfuss)
@@ -234,6 +243,7 @@ export const useCalculations = () => {
         salaryIncome,
         wealthYieldIncome,
         otherIncome,
+        eigenmietwert,
         totalGrossIncome,
         capitalWithdrawalAmount,
         mortgageInterest,
@@ -243,6 +253,7 @@ export const useCalculations = () => {
         mobilitaet,
         variableKosten,
         capEx,
+        deductibleCapEx,
         totalOutflowExclTaxes,
         taxableIncome,
         incomeTax,
@@ -259,6 +270,9 @@ export const useCalculations = () => {
         saeule3aEnd: current3a,
         fzkEnd: currentFzk,
         totalWealthEnd: currentLiquidWealth + current3a + currentFzk + (efhTaxValue - mortgageDebt),
+        efhTaxValue,
+        mortgageDebt,
+        wealthTaxableBase: { liquid: currentLiquidWealth, pillar3a: current3a },
         fixedCosts,
         guaranteedIncome,
         coverageRatio
@@ -274,8 +288,8 @@ export const useCalculations = () => {
     let currentWealth = data['2031+'].liquidWealthEnd;
     const current3a = data['2031+'].saeule3aEnd;
     const currentFzk = data['2031+'].fzkEnd;
-    const mortgageDebt = state.fixeKosten.hypothek.saronAmount + state.fixeKosten.hypothek.festAmount;
-    const realEstateEquity = state.assets.efhTaxValue - mortgageDebt; // using tax value for equity approximation
+    const mortgageDebt = (Number(state.immobilie.hypothek.saronAmount) || 0) + (Number(state.immobilie.hypothek.festAmount) || 0);
+    const realEstateEquity = (Number(state.immobilie.efhTaxValue) || 0) - mortgageDebt; // using tax value for equity approximation
 
     // Base surplus logic for 2031+ onwards
     const annualSurplus = data['2031+'].surplusDeficit;

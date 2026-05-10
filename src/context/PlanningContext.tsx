@@ -38,17 +38,11 @@ export interface PlanningState {
     deductionRate: number; // percentage
   };
   otherIncome: Record<YearKey, number>;
+  eigenmietwert: Record<YearKey, number>;
 
   // Section 2: Ausgaben
   fixeKosten: {
-    hypothek: {
-      saronAmount: number;
-      saronRate: number; // percentage
-      festAmount: number;
-      festRate: number; // percentage
-    };
     amortisation: number;
-    unterhaltRate: number; // percentage of EFH value
     krankenkasse: {
       base: number;
       applyAgeIncrease: boolean;
@@ -59,9 +53,21 @@ export interface PlanningState {
   variableKosten: number;
   capExEvents: CapExEvent[];
 
-  // Section 3: Vermögen
-  assets: {
+  // Section 3: Immobilien
+  immobilie: {
     efhTaxValue: number;
+    eigenmietwert: number;
+    hypothek: {
+      saronAmount: number;
+      saronRate: number; // percentage
+      festAmount: number;
+      festRate: number; // percentage
+    };
+    unterhaltRate: number; // percentage of EFH value
+  };
+
+  // Section 4: Vermögen
+  assets: {
     saeule3a: {
       balance: number;
       withdrawalYear: string; // e.g. "2028" or ""
@@ -109,14 +115,7 @@ const defaultState: PlanningState = {
     '2026': 0, '2027': 0, '2028': 0, '2029': 0, '2030': 0, '2031+': 0
   },
   fixeKosten: {
-    hypothek: {
-      saronAmount: 175000,
-      saronRate: 0.86,
-      festAmount: 600000,
-      festRate: 1.68,
-    },
     amortisation: 0,
-    unterhaltRate: 1.0, // 1%
     krankenkasse: {
       base: 12000, // Estimated base CHF per year for couple
       applyAgeIncrease: true,
@@ -130,8 +129,18 @@ const defaultState: PlanningState = {
     { id: '2', description: 'Renovation: OG Böden & Elternschlafzimmer', amount: 30000, year: '2026', isTaxDeductible: true },
     { id: '3', description: 'Umgebung & Garten', amount: 40000, year: '2027', isTaxDeductible: true }
   ],
-  assets: {
+  immobilie: {
     efhTaxValue: 810000,
+    eigenmietwert: 0,
+    hypothek: {
+      saronAmount: 175000,
+      saronRate: 0.86,
+      festAmount: 600000,
+      festRate: 1.68,
+    },
+    unterhaltRate: 1.0, // 1%
+  },
+  assets: {
     saeule3a: {
       balance: 0,
       withdrawalYear: '',
