@@ -42,18 +42,36 @@ export const SettingsModal = () => {
                 {/* AHV */}
                 <div className="space-y-4">
                   <h4 className="font-medium text-gray-700">AHV</h4>
-                  <div>
-                    <span className="text-xs text-gray-500 block mb-1">Start Markus (Jahr / Monat 0=Jan)</span>
-                    <div className="flex space-x-2">
-                      <input type="number" value={state.ahv.markusStartYear} onChange={(e) => updateState('ahv', { markusStartYear: Number(e.target.value) })} className="w-24 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                      <input type="number" value={state.ahv.markusStartMonth} onChange={(e) => updateState('ahv', { markusStartMonth: Number(e.target.value) })} className="w-20 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Start Markus (Jahr / Monat 1=Jan)</span>
+                      <div className="flex space-x-2">
+                        <input type="number" value={state.ahv.markusStartYear} onChange={(e) => updateState('ahv', { markusStartYear: Number(e.target.value) })} className="w-24 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="number" value={state.ahv.markusStartMonth} onChange={(e) => updateState('ahv', { markusStartMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={1} max={12} />
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Ende Markus (J/M)</span>
+                      <div className="flex space-x-2">
+                        <input type="number" value={state.ahv.markusEndYear} onChange={(e) => updateState('ahv', { markusEndYear: Number(e.target.value) })} className="w-24 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="number" value={state.ahv.markusEndMonth} onChange={(e) => updateState('ahv', { markusEndMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={1} max={12} />
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <span className="text-xs text-gray-500 block mb-1">Start Monique (Jahr / Monat 0=Jan)</span>
-                    <div className="flex space-x-2">
-                      <input type="number" value={state.ahv.moniqueStartYear} onChange={(e) => updateState('ahv', { moniqueStartYear: Number(e.target.value) })} className="w-24 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                      <input type="number" value={state.ahv.moniqueStartMonth} onChange={(e) => updateState('ahv', { moniqueStartMonth: Number(e.target.value) })} className="w-20 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Start Monique (Jahr / Monat 1=Jan)</span>
+                      <div className="flex space-x-2">
+                        <input type="number" value={state.ahv.moniqueStartYear} onChange={(e) => updateState('ahv', { moniqueStartYear: Number(e.target.value) })} className="w-24 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="number" value={state.ahv.moniqueStartMonth} onChange={(e) => updateState('ahv', { moniqueStartMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={1} max={12} />
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Ende Monique (J/M)</span>
+                      <div className="flex space-x-2">
+                        <input type="number" value={state.ahv.moniqueEndYear} onChange={(e) => updateState('ahv', { moniqueEndYear: Number(e.target.value) })} className="w-24 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                        <input type="number" value={state.ahv.moniqueEndMonth} onChange={(e) => updateState('ahv', { moniqueEndMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={1} max={12} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -64,16 +82,23 @@ export const SettingsModal = () => {
                     <h4 className="font-medium text-gray-700 mb-3">Pensionskasse</h4>
                     <div className="grid grid-cols-2 gap-4 mb-3">
                       <div>
-                        <span className="text-xs text-gray-500 block mb-1">Start (Jahr / Monat)</span>
+                        <span className="text-xs text-gray-500 block mb-1">Start (Jahr / Monat 1=Jan)</span>
                         <div className="flex space-x-2">
                           <input type="number" value={state.pensionskasse.startYear} onChange={(e) => updateState('pensionskasse', { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <input type="number" value={state.pensionskasse.startMonth} onChange={(e) => updateState('pensionskasse', { startMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                          <input type="number" value={state.pensionskasse.startMonth} onChange={(e) => updateState('pensionskasse', { startMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={1} max={12} />
                         </div>
                       </div>
                       <div>
+                        <span className="text-xs text-gray-500 block mb-1">Ende (J/M)</span>
+                        <div className="flex space-x-2">
+                          <input type="number" value={state.pensionskasse.endYear} onChange={(e) => updateState('pensionskasse', { endYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                          <input type="number" value={state.pensionskasse.endMonth} onChange={(e) => updateState('pensionskasse', { endMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={1} max={12} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mb-3">
                         <span className="text-xs text-gray-500 block mb-1">Total Kapital</span>
                         <input type="number" value={state.pensionskasse.totalCapital} onChange={(e) => updateState('pensionskasse', { totalCapital: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -101,17 +126,17 @@ export const SettingsModal = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <span className="text-xs text-gray-500 block mb-1">Start (J/M)</span>
+                        <span className="text-xs text-gray-500 block mb-1">Start (J/M 1=Jan)</span>
                         <div className="flex space-x-2">
                           <input type="number" value={state.salary.startYear} onChange={(e) => updateState('salary', { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <input type="number" value={state.salary.startMonth} onChange={(e) => updateState('salary', { startMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                          <input type="number" value={state.salary.startMonth} onChange={(e) => updateState('salary', { startMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={1} max={12} />
                         </div>
                       </div>
                       <div>
                         <span className="text-xs text-gray-500 block mb-1">Ende (J/M)</span>
                         <div className="flex space-x-2">
                           <input type="number" value={state.salary.endYear} onChange={(e) => updateState('salary', { endYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <input type="number" value={state.salary.endMonth} onChange={(e) => updateState('salary', { endMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                          <input type="number" value={state.salary.endMonth} onChange={(e) => updateState('salary', { endMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={1} max={12} />
                         </div>
                       </div>
                     </div>

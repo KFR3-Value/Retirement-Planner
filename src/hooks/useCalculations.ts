@@ -99,44 +99,47 @@ export const useCalculations = () => {
       }
 
       // --- INCOME ---
-      // AHV Proration
-      let ahvIncome = 0;
-      const calcAhvForPerson = (startYear: number, startMonth: number) => {
-        if (yearNum < startYear) return 0;
-        if (yearNum > startYear) return state.ahv.fullPensionCouple / 2;
-        // Prorated year
-        const monthsActive = 12 - startMonth;
-        return (state.ahv.fullPensionCouple / 2) * (monthsActive / 12);
-      };
-
-      ahvIncome += calcAhvForPerson(state.ahv.markusStartYear, state.ahv.markusStartMonth);
-      ahvIncome += calcAhvForPerson(state.ahv.moniqueStartYear, state.ahv.moniqueStartMonth);
-
-      const calcPkForYear = (startYear: number, startMonth: number) => {
-        if (yearNum < startYear) return 0;
-        if (yearNum > startYear) return pkRenteFullYear;
-        // Prorated year
-        const monthsActive = 12 - startMonth;
-        return pkRenteFullYear * (monthsActive / 12);
-      };
-
-      const pkRenteIncome = calcPkForYear(state.pensionskasse.startYear, state.pensionskasse.startMonth);
-      
-      const calcSalaryForYear = () => {
-        const { startYear, startMonth, endYear, endMonth, monthlyGross, deductionRate } = state.salary;
+      // Function to calculate prorated income given start/end dates and 1-indexed months
+      const calculateProratedMonths = (startYear: number, startMonth: number, endYear: number, endMonth: number) => {
         if (yearNum < startYear || yearNum > endYear) return 0;
 
-        let activeMonths = 0;
+        let activeMonths;
         if (yearNum === startYear && yearNum === endYear) {
-          activeMonths = endMonth - startMonth + 1; // inclusive
+          // Both start and end in the same year
+          // +1 because both are inclusive. e.g. start=1, end=3 -> months 1, 2, 3 -> 3 active months (3 - 1 + 1 = 3)
+          activeMonths = endMonth - startMonth + 1;
         } else if (yearNum === startYear) {
-          activeMonths = 12 - startMonth;
+          // Starts in this year, ends later
+          // e.g. start=10 (Oct) -> months 10, 11, 12 -> 3 active months (12 - 10 + 1 = 3)
+          activeMonths = 12 - startMonth + 1;
         } else if (yearNum === endYear) {
-          activeMonths = endMonth + 1;
+          // Started earlier, ends in this year
+          // e.g. end=2 (Feb) -> months 1, 2 -> 2 active months
+          activeMonths = endMonth;
         } else {
-          activeMonths = 12; // full year
+          // Full year active
+          activeMonths = 12;
         }
 
+        return Math.max(0, Math.min(12, activeMonths)); // Ensure it's between 0 and 12
+      };
+
+      // AHV Proration
+      let ahvIncome = 0;
+      const markusAhvMonths = calculateProratedMonths(state.ahv.markusStartYear, state.ahv.markusStartMonth, state.ahv.markusEndYear, state.ahv.markusEndMonth);
+      ahvIncome += (state.ahv.fullPensionCouple / 2) * (markusAhvMonths / 12);
+
+      const moniqueAhvMonths = calculateProratedMonths(state.ahv.moniqueStartYear, state.ahv.moniqueStartMonth, state.ahv.moniqueEndYear, state.ahv.moniqueEndMonth);
+      ahvIncome += (state.ahv.fullPensionCouple / 2) * (moniqueAhvMonths / 12);
+
+      // PK Rente Proration
+      const pkMonths = calculateProratedMonths(state.pensionskasse.startYear, state.pensionskasse.startMonth, state.pensionskasse.endYear, state.pensionskasse.endMonth);
+      const pkRenteIncome = pkRenteFullYear * (pkMonths / 12);
+
+      // Salary Proration
+      const calcSalaryForYear = () => {
+        const { startYear, startMonth, endYear, endMonth, monthlyGross, deductionRate } = state.salary;
+        const activeMonths = calculateProratedMonths(startYear, startMonth, endYear, endMonth);
         const grossAnnual = activeMonths * monthlyGross;
         const netAnnual = grossAnnual * (1 - (deductionRate / 100));
         return Math.max(0, netAnnual);
