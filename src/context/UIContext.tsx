@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 
 export type ModalTab = 1 | 2 | 3 | 4 | 5 | 'all' | null;
 

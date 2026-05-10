@@ -37,7 +37,7 @@ export const MainLayout = () => {
         } else {
           alert('Ungültiges Dateiformat. Keine passenden Daten gefunden.');
         }
-      } catch (err) {
+      } catch {
         alert('Fehler beim Lesen der Datei. Ist es ein gültiges JSON/Text Format?');
       }
     };

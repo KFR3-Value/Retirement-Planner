@@ -5,7 +5,7 @@ import { useUI } from '../context/UIContext';
 import { formatCHF } from '../utils/format';
 
 export const Engine = () => {
-  const { state, updateState, updateOtherIncome } = usePlanning();
+  const { state, updateOtherIncome } = usePlanning();
   const { data } = useCalculations();
   const { openSettingsModal } = useUI();
   
@@ -258,9 +258,9 @@ export const Engine = () => {
           </tr>
           <DataRow label="Cash Flow (Überschuss / Defizit)" dataKey="surplusDeficit" isTotal={true} />
 
-          <DataRow label="Freies Vermögen (Liquid Assets) Ende Jahr" dataKey="liquidWealthEnd" onClickLabel={() => setIsSettingsModalOpen(true)} />
-          <DataRow label="Säule 3a Ende Jahr" dataKey="saeule3aEnd" onClickLabel={() => setIsSettingsModalOpen(true)} />
-          <DataRow label="Freizügigkeitskonto Ende Jahr" dataKey="fzkEnd" onClickLabel={() => setIsSettingsModalOpen(true)} />
+          <DataRow label="Freies Vermögen (Liquid Assets) Ende Jahr" dataKey="liquidWealthEnd" onClickLabel={() => openSettingsModal('all')} />
+          <DataRow label="Säule 3a Ende Jahr" dataKey="saeule3aEnd" onClickLabel={() => openSettingsModal('all')} />
+          <DataRow label="Freizügigkeitskonto Ende Jahr" dataKey="fzkEnd" onClickLabel={() => openSettingsModal('all')} />
           <DataRow label="Total Reinvermögen (inkl. Immobilien-Equity)" dataKey="totalWealthEnd" isTotal={true} />
 
         </tbody>

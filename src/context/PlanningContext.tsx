@@ -15,16 +15,22 @@ export interface CapExEvent {
 export interface PlanningState {
   // Section 1: Einkünfte
   ahv: {
-    markusStartMonth: number; // 0 for Jan, etc.
+    markusStartMonth: number; // 1 for Jan, 12 for Dec
     markusStartYear: number;
+    markusEndMonth: number;
+    markusEndYear: number;
     moniqueStartMonth: number;
     moniqueStartYear: number;
+    moniqueEndMonth: number;
+    moniqueEndYear: number;
     nichterwerbstaetig: boolean;
     fullPensionCouple: number;
   };
   pensionskasse: {
     startYear: number;
     startMonth: number;
+    endYear: number;
+    endMonth: number;
     totalCapital: number;
     renteSplit: number; // 0 to 100
     umwandlungssatz: number; // percentage
@@ -32,7 +38,7 @@ export interface PlanningState {
   salary: {
     monthlyGross: number;
     startYear: number;
-    startMonth: number;
+    startMonth: number; // 1 for Jan, 12 for Dec
     endYear: number;
     endMonth: number;
     deductionRate: number; // percentage
@@ -89,16 +95,22 @@ export interface PlanningState {
 
 const defaultState: PlanningState = {
   ahv: {
-    markusStartMonth: 0, // Jan
+    markusStartMonth: 1, // Jan (1-indexed)
     markusStartYear: 2027,
-    moniqueStartMonth: 9, // Oct
+    markusEndMonth: 12,
+    markusEndYear: 2099,
+    moniqueStartMonth: 10, // Oct (1-indexed)
     moniqueStartYear: 2027,
+    moniqueEndMonth: 12,
+    moniqueEndYear: 2099,
     nichterwerbstaetig: false,
     fullPensionCouple: 44100, // Reasonable max approximation
   },
   pensionskasse: {
     startYear: 2026,
-    startMonth: 0,
+    startMonth: 1, // Jan (1-indexed)
+    endYear: 2099,
+    endMonth: 12,
     totalCapital: 1200000,
     renteSplit: 50, // Default to 50% Rente, 50% Kapital
     umwandlungssatz: 5.0,
@@ -106,12 +118,15 @@ const defaultState: PlanningState = {
   salary: {
     monthlyGross: 10000,
     startYear: 2026,
-    startMonth: 0,
+    startMonth: 1, // Jan (1-indexed)
     endYear: 2027,
     endMonth: 1, // Jan 2027
     deductionRate: 15, // Default 15% standard deductions
   },
   otherIncome: {
+    '2026': 0, '2027': 0, '2028': 0, '2029': 0, '2030': 0, '2031+': 0
+  },
+  eigenmietwert: {
     '2026': 0, '2027': 0, '2028': 0, '2029': 0, '2030': 0, '2031+': 0
   },
   fixeKosten: {
