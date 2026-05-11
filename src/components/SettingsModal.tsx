@@ -1,6 +1,15 @@
 import { usePlanning, YEARS } from '../context/PlanningContext';
 import { useUI } from '../context/UIContext';
 
+const MonthSelect = ({ value, onChange, className = "border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" }: { value: number, onChange: (val: number) => void, className?: string }) => {
+  const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+  return (
+    <select value={value} onChange={e => onChange(Number(e.target.value))} className={className}>
+      {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+    </select>
+  );
+};
+
 export const SettingsModal = () => {
   const { state, updateState } = usePlanning();
   const { activeModalTab, closeSettingsModal } = useUI();
@@ -18,6 +27,52 @@ export const SettingsModal = () => {
 
   const handleDeleteCapEx = (id: string) => {
     updateState('capExEvents', state.capExEvents.filter(e => e.id !== id));
+  };
+
+  const handleAddOtherIncome = () => {
+    const newEvent = { id: Date.now().toString(), description: 'Zusatzeinkommen', monthlyAmount: 0, startYear: 2026, startMonth: 0, endYear: 2030, endMonth: 11 };
+    updateState('otherIncomeEvents', [...(state.otherIncomeEvents || []), newEvent]);
+  };
+
+  const handleUpdateOtherIncome = (id: string, updates: any) => {
+    updateState('otherIncomeEvents', (state.otherIncomeEvents || []).map(e => e.id === id ? { ...e, ...updates } : e));
+  };
+
+  const handleDeleteOtherIncome = (id: string) => {
+    updateState('otherIncomeEvents', (state.otherIncomeEvents || []).filter(e => e.id !== id));
+  };
+
+  const handleUpdateAHVStream = (streamId: string, updates: any) => {
+    updateState('ahv', {
+      ...state.ahv,
+      scenarios: state.ahv.scenarios.map(scen => 
+        scen.id === state.ahv.selectedScenarioId 
+          ? { ...scen, streams: scen.streams.map(st => st.id === streamId ? { ...st, ...updates } : st) } 
+          : scen
+      )
+    });
+  };
+
+  const handleAddAHVStream = () => {
+    updateState('ahv', {
+      ...state.ahv,
+      scenarios: state.ahv.scenarios.map(scen => 
+        scen.id === state.ahv.selectedScenarioId 
+          ? { ...scen, streams: [...scen.streams, { id: Date.now().toString(), startYear: 2026, startMonth: 0, endYear: 2099, endMonth: 11, markusAmount: 0, moniqueAmount: 0 }] } 
+          : scen
+      )
+    });
+  };
+
+  const handleDeleteAHVStream = (streamId: string) => {
+    updateState('ahv', {
+      ...state.ahv,
+      scenarios: state.ahv.scenarios.map(scen => 
+        scen.id === state.ahv.selectedScenarioId 
+          ? { ...scen, streams: scen.streams.filter(st => st.id !== streamId) } 
+          : scen
+      )
+    });
   };
 
   return (
@@ -38,25 +93,75 @@ export const SettingsModal = () => {
           {(activeModalTab === 'all' || activeModalTab === 1) && (
             <section>
               <h3 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">1. Einkommen & Vorsorge</h3>
-              <div className="grid grid-cols-2 gap-6">
-                {/* AHV */}
+              
+              {/* AHV Section Full Width */}
+              <div className="mb-10 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
+                  <h4 className="text-lg font-bold text-gray-800">AHV Szenarien</h4>
+                </div>
                 <div className="space-y-4">
-                  <h4 className="font-medium text-gray-700">AHV</h4>
                   <div>
-                    <span className="text-xs text-gray-500 block mb-1">Start Markus (Jahr / Monat 0=Jan)</span>
-                    <div className="flex space-x-2">
-                      <input type="number" value={state.ahv.markusStartYear} onChange={(e) => updateState('ahv', { markusStartYear: Number(e.target.value) })} className="w-24 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                      <input type="number" value={state.ahv.markusStartMonth} onChange={(e) => updateState('ahv', { markusStartMonth: Number(e.target.value) })} className="w-20 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
-                    </div>
+                    <span className="text-sm font-medium text-gray-700 block mb-1">Aktuelles Szenario</span>
+                    <select 
+                      value={state.ahv.selectedScenarioId} 
+                      onChange={(e) => updateState('ahv', { selectedScenarioId: e.target.value })}
+                      className="w-full md:w-1/2 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    >
+                      {state.ahv.scenarios.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
                   </div>
-                  <div>
-                    <span className="text-xs text-gray-500 block mb-1">Start Monique (Jahr / Monat 0=Jan)</span>
-                    <div className="flex space-x-2">
-                      <input type="number" value={state.ahv.moniqueStartYear} onChange={(e) => updateState('ahv', { moniqueStartYear: Number(e.target.value) })} className="w-24 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
-                      <input type="number" value={state.ahv.moniqueStartMonth} onChange={(e) => updateState('ahv', { moniqueStartMonth: Number(e.target.value) })} className="w-20 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                  
+                  <div className="mt-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h5 className="font-bold text-gray-700 text-sm">Zahlungsströme (Aktuelles Szenario)</h5>
+                      <button onClick={handleAddAHVStream} className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
+                        + Neuer Strom
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {state.ahv.scenarios.find(s => s.id === state.ahv.selectedScenarioId)?.streams.map(stream => (
+                        <div key={stream.id} className="flex flex-col space-y-3 bg-white p-4 border rounded shadow-sm relative">
+                          <div className="absolute top-2 right-2">
+                            <button onClick={() => handleDeleteAHVStream(stream.id)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                          </div>
+                          
+                          <div className="flex space-x-4">
+                            <div className="flex-1">
+                              <span className="text-xs text-gray-500 block mb-1">Start (J/M)</span>
+                              <div className="flex space-x-1">
+                                <input type="number" value={stream.startYear} onChange={(e) => handleUpdateAHVStream(stream.id, { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 text-xs" />
+                                <MonthSelect value={stream.startMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { startMonth: val })} className="flex-1 border rounded px-2 py-1 text-xs bg-white" />
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-xs text-gray-500 block mb-1">Ende (J/M)</span>
+                              <div className="flex space-x-1">
+                                <input type="number" value={stream.endYear} onChange={(e) => handleUpdateAHVStream(stream.id, { endYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 text-xs" />
+                                <MonthSelect value={stream.endMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { endMonth: val })} className="flex-1 border rounded px-2 py-1 text-xs bg-white" />
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex space-x-4">
+                            <div className="flex-1">
+                              <span className="text-xs text-gray-500 block mb-1">Markus (CHF/Mt)</span>
+                              <input type="number" value={stream.markusAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { markusAmount: Number(e.target.value) })} className="w-full border rounded px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-xs text-gray-500 block mb-1">Monique (CHF/Mt)</span>
+                              <input type="number" value={stream.moniqueAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { moniqueAmount: Number(e.target.value) })} className="w-full border rounded px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
 
                 {/* PK & Lohn */}
                 <div className="space-y-6">
@@ -67,7 +172,7 @@ export const SettingsModal = () => {
                         <span className="text-xs text-gray-500 block mb-1">Start (Jahr / Monat)</span>
                         <div className="flex space-x-2">
                           <input type="number" value={state.pensionskasse.startYear} onChange={(e) => updateState('pensionskasse', { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <input type="number" value={state.pensionskasse.startMonth} onChange={(e) => updateState('pensionskasse', { startMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                          <MonthSelect value={state.pensionskasse.startMonth} onChange={(val) => updateState('pensionskasse', { startMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
                         </div>
                       </div>
                       <div>
@@ -104,20 +209,69 @@ export const SettingsModal = () => {
                         <span className="text-xs text-gray-500 block mb-1">Start (J/M)</span>
                         <div className="flex space-x-2">
                           <input type="number" value={state.salary.startYear} onChange={(e) => updateState('salary', { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <input type="number" value={state.salary.startMonth} onChange={(e) => updateState('salary', { startMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                          <MonthSelect value={state.salary.startMonth} onChange={(val) => updateState('salary', { startMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
                         </div>
                       </div>
                       <div>
                         <span className="text-xs text-gray-500 block mb-1">Ende (J/M)</span>
                         <div className="flex space-x-2">
                           <input type="number" value={state.salary.endYear} onChange={(e) => updateState('salary', { endYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <input type="number" value={state.salary.endMonth} onChange={(e) => updateState('salary', { endMonth: Number(e.target.value) })} className="w-16 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={11} />
+                          <MonthSelect value={state.salary.endMonth} onChange={(val) => updateState('salary', { endMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+              
+              {/* Sonstige Einkünfte */}
+              <div className="mt-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-center mb-4 border-b pb-2">
+                  <h4 className="text-md font-bold text-gray-800">Sonstige Einkünfte</h4>
+                  <button onClick={handleAddOtherIncome} className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+                    + Einkommen
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {(state.otherIncomeEvents || []).map(event => (
+                    <div key={event.id} className="flex flex-col space-y-3 bg-white p-3 border rounded shadow-sm">
+                      <div className="flex space-x-4 items-center">
+                        <div className="flex-grow">
+                          <span className="text-xs text-gray-500 block mb-1">Beschreibung</span>
+                          <input type="text" value={event.description} onChange={(e) => handleUpdateOtherIncome(event.id, { description: e.target.value })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                        <div className="w-32">
+                          <span className="text-xs text-gray-500 block mb-1">Betrag/Monat</span>
+                          <input type="number" value={event.monthlyAmount} onChange={(e) => handleUpdateOtherIncome(event.id, { monthlyAmount: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                        <div className="pt-5">
+                          <button onClick={() => handleDeleteOtherIncome(event.id)} className="text-red-500 hover:text-red-700 px-2 py-2" title="Löschen">✕</button>
+                        </div>
+                      </div>
+                      <div className="flex space-x-4">
+                        <div>
+                          <span className="text-xs text-gray-500 block mb-1">Start (J/M)</span>
+                          <div className="flex space-x-2">
+                            <input type="number" value={event.startYear} onChange={(e) => handleUpdateOtherIncome(event.id, { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                            <MonthSelect value={event.startMonth} onChange={(val) => handleUpdateOtherIncome(event.id, { startMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-500 block mb-1">Ende (J/M)</span>
+                          <div className="flex space-x-2">
+                            <input type="number" value={event.endYear} onChange={(e) => handleUpdateOtherIncome(event.id, { endYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                            <MonthSelect value={event.endMonth} onChange={(val) => handleUpdateOtherIncome(event.id, { endMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!state.otherIncomeEvents || state.otherIncomeEvents.length === 0) && (
+                    <p className="text-gray-500 text-sm text-center py-4">Keine sonstigen Einkünfte erfasst.</p>
+                  )}
+                </div>
+              </div>
+              
             </section>
           )}
 

@@ -1,0 +1,13 @@
+Task 3.1: "Detailed Income Phasing: Implement detailed month inputs for all income variables to specify exactly when they start and end."
+
+Current State:
+- `salary`: has startYear, startMonth, endYear, endMonth (months are 0-11 numbers)
+- `otherIncome`: Record<YearKey, number> (no months, just annual)
+- `ahv`: markusStart, moniqueStart (months 0-11)
+- `pensionskasse`: start (months 0-11)
+
+To "specify exactly when they start and end" for "all income variables":
+If AHV/PK end dates are Task 3.2, then Task 3.1 must be:
+1. Make months human-readable dropdowns (Jan-Dec).
+2. For `otherIncome`, maybe change it to an array of objects `[{ description, amount, startYear, startMonth, endYear, endMonth }]` instead of a static Record per year?
+3. Or maybe the prompt just means converting the 0-11 number inputs into proper dropdowns for Salary, AHV, PK. But it says "specify exactly when they start and end". AHV and PK don't currently have end dates. Does it mean we should add end dates to them in 3.1? But 3.2 says "Rente End Dates". So 3.1 is probably just for Salary and Other Income.

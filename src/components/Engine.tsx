@@ -5,7 +5,7 @@ import { useUI } from '../context/UIContext';
 import { formatCHF } from '../utils/format';
 
 export const Engine = () => {
-  const { state, updateState, updateOtherIncome } = usePlanning();
+  const { state, updateState } = usePlanning();
   const { data } = useCalculations();
   const { openSettingsModal } = useUI();
   
@@ -161,11 +161,7 @@ export const Engine = () => {
           <DataRow label="Pensionskassen-Rente" dataKey="pkRenteIncome" onClickLabel={() => openSettingsModal(1)} />
           <DataRow label={`Vermögensertrag (${state.baseline.liquidYieldRate}% auf Liquides)`} dataKey="wealthYieldIncome" onClickLabel={() => openSettingsModal(3)} />
 
-          <InputRow
-            label="Sonstige Einkünfte (Manuell)"
-            valueFn={(y) => state.otherIncome[y]}
-            onChange={updateOtherIncome}
-          />
+          <DataRow label="Sonstige Einkünfte" dataKey="otherIncome" onClickLabel={() => openSettingsModal(1)} />
           
           <DataRow label="Total Ordentliche Bruttoeinkünfte" dataKey="totalGrossIncome" isTotal={true} />
 

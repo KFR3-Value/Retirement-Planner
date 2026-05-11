@@ -35,9 +35,9 @@ This file manages asynchronous workflows between the human user and AI agents. A
 ### 3. Master Task: Income Variables & AHV Scenarios
 **Goal**: Enhance income planning with precise temporal controls and implement multiple AHV withdrawal scenarios.
 
-- `[ ]` **3.1 Detailed Income Phasing**: Implement detailed month inputs for all income variables to specify exactly when they start and end.
+- `[x]` **3.1 Detailed Income Phasing**: Implement detailed month inputs for all income variables to specify exactly when they start and end.
 - `[ ]` **3.2 Rente End Dates**: Add the option to specify an end date for any Rente (pension) stream.
-- `[ ]` **3.3 AHV Scenarios**: Implement 3 distinct AHV scenarios (Monique drawing 3 years prior, User on 64th birthday, User 1 year later) and accurately reflect their impact on the AHV rent as specified in the underlying data.
+- `[x]` **3.3 AHV Scenarios**: Implement 3 distinct AHV scenarios (Monique drawing 3 years prior, User on 64th birthday, User 1 year later) and accurately reflect their impact on the AHV rent as specified in the underlying data.
 - `[ ]` **3.4 Tragbarkeitsrechner**: Implement a mortgage affordability calculator (Tragbarkeitsrechner) to display year-by-year whether bank affordability criteria are met.
 
 ### 4. Master Task: Scenario & Sensitivity Analysis

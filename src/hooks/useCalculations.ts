@@ -99,18 +99,20 @@ export const useCalculations = () => {
       }
 
       // --- INCOME ---
-      // AHV Proration
+      // AHV Calculation based on Scenarios
       let ahvIncome = 0;
-      const calcAhvForPerson = (startYear: number, startMonth: number) => {
-        if (yearNum < startYear) return 0;
-        if (yearNum > startYear) return state.ahv.fullPensionCouple / 2;
-        // Prorated year
-        const monthsActive = 12 - startMonth;
-        return (state.ahv.fullPensionCouple / 2) * (monthsActive / 12);
-      };
+      const activeScenario = state.ahv.scenarios.find(s => s.id === state.ahv.selectedScenarioId) || state.ahv.scenarios[0];
 
-      ahvIncome += calcAhvForPerson(state.ahv.markusStartYear, state.ahv.markusStartMonth);
-      ahvIncome += calcAhvForPerson(state.ahv.moniqueStartYear, state.ahv.moniqueStartMonth);
+      for (let m = 0; m < 12; m++) {
+        for (const stream of activeScenario.streams) {
+          const isStarted = stream.startYear < yearNum || (stream.startYear === yearNum && stream.startMonth <= m);
+          const isEnded = stream.endYear < yearNum || (stream.endYear === yearNum && stream.endMonth < m);
+          
+          if (isStarted && !isEnded) {
+            ahvIncome += stream.markusAmount + stream.moniqueAmount;
+          }
+        }
+      }
 
       const calcPkForYear = (startYear: number, startMonth: number) => {
         if (yearNum < startYear) return 0;
@@ -122,20 +124,23 @@ export const useCalculations = () => {
 
       const pkRenteIncome = calcPkForYear(state.pensionskasse.startYear, state.pensionskasse.startMonth);
       
+      const calcMonthsActive = (y: number, sYear: number, sMonth: number, eYear: number, eMonth: number) => {
+        if (y < sYear || y > eYear) return 0;
+        if (y === sYear && y === eYear) {
+          return eMonth - sMonth + 1; // inclusive
+        } else if (y === sYear) {
+          return 12 - sMonth;
+        } else if (y === eYear) {
+          return eMonth + 1;
+        } else {
+          return 12; // full year
+        }
+      };
+
       const calcSalaryForYear = () => {
         const { startYear, startMonth, endYear, endMonth, monthlyGross, deductionRate } = state.salary;
-        if (yearNum < startYear || yearNum > endYear) return 0;
-
-        let activeMonths = 0;
-        if (yearNum === startYear && yearNum === endYear) {
-          activeMonths = endMonth - startMonth + 1; // inclusive
-        } else if (yearNum === startYear) {
-          activeMonths = 12 - startMonth;
-        } else if (yearNum === endYear) {
-          activeMonths = endMonth + 1;
-        } else {
-          activeMonths = 12; // full year
-        }
+        const activeMonths = calcMonthsActive(yearNum, startYear, startMonth, endYear, endMonth);
+        if (activeMonths <= 0) return 0;
 
         const grossAnnual = activeMonths * monthlyGross;
         const netAnnual = grossAnnual * (1 - (deductionRate / 100));
@@ -144,7 +149,11 @@ export const useCalculations = () => {
       const salaryIncome = calcSalaryForYear();
 
       const wealthYieldIncome = currentLiquidWealth * (state.baseline.liquidYieldRate / 100);
-      const otherIncome = state.otherIncome[yearKey] || 0;
+      
+      const otherIncome = state.otherIncomeEvents.reduce((sum, event) => {
+        const activeMonths = calcMonthsActive(yearNum, event.startYear, event.startMonth, event.endYear, event.endMonth);
+        return sum + (activeMonths * event.monthlyAmount);
+      }, 0);
 
       const totalGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + wealthYieldIncome + otherIncome;
       

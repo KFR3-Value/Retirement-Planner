@@ -4,6 +4,32 @@ export type YearKey = '2026' | '2027' | '2028' | '2029' | '2030' | '2031+';
 
 export const YEARS: YearKey[] = ['2026', '2027', '2028', '2029', '2030', '2031+'];
 
+export interface OtherIncomeEvent {
+  id: string;
+  description: string;
+  monthlyAmount: number;
+  startYear: number;
+  startMonth: number;
+  endYear: number;
+  endMonth: number;
+}
+
+export interface AHVStream {
+  id: string;
+  startYear: number;
+  startMonth: number;
+  endYear: number;
+  endMonth: number;
+  markusAmount: number;
+  moniqueAmount: number;
+}
+
+export interface AHVScenarioDef {
+  id: string;
+  name: string;
+  streams: AHVStream[];
+}
+
 export interface CapExEvent {
   id: string;
   description: string;
@@ -15,12 +41,8 @@ export interface CapExEvent {
 export interface PlanningState {
   // Section 1: Einkünfte
   ahv: {
-    markusStartMonth: number; // 0 for Jan, etc.
-    markusStartYear: number;
-    moniqueStartMonth: number;
-    moniqueStartYear: number;
-    nichterwerbstaetig: boolean;
-    fullPensionCouple: number;
+    selectedScenarioId: string;
+    scenarios: AHVScenarioDef[];
   };
   pensionskasse: {
     startYear: number;
@@ -37,7 +59,7 @@ export interface PlanningState {
     endMonth: number;
     deductionRate: number; // percentage
   };
-  otherIncome: Record<YearKey, number>;
+  otherIncomeEvents: OtherIncomeEvent[];
   eigenmietwert: Record<YearKey, number>;
 
   // Section 2: Ausgaben
@@ -89,12 +111,35 @@ export interface PlanningState {
 
 const defaultState: PlanningState = {
   ahv: {
-    markusStartMonth: 0, // Jan
-    markusStartYear: 2027,
-    moniqueStartMonth: 9, // Oct
-    moniqueStartYear: 2027,
-    nichterwerbstaetig: false,
-    fullPensionCouple: 44100, // Reasonable max approximation
+    selectedScenarioId: 'scen1',
+    scenarios: [
+      {
+        id: 'scen1',
+        name: 'Szenario 1 (Monique ab 10.2027)',
+        streams: [
+          { id: 's1-1', startYear: 2026, startMonth: 0, endYear: 2027, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
+          { id: 's1-2', startYear: 2027, startMonth: 9, endYear: 2030, endMonth: 8, markusAmount: 2495, moniqueAmount: 1159 },
+          { id: 's1-3', startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1819 }
+        ]
+      },
+      {
+        id: 'scen2',
+        name: 'Szenario 2 (Monique ab 10.2029)',
+        streams: [
+          { id: 's2-1', startYear: 2026, startMonth: 0, endYear: 2029, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
+          { id: 's2-2', startYear: 2029, startMonth: 9, endYear: 2030, endMonth: 8, markusAmount: 2518, moniqueAmount: 1262 },
+          { id: 's2-3', startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1855 }
+        ]
+      },
+      {
+        id: 'scen3',
+        name: 'Szenario 3 (Monique regulär ab 10.2030)',
+        streams: [
+          { id: 's3-1', startYear: 2026, startMonth: 0, endYear: 2030, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
+          { id: 's3-2', startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1955 }
+        ]
+      }
+    ]
   },
   pensionskasse: {
     startYear: 2026,
@@ -111,9 +156,7 @@ const defaultState: PlanningState = {
     endMonth: 1, // Jan 2027
     deductionRate: 15, // Default 15% standard deductions
   },
-  otherIncome: {
-    '2026': 0, '2027': 0, '2028': 0, '2029': 0, '2030': 0, '2031+': 0
-  },
+  otherIncomeEvents: [],
   fixeKosten: {
     amortisation: 0,
     krankenkasse: {
@@ -161,7 +204,6 @@ const defaultState: PlanningState = {
 interface PlanningContextType {
   state: PlanningState;
   updateState: (section: keyof PlanningState, updates: any) => void;
-  updateOtherIncome: (year: YearKey, value: number) => void;
   loadState: (newState: PlanningState) => void;
 }
 
@@ -181,19 +223,12 @@ export const PlanningProvider: React.FC<{ children: ReactNode }> = ({ children }
     });
   };
 
-  const updateOtherIncome = (year: YearKey, value: number) => {
-    setState(prev => ({
-      ...prev,
-      otherIncome: { ...prev.otherIncome, [year]: value }
-    }));
-  };
-
   const loadState = (newState: PlanningState) => {
     setState(newState);
   };
 
   return (
-    <PlanningContext.Provider value={{ state, updateState, updateOtherIncome, loadState }}>
+    <PlanningContext.Provider value={{ state, updateState, loadState }}>
       {children}
     </PlanningContext.Provider>
   );
