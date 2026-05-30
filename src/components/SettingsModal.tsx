@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePlanning, YEARS } from '../context/PlanningContext';
 import { useUI } from '../context/UIContext';
 
-const MonthSelect = ({ value, onChange, className = "border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" }: { value: number, onChange: (val: number) => void, className?: string }) => {
+const MonthSelect = ({ value, onChange, className = "border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200" }: { value: number, onChange: (val: number) => void, className?: string }) => {
   const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
   return (
     <select value={value} onChange={e => onChange(Number(e.target.value))} className={className}>
@@ -101,11 +101,11 @@ export const SettingsModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Globale Annahmen & Parameter</h2>
-          <button onClick={closeSettingsModal} className="text-gray-400 hover:text-gray-500">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-slate-900 border border-slate-800 text-slate-100 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+        <div className="flex justify-between items-center p-6 border-b border-slate-800">
+          <h2 className="text-xl font-bold text-slate-100 font-mono">Globale Annahmen & Parameter</h2>
+          <button onClick={closeSettingsModal} className="text-slate-400 hover:text-slate-200 transition-colors">
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -117,10 +117,10 @@ export const SettingsModal = () => {
           {/* SECTION 1: Einkommen & Vorsorge */}
           {(activeModalTab === 'all' || activeModalTab === 1) && (
             <section>
-              <h3 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">1. Einkommen & Vorsorge</h3>
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">1. Einkommen & Vorsorge</h3>
 
               {/* Sub-tab bar */}
-              <div className="flex space-x-1 mb-6 border-b border-gray-200">
+              <div className="flex space-x-1 mb-6 border-b border-slate-800">
                 {(['ahv','lohn','pk','sonstige'] as const).map(tab => {
                   const labels: Record<string,string> = { ahv:'AHV', lohn:'Lohn / Gehalt', pk:'Pensionskasse', sonstige:'Sonstige Einkünfte' };
                   return (
@@ -129,8 +129,8 @@ export const SettingsModal = () => {
                       onClick={() => setIncomeTab(tab)}
                       className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
                         incomeTab === tab
-                          ? 'bg-white border border-b-white border-gray-200 text-blue-700 -mb-px z-10'
-                          : 'text-gray-500 hover:text-gray-700'
+                          ? 'bg-slate-950 border border-slate-850 border-b-transparent text-emerald-400 -mb-px z-10'
+                          : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
                       {labels[tab]}
@@ -141,17 +141,17 @@ export const SettingsModal = () => {
 
               {/* AHV Panel */}
               {incomeTab === 'ahv' && (
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
-                  <h4 className="text-lg font-bold text-gray-800">AHV Szenarien</h4>
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800">
+                <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                  <h4 className="text-md font-bold text-slate-200 font-mono">AHV Szenarien</h4>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <span className="text-sm font-medium text-gray-700 block mb-1">Aktuelles Szenario</span>
+                    <span className="text-sm font-medium text-slate-300 block mb-1">Aktuelles Szenario</span>
                     <select 
                       value={state.ahv.selectedScenarioId} 
                       onChange={(e) => updateState('ahv', { selectedScenarioId: e.target.value })}
-                      className="w-full md:w-1/2 border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                      className="w-full md:w-1/2 border border-slate-850 rounded px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono"
                     >
                       {state.ahv.scenarios.map(s => (
                         <option key={s.id} value={s.id}>{s.name}</option>
@@ -161,43 +161,43 @@ export const SettingsModal = () => {
                   
                   <div className="mt-4 space-y-4">
                     <div className="flex justify-between items-center">
-                      <h5 className="font-bold text-gray-700 text-sm">Zahlungsströme (Aktuelles Szenario)</h5>
-                      <button onClick={handleAddAHVStream} className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
+                      <h5 className="font-bold text-slate-300 text-sm">Zahlungsströme (Aktuelles Szenario)</h5>
+                      <button onClick={handleAddAHVStream} className="px-3 py-1 bg-emerald-600 text-white text-xs font-semibold rounded hover:bg-emerald-500 transition-colors">
                         + Neuer Strom
                       </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {state.ahv.scenarios.find(s => s.id === state.ahv.selectedScenarioId)?.streams.map(stream => (
-                        <div key={stream.id} className="flex flex-col space-y-3 bg-white p-4 border rounded shadow-sm relative">
+                        <div key={stream.id} className="flex flex-col space-y-3 bg-slate-900 p-4 border border-slate-800 rounded shadow-lg relative">
                           <div className="absolute top-2 right-2">
-                            <button onClick={() => handleDeleteAHVStream(stream.id)} className="text-red-500 hover:text-red-700 text-xs">✕</button>
+                            <button onClick={() => handleDeleteAHVStream(stream.id)} className="text-rose-400 hover:text-rose-300 text-xs">✕</button>
                           </div>
                           
                           <div className="flex space-x-4">
                             <div className="flex-1">
-                              <span className="text-xs text-gray-500 block mb-1">Start (J/M)</span>
+                              <span className="text-xs text-slate-400 block mb-1">Start (J/M)</span>
                               <div className="flex space-x-1">
-                                <input type="number" value={stream.startYear} onChange={(e) => handleUpdateAHVStream(stream.id, { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 text-xs" />
-                                <MonthSelect value={stream.startMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { startMonth: val })} className="flex-1 border rounded px-2 py-1 text-xs bg-white" />
+                                <input type="number" value={stream.startYear} onChange={(e) => handleUpdateAHVStream(stream.id, { startYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200 font-mono" />
+                                <MonthSelect value={stream.startMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { startMonth: val })} className="flex-1 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200" />
                               </div>
                             </div>
                             <div className="flex-1">
-                              <span className="text-xs text-gray-500 block mb-1">Ende (J/M)</span>
+                              <span className="text-xs text-slate-400 block mb-1">Ende (J/M)</span>
                               <div className="flex space-x-1">
-                                <input type="number" value={stream.endYear} onChange={(e) => handleUpdateAHVStream(stream.id, { endYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 text-xs" />
-                                <MonthSelect value={stream.endMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { endMonth: val })} className="flex-1 border rounded px-2 py-1 text-xs bg-white" />
+                                <input type="number" value={stream.endYear} onChange={(e) => handleUpdateAHVStream(stream.id, { endYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200 font-mono" />
+                                <MonthSelect value={stream.endMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { endMonth: val })} className="flex-1 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200" />
                               </div>
                             </div>
                           </div>
                           
                           <div className="flex space-x-4">
                             <div className="flex-1">
-                              <span className="text-xs text-gray-500 block mb-1">Markus (CHF/Mt)</span>
-                              <input type="number" value={stream.markusAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { markusAmount: Number(e.target.value) })} className="w-full border rounded px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500" />
+                              <span className="text-xs text-slate-400 block mb-1">Markus (CHF/Mt)</span>
+                              <input type="number" value={stream.markusAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { markusAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
                             </div>
                             <div className="flex-1">
-                              <span className="text-xs text-gray-500 block mb-1">Monique (CHF/Mt)</span>
-                              <input type="number" value={stream.moniqueAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { moniqueAmount: Number(e.target.value) })} className="w-full border rounded px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500" />
+                              <span className="text-xs text-slate-400 block mb-1">Monique (CHF/Mt)</span>
+                              <input type="number" value={stream.moniqueAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { moniqueAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
                             </div>
                           </div>
                         </div>
@@ -210,32 +210,32 @@ export const SettingsModal = () => {
 
               {/* Pensionskasse Panel */}
               {incomeTab === 'pk' && (
-              <div className="mb-10 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
-                  <h4 className="text-lg font-bold text-gray-800">Pensionskasse</h4>
+              <div className="mb-10 bg-slate-950/40 p-6 rounded-lg border border-slate-800">
+                <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                  <h4 className="text-md font-bold text-slate-200 font-mono">Pensionskasse</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Start (Jahr / Monat)</span>
+                      <span className="text-xs text-slate-400 block mb-1">Start (Jahr / Monat)</span>
                       <div className="flex space-x-2">
-                        <input type="number" value={state.pensionskasse.startYear} onChange={(e) => updateState('pensionskasse', { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                        <MonthSelect value={state.pensionskasse.startMonth} onChange={(val) => updateState('pensionskasse', { startMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
+                        <input type="number" value={state.pensionskasse.startYear} onChange={(e) => updateState('pensionskasse', { startYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
+                        <MonthSelect value={state.pensionskasse.startMonth} onChange={(val) => updateState('pensionskasse', { startMonth: val })} className="w-20 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200" />
                       </div>
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Total Kapital</span>
-                      <input type="number" value={state.pensionskasse.totalCapital} onChange={(e) => updateState('pensionskasse', { totalCapital: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">Total Kapital</span>
+                      <input type="number" value={state.pensionskasse.totalCapital} onChange={(e) => updateState('pensionskasse', { totalCapital: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Rente %</span>
-                      <input type="number" value={state.pensionskasse.renteSplit} onChange={(e) => updateState('pensionskasse', { renteSplit: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={100} />
+                      <span className="text-xs text-slate-400 block mb-1">Rente %</span>
+                      <input type="number" value={state.pensionskasse.renteSplit} onChange={(e) => updateState('pensionskasse', { renteSplit: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" min={0} max={100} />
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">UWS %</span>
-                      <input type="number" step="0.1" value={state.pensionskasse.umwandlungssatz} onChange={(e) => updateState('pensionskasse', { umwandlungssatz: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">UWS %</span>
+                      <input type="number" step="0.1" value={state.pensionskasse.umwandlungssatz} onChange={(e) => updateState('pensionskasse', { umwandlungssatz: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
                     </div>
                   </div>
                 </div>
@@ -244,10 +244,10 @@ export const SettingsModal = () => {
 
               {/* Lohn Panel */}
               {incomeTab === 'lohn' && (
-              <div className="mb-10 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
-                  <h4 className="text-lg font-bold text-gray-800">Lohn / Gehalt</h4>
-                  <button onClick={handleAddSalaryStream} className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
+              <div className="mb-10 bg-slate-950/40 p-6 rounded-lg border border-slate-800">
+                <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                  <h4 className="text-md font-bold text-slate-200 font-mono">Lohn / Gehalt</h4>
+                  <button onClick={handleAddSalaryStream} className="px-3 py-1 bg-emerald-600 text-white text-xs font-semibold rounded hover:bg-emerald-500 transition-colors">
                     + Neuer Lohnstrom
                   </button>
                 </div>
@@ -264,37 +264,37 @@ export const SettingsModal = () => {
                     const net = stream.inputType === 'brutto' ? stream.amount - totalDeductionAmt : stream.amount;
                     const ausbezahlt = net;
                     return (
-                    <div key={stream.id} className="bg-white border rounded-lg shadow-sm overflow-hidden">
+                    <div key={stream.id} className="bg-slate-900 border border-slate-800 rounded-lg shadow-lg overflow-hidden">
                       {/* Card header */}
-                      <div className="flex items-center justify-between bg-gray-100 px-4 py-2 border-b">
-                        <input type="text" value={stream.description} onChange={(e) => handleUpdateSalaryStream(stream.id, { description: e.target.value })} className="font-semibold text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1 w-56" />
+                      <div className="flex items-center justify-between bg-slate-950 px-4 py-2 border-b border-slate-800">
+                        <input type="text" value={stream.description} onChange={(e) => handleUpdateSalaryStream(stream.id, { description: e.target.value })} className="font-semibold text-sm bg-transparent border-none text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 rounded px-1 w-56 font-mono" />
                         <div className="flex items-center space-x-2">
-                          <select value={stream.inputType} onChange={(e) => handleUpdateSalaryStream(stream.id, { inputType: e.target.value })} className="text-xs border rounded px-2 py-1 bg-white">
+                          <select value={stream.inputType} onChange={(e) => handleUpdateSalaryStream(stream.id, { inputType: e.target.value })} className="text-xs border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200">
                             <option value="brutto">Brutto-Eingabe</option>
                             <option value="netto">Netto-Eingabe</option>
                           </select>
-                          <button onClick={() => handleDeleteSalaryStream(stream.id)} className="text-red-400 hover:text-red-600 text-xs px-1">✕</button>
+                          <button onClick={() => handleDeleteSalaryStream(stream.id)} className="text-rose-400 hover:text-rose-300 text-xs px-1">✕</button>
                         </div>
                       </div>
 
                       <div className="px-4 py-3 space-y-1 text-sm">
                         {/* Monatslohn row */}
                         <div className="flex justify-between items-center py-1">
-                          <span className="text-gray-600 text-xs w-40">Monatslohn (Brutto)</span>
-                          <input type="number" value={stream.amount} onChange={(e) => handleUpdateSalaryStream(stream.id, { amount: Number(e.target.value) })} className="w-28 border rounded px-2 py-0.5 text-xs text-right focus:ring-blue-500 focus:border-blue-500" />
+                          <span className="text-slate-400 text-xs w-40">Monatslohn (Brutto)</span>
+                          <input type="number" value={stream.amount} onChange={(e) => handleUpdateSalaryStream(stream.id, { amount: Number(e.target.value) })} className="w-28 border border-slate-800 rounded px-2 py-0.5 text-xs text-right bg-slate-950 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                         </div>
 
                         {/* Bruttolohn total */}
-                        <div className="flex justify-between items-center py-1.5 border-t border-b border-gray-300 font-bold">
-                          <span>5000 Bruttolohn</span>
-                          <span className="text-right w-28 pr-2">{stream.amount.toLocaleString('de-CH', {minimumFractionDigits:2})} CHF</span>
+                        <div className="flex justify-between items-center py-1.5 border-t border-b border-slate-800 font-bold">
+                          <span className="text-slate-300">5000 Bruttolohn</span>
+                          <span className="text-right w-28 pr-2 font-mono text-slate-100">{stream.amount.toLocaleString('de-CH', {minimumFractionDigits:2})} CHF</span>
                         </div>
 
                         {/* Deductions — only for brutto */}
                         {stream.inputType === 'brutto' && (
                           <div className="space-y-1 pt-1">
                             {/* header row */}
-                            <div className="grid grid-cols-[1fr_6rem_4rem_6rem] gap-2 text-[10px] text-gray-400 uppercase pb-0.5">
+                            <div className="grid grid-cols-[1fr_6rem_4rem_6rem] gap-2 text-[10px] text-slate-500 uppercase pb-0.5 font-mono">
                               <span>Position</span><span className="text-right">Basis</span><span className="text-right">Satz</span><span className="text-right">Betrag</span>
                             </div>
                             {[
@@ -309,24 +309,24 @@ export const SettingsModal = () => {
                               const basis: number = (d as any)[row.basisKey] ?? stream.amount;
                               const amt = basis * pct / 100;
                               return (
-                                <div key={row.key} className="grid grid-cols-[1fr_6rem_4rem_6rem] gap-2 items-center text-xs py-0.5">
-                                  <span className="text-gray-600">{row.label}</span>
+                                <div key={row.key} className="grid grid-cols-[1fr_6rem_4rem_6rem] gap-2 items-center text-xs py-0.5 font-mono text-slate-300">
+                                  <span className="text-slate-400">{row.label}</span>
                                   <input
                                     type="number"
                                     value={basis}
                                     onChange={(e) => handleUpdateSalaryStream(stream.id, { deductions: { ...d, [row.basisKey]: Number(e.target.value) }})}
-                                    className="w-full border rounded px-1 py-0.5 text-xs text-right bg-yellow-50 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full border border-slate-800 rounded px-1 py-0.5 text-xs text-right bg-slate-950 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500"
                                   />
                                   <div className="flex items-center">
-                                    <input type="number" step="0.01" value={pct} onChange={(e) => handleUpdateSalaryStream(stream.id, { deductions: { ...d, [row.key]: Number(e.target.value) }})} className="w-full border rounded px-1 py-0.5 text-xs text-right" />
-                                    <span className="ml-0.5 text-gray-400">%</span>
+                                    <input type="number" step="0.01" value={pct} onChange={(e) => handleUpdateSalaryStream(stream.id, { deductions: { ...d, [row.key]: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-1 py-0.5 text-xs text-right bg-slate-950 text-slate-200" />
+                                    <span className="ml-0.5 text-slate-500">%</span>
                                   </div>
-                                  <span className={`text-right font-medium ${amt < 0 ? 'text-green-600' : 'text-red-600'}`}>{amt === 0 ? '—' : `${amt < 0 ? '+' : '-'}${Math.abs(amt).toLocaleString('de-CH',{minimumFractionDigits:2})}`}</span>
+                                  <span className={`text-right font-medium ${amt < 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{amt === 0 ? '—' : `${amt < 0 ? '+' : '-'}${Math.abs(amt).toLocaleString('de-CH',{minimumFractionDigits:2})}`}</span>
                                 </div>
                               );
                             })}
-                            {/* Total deductions - sum per-basis */}
-                            <div className="flex justify-between items-center pt-1 border-t text-xs font-semibold text-red-600">
+                            {/* Total deductions */}
+                            <div className="flex justify-between items-center pt-1 border-t border-slate-800 text-xs font-semibold text-rose-400 font-mono">
                               <span>7950 Total Abzüge</span>
                               <span>-{(
                                 ((d.ahvBasis??stream.amount)*(d.ahv||0)/100) +
@@ -341,29 +341,29 @@ export const SettingsModal = () => {
                         )}
 
                         {/* Nettolohn */}
-                        <div className="flex justify-between items-center py-1.5 border-t border-b border-gray-300 font-bold">
-                          <span>8000 Nettolohn</span>
-                          <span className="text-green-700">{net.toLocaleString('de-CH',{minimumFractionDigits:2})} CHF</span>
+                        <div className="flex justify-between items-center py-1.5 border-t border-b border-slate-800 font-bold">
+                          <span className="text-slate-300">8000 Nettolohn</span>
+                          <span className="text-emerald-400 font-mono">{net.toLocaleString('de-CH',{minimumFractionDigits:2})} CHF</span>
                         </div>
-                        <div className="flex justify-between items-center py-1 text-xs text-gray-500">
+                        <div className="flex justify-between items-center py-1 text-xs text-slate-500">
                           <span>9000 Ausbezahlter Lohn (monatlich)</span>
-                          <span className="font-semibold text-gray-800">{ausbezahlt.toLocaleString('de-CH',{minimumFractionDigits:2})} CHF</span>
+                          <span className="font-semibold text-slate-300 font-mono">{ausbezahlt.toLocaleString('de-CH',{minimumFractionDigits:2})} CHF</span>
                         </div>
 
                         {/* Period */}
-                        <div className="flex space-x-4 pt-2 border-t mt-1">
+                        <div className="flex space-x-4 pt-2 border-t border-slate-800 mt-1">
                           <div className="flex-1">
-                            <span className="text-[10px] text-gray-400 block mb-0.5">Von</span>
+                            <span className="text-[10px] text-slate-500 block mb-0.5 font-mono">Von</span>
                             <div className="flex space-x-1">
-                              <input type="number" value={stream.startYear} onChange={(e) => handleUpdateSalaryStream(stream.id, { startYear: Number(e.target.value) })} className="w-16 border rounded px-1 py-0.5 text-xs" />
-                              <MonthSelect value={stream.startMonth} onChange={(val) => handleUpdateSalaryStream(stream.id, { startMonth: val })} className="flex-1 border rounded px-1 py-0.5 text-xs bg-white" />
+                              <input type="number" value={stream.startYear} onChange={(e) => handleUpdateSalaryStream(stream.id, { startYear: Number(e.target.value) })} className="w-16 border border-slate-800 rounded px-1 py-0.5 text-xs bg-slate-950 text-slate-200 font-mono" />
+                              <MonthSelect value={stream.startMonth} onChange={(val) => handleUpdateSalaryStream(stream.id, { startMonth: val })} className="flex-1 border border-slate-800 rounded px-1 py-0.5 text-xs bg-slate-950 text-slate-200" />
                             </div>
                           </div>
                           <div className="flex-1">
-                            <span className="text-[10px] text-gray-400 block mb-0.5">Bis</span>
+                            <span className="text-[10px] text-slate-500 block mb-0.5 font-mono">Bis</span>
                             <div className="flex space-x-1">
-                              <input type="number" value={stream.endYear} onChange={(e) => handleUpdateSalaryStream(stream.id, { endYear: Number(e.target.value) })} className="w-16 border rounded px-1 py-0.5 text-xs" />
-                              <MonthSelect value={stream.endMonth} onChange={(val) => handleUpdateSalaryStream(stream.id, { endMonth: val })} className="flex-1 border rounded px-1 py-0.5 text-xs bg-white" />
+                              <input type="number" value={stream.endYear} onChange={(e) => handleUpdateSalaryStream(stream.id, { endYear: Number(e.target.value) })} className="w-16 border border-slate-800 rounded px-1 py-0.5 text-xs bg-slate-950 text-slate-200 font-mono" />
+                              <MonthSelect value={stream.endMonth} onChange={(val) => handleUpdateSalaryStream(stream.id, { endMonth: val })} className="flex-1 border border-slate-800 rounded px-1 py-0.5 text-xs bg-slate-950 text-slate-200" />
                             </div>
                           </div>
                         </div>
@@ -372,7 +372,7 @@ export const SettingsModal = () => {
                     );
                   })}
                   {(!state.salaryStreams || state.salaryStreams.length === 0) && (
-                    <p className="text-gray-500 text-sm text-center py-4">Keine Lohnströme erfasst.</p>
+                    <p className="text-slate-500 text-sm text-center py-4">Keine Lohnströme erfasst.</p>
                   )}
                 </div>
               </div>
@@ -380,49 +380,49 @@ export const SettingsModal = () => {
 
               {/* Sonstige Panel */}
               {incomeTab === 'sonstige' && (
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex justify-between items-center mb-4 border-b pb-2">
-                  <h4 className="text-md font-bold text-gray-800">Sonstige Einkünfte</h4>
-                  <button onClick={handleAddOtherIncome} className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800">
+                <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                  <h4 className="text-md font-bold text-slate-200 font-mono">Sonstige Einkünfte</h4>
+                  <button onClick={handleAddOtherIncome} className="px-3 py-1 bg-emerald-600 text-white text-sm font-semibold rounded hover:bg-emerald-500 transition-colors">
                     + Einkommen
                   </button>
                 </div>
                 <div className="space-y-4">
                   {(state.otherIncomeEvents || []).map(event => (
-                    <div key={event.id} className="flex flex-col space-y-3 bg-white p-3 border rounded shadow-sm">
+                    <div key={event.id} className="flex flex-col space-y-3 bg-slate-900 p-3 border border-slate-800 rounded shadow-md">
                       <div className="flex space-x-4 items-center">
                         <div className="flex-grow">
-                          <span className="text-xs text-gray-500 block mb-1">Beschreibung</span>
-                          <input type="text" value={event.description} onChange={(e) => handleUpdateOtherIncome(event.id, { description: e.target.value })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                          <span className="text-xs text-slate-400 block mb-1">Beschreibung</span>
+                          <input type="text" value={event.description} onChange={(e) => handleUpdateOtherIncome(event.id, { description: e.target.value })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500" />
                         </div>
                         <div className="w-32">
-                          <span className="text-xs text-gray-500 block mb-1">Betrag/Monat</span>
-                          <input type="number" value={event.monthlyAmount} onChange={(e) => handleUpdateOtherIncome(event.id, { monthlyAmount: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                          <span className="text-xs text-slate-400 block mb-1">Betrag/Monat</span>
+                          <input type="number" value={event.monthlyAmount} onChange={(e) => handleUpdateOtherIncome(event.id, { monthlyAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                         </div>
                         <div className="pt-5">
-                          <button onClick={() => handleDeleteOtherIncome(event.id)} className="text-red-500 hover:text-red-700 px-2 py-2" title="Löschen">✕</button>
+                          <button onClick={() => handleDeleteOtherIncome(event.id)} className="text-rose-400 hover:text-rose-350 px-2 py-2" title="Löschen">✕</button>
                         </div>
                       </div>
                       <div className="flex space-x-4">
                         <div>
-                          <span className="text-xs text-gray-500 block mb-1">Start (J/M)</span>
+                          <span className="text-xs text-slate-400 block mb-1">Start (J/M)</span>
                           <div className="flex space-x-2">
-                            <input type="number" value={event.startYear} onChange={(e) => handleUpdateOtherIncome(event.id, { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                            <MonthSelect value={event.startMonth} onChange={(val) => handleUpdateOtherIncome(event.id, { startMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
+                            <input type="number" value={event.startYear} onChange={(e) => handleUpdateOtherIncome(event.id, { startYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono" />
+                            <MonthSelect value={event.startMonth} onChange={(val) => handleUpdateOtherIncome(event.id, { startMonth: val })} className="w-20 border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100" />
                           </div>
                         </div>
                         <div>
-                          <span className="text-xs text-gray-500 block mb-1">Ende (J/M)</span>
+                          <span className="text-xs text-slate-400 block mb-1">Ende (J/M)</span>
                           <div className="flex space-x-2">
-                            <input type="number" value={event.endYear} onChange={(e) => handleUpdateOtherIncome(event.id, { endYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                            <MonthSelect value={event.endMonth} onChange={(val) => handleUpdateOtherIncome(event.id, { endMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
+                            <input type="number" value={event.endYear} onChange={(e) => handleUpdateOtherIncome(event.id, { endYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono" />
+                            <MonthSelect value={event.endMonth} onChange={(val) => handleUpdateOtherIncome(event.id, { endMonth: val })} className="w-20 border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100" />
                           </div>
                         </div>
                       </div>
                     </div>
                   ))}
                   {(!state.otherIncomeEvents || state.otherIncomeEvents.length === 0) && (
-                    <p className="text-gray-500 text-sm text-center py-4">Keine sonstigen Einkünfte erfasst.</p>
+                    <p className="text-slate-500 text-sm text-center py-4">Keine sonstigen Einkünfte erfasst.</p>
                   )}
                 </div>
               </div>
@@ -433,23 +433,23 @@ export const SettingsModal = () => {
           {/* SECTION 2: Ausgaben & Hypotheken */}
           {(activeModalTab === 'all' || activeModalTab === 2) && (
             <section>
-              <h3 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">2. Ausgaben & Hypotheken</h3>
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">2. Ausgaben & Hypotheken</h3>
               <div className="grid grid-cols-2 gap-6">
                 {/* Other Expenses */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-700">Weitere Fixkosten</h4>
+                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800 col-span-2">
+                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Weitere Fixkosten</h4>
                   <div>
-                    <span className="text-xs text-gray-500 block mb-1">Krankenkasse Base (CHF)</span>
-                    <input type="number" value={state.fixeKosten.krankenkasse.base} onChange={(e) => updateState('fixeKosten', { krankenkasse: { ...state.fixeKosten.krankenkasse, base: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <span className="text-xs text-slate-400 block mb-1">Krankenkasse Base (CHF)</span>
+                    <input type="number" value={state.fixeKosten.krankenkasse.base} onChange={(e) => updateState('fixeKosten', { krankenkasse: { ...state.fixeKosten.krankenkasse, base: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Mobilität (CHF)</span>
-                      <input type="number" value={state.fixeKosten.mobilitaet} onChange={(e) => updateState('fixeKosten', { mobilitaet: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">Mobilität (CHF)</span>
+                      <input type="number" value={state.fixeKosten.mobilitaet} onChange={(e) => updateState('fixeKosten', { mobilitaet: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Variable Kosten (CHF)</span>
-                      <input type="number" value={state.variableKosten} onChange={(e) => updateState('variableKosten', Number(e.target.value))} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">Variable Kosten (CHF)</span>
+                      <input type="number" value={state.variableKosten} onChange={(e) => updateState('variableKosten', Number(e.target.value))} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                     </div>
                   </div>
                 </div>
@@ -460,42 +460,42 @@ export const SettingsModal = () => {
           {/* SECTION 3: Vermögen & Rendite */}
           {(activeModalTab === 'all' || activeModalTab === 3) && (
             <section>
-              <h3 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">3. Vermögen & Rendite</h3>
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">3. Vermögen & Rendite</h3>
               <div className="grid grid-cols-2 gap-6">
                 {/* Assets */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-700">Startkapital & Immobilien</h4>
+                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
+                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Startkapital & Immobilien</h4>
                   <div>
-                    <span className="text-xs text-gray-500 block mb-1">Startvermögen Liquide (CHF)</span>
-                    <input type="number" value={state.assets.startingLiquidWealth} onChange={(e) => updateState('assets', { startingLiquidWealth: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <span className="text-xs text-slate-400 block mb-1">Startvermögen Liquide (CHF)</span>
+                    <input type="number" value={state.assets.startingLiquidWealth} onChange={(e) => updateState('assets', { startingLiquidWealth: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                   </div>
                   <div>
-                    <span className="text-xs text-gray-500 block mb-1">Rendite auf Liquides (%)</span>
-                    <input type="number" step="0.1" value={state.baseline.liquidYieldRate} onChange={(e) => updateState('baseline', { liquidYieldRate: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <span className="text-xs text-slate-400 block mb-1">Rendite auf Liquides (%)</span>
+                    <input type="number" step="0.1" value={state.baseline.liquidYieldRate} onChange={(e) => updateState('baseline', { liquidYieldRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                   </div>
                 </div>
 
                 {/* Tied Assets */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-700">Gebundenes Kapital</h4>
+                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
+                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Gebundenes Kapital</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Säule 3a Saldo</span>
-                      <input type="number" value={state.assets.saeule3a.balance} onChange={(e) => updateState('assets', { saeule3a: { ...state.assets.saeule3a, balance: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">Säule 3a Saldo</span>
+                      <input type="number" value={state.assets.saeule3a.balance} onChange={(e) => updateState('assets', { saeule3a: { ...state.assets.saeule3a, balance: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">3a Bezugsjahr</span>
-                      <input type="text" value={state.assets.saeule3a.withdrawalYear} onChange={(e) => updateState('assets', { saeule3a: { ...state.assets.saeule3a, withdrawalYear: e.target.value }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="z.B. 2028" />
+                      <span className="text-xs text-slate-400 block mb-1">3a Bezugsjahr</span>
+                      <input type="text" value={state.assets.saeule3a.withdrawalYear} onChange={(e) => updateState('assets', { saeule3a: { ...state.assets.saeule3a, withdrawalYear: e.target.value }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" placeholder="z.B. 2028" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">FZK Saldo</span>
-                      <input type="number" value={state.assets.freizuegigkeitskonto.balance} onChange={(e) => updateState('assets', { freizuegigkeitskonto: { ...state.assets.freizuegigkeitskonto, balance: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">FZK Saldo</span>
+                      <input type="number" value={state.assets.freizuegigkeitskonto.balance} onChange={(e) => updateState('assets', { freizuegigkeitskonto: { ...state.assets.freizuegigkeitskonto, balance: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">FZK Bezugsjahr</span>
-                      <input type="text" value={state.assets.freizuegigkeitskonto.withdrawalYear} onChange={(e) => updateState('assets', { freizuegigkeitskonto: { ...state.assets.freizuegigkeitskonto, withdrawalYear: e.target.value }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="z.B. 2027" />
+                      <span className="text-xs text-slate-400 block mb-1">FZK Bezugsjahr</span>
+                      <input type="text" value={state.assets.freizuegigkeitskonto.withdrawalYear} onChange={(e) => updateState('assets', { freizuegigkeitskonto: { ...state.assets.freizuegigkeitskonto, withdrawalYear: e.target.value }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" placeholder="z.B. 2027" />
                     </div>
                   </div>
                 </div>
@@ -506,54 +506,54 @@ export const SettingsModal = () => {
           {/* SECTION 4: Investitionsplan (CapEx) */}
           {(activeModalTab === 'all' || activeModalTab === 4) && (
             <section>
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex justify-between items-center mb-4 border-b pb-2">
-                  <h3 className="text-lg font-bold text-gray-800">4. Investitionsplan (CapEx)</h3>
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800">
+                <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                  <h3 className="text-lg font-bold text-slate-200 font-mono">4. Investitionsplan (CapEx)</h3>
                   <button 
                     onClick={handleAddCapEx}
-                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                    className="px-3 py-1 bg-emerald-600 text-white text-sm font-semibold rounded hover:bg-emerald-500 transition-colors"
                   >
                     + Investition
                   </button>
                 </div>
                 <div className="space-y-4">
                   {state.capExEvents.map(event => (
-                    <div key={event.id} className="flex space-x-4 items-center bg-white p-3 border rounded shadow-sm">
+                    <div key={event.id} className="flex space-x-4 items-center bg-slate-900 p-3 border border-slate-800 rounded shadow-md">
                       <div className="flex-grow">
-                        <span className="text-xs text-gray-500 block mb-1">Beschreibung</span>
+                        <span className="text-xs text-slate-400 block mb-1">Beschreibung</span>
                         <input 
                           type="text" 
                           value={event.description} 
                           onChange={(e) => handleUpdateCapEx(event.id, { description: e.target.value })} 
-                          className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" 
+                          className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500" 
                         />
                       </div>
                       <div className="w-32">
-                        <span className="text-xs text-gray-500 block mb-1">Betrag (CHF)</span>
+                        <span className="text-xs text-slate-400 block mb-1">Betrag (CHF)</span>
                         <input 
                           type="number" 
                           value={event.amount} 
                           onChange={(e) => handleUpdateCapEx(event.id, { amount: Number(e.target.value) })} 
-                          className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" 
+                          className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono" 
                         />
                       </div>
                       <div className="w-24">
-                        <span className="text-xs text-gray-500 block mb-1">Jahr</span>
+                        <span className="text-xs text-slate-400 block mb-1">Jahr</span>
                         <select 
                           value={event.year} 
                           onChange={(e) => handleUpdateCapEx(event.id, { year: e.target.value })}
-                          className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                          className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono"
                         >
                           {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
                         </select>
                       </div>
                       <div className="w-24 flex items-end pb-2">
-                        <label className="flex items-center space-x-2 text-xs text-gray-700 cursor-pointer" title="Steuerlich abziehbar?">
+                        <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer" title="Steuerlich abziehbar?">
                           <input 
                             type="checkbox" 
                             checked={event.isTaxDeductible || false}
                             onChange={(e) => handleUpdateCapEx(event.id, { isTaxDeductible: e.target.checked })}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-800 bg-slate-950 rounded"
                           />
                           <span>Abziehbar</span>
                         </label>
@@ -561,7 +561,7 @@ export const SettingsModal = () => {
                       <div className="pt-5">
                         <button 
                           onClick={() => handleDeleteCapEx(event.id)}
-                          className="text-red-500 hover:text-red-700 px-2 py-2"
+                          className="text-rose-400 hover:text-rose-350 px-2 py-2"
                           title="Löschen"
                         >
                           ✕
@@ -570,7 +570,7 @@ export const SettingsModal = () => {
                     </div>
                   ))}
                   {state.capExEvents.length === 0 && (
-                    <p className="text-gray-500 text-sm text-center py-4">Keine Investitionen geplant.</p>
+                    <p className="text-slate-500 text-sm text-center py-4">Keine Investitionen geplant.</p>
                   )}
                 </div>
               </div>
@@ -580,47 +580,47 @@ export const SettingsModal = () => {
           {/* SECTION 5: Immobilien */}
           {(activeModalTab === 'all' || activeModalTab === 5) && (
             <section>
-              <h3 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">5. Immobilien (Eigenheim)</h3>
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">5. Immobilien (Eigenheim)</h3>
               <div className="grid grid-cols-2 gap-6">
                 
                 {/* Steuerwerte */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-700">Werte & Steuern</h4>
+                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
+                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Werte & Steuern</h4>
                   <div>
-                    <span className="text-xs text-gray-500 block mb-1">Steuerwert Liegenschaft (CHF)</span>
-                    <input type="number" value={state.immobilie.efhTaxValue} onChange={(e) => updateState('immobilie', { efhTaxValue: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <span className="text-xs text-slate-400 block mb-1">Steuerwert Liegenschaft (CHF)</span>
+                    <input type="number" value={state.immobilie.efhTaxValue} onChange={(e) => updateState('immobilie', { efhTaxValue: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                   </div>
                   <div>
-                    <span className="text-xs text-gray-500 block mb-1">Eigenmietwert (CHF)</span>
-                    <input type="number" value={state.immobilie.eigenmietwert} onChange={(e) => updateState('immobilie', { eigenmietwert: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <span className="text-xs text-slate-400 block mb-1">Eigenmietwert (CHF)</span>
+                    <input type="number" value={state.immobilie.eigenmietwert} onChange={(e) => updateState('immobilie', { eigenmietwert: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                   </div>
                   <div>
-                    <span className="text-xs text-gray-500 block mb-1">Liegenschaftsunterhalt (als % vom Steuerwert)</span>
-                    <input type="number" step="0.1" value={state.immobilie.unterhaltRate} onChange={(e) => updateState('immobilie', { unterhaltRate: Number(e.target.value) })} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <span className="text-xs text-slate-400 block mb-1">Liegenschaftsunterhalt (als % vom Steuerwert)</span>
+                    <input type="number" step="0.1" value={state.immobilie.unterhaltRate} onChange={(e) => updateState('immobilie', { unterhaltRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                   </div>
                 </div>
 
                 {/* Hypotheken */}
-                <div className="space-y-4">
-                  <h4 className="font-medium text-gray-700">Hypotheken</h4>
+                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
+                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Hypotheken</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Saron Betrag</span>
-                      <input type="number" value={state.immobilie.hypothek.saronAmount} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, saronAmount: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">Saron Betrag</span>
+                      <input type="number" value={state.immobilie.hypothek.saronAmount} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, saronAmount: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Saron Zins (%)</span>
-                      <input type="number" step="0.01" value={state.immobilie.hypothek.saronRate} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, saronRate: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">Saron Zins (%)</span>
+                      <input type="number" step="0.01" value={state.immobilie.hypothek.saronRate} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, saronRate: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Fest Betrag</span>
-                      <input type="number" value={state.immobilie.hypothek.festAmount} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, festAmount: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">Fest Betrag</span>
+                      <input type="number" value={state.immobilie.hypothek.festAmount} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, festAmount: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                     </div>
                     <div>
-                      <span className="text-xs text-gray-500 block mb-1">Fest Zins (%)</span>
-                      <input type="number" step="0.01" value={state.immobilie.hypothek.festRate} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, festRate: Number(e.target.value) }})} className="w-full border rounded px-3 py-2 focus:ring-blue-500 focus:border-blue-500" />
+                      <span className="text-xs text-slate-400 block mb-1">Fest Zins (%)</span>
+                      <input type="number" step="0.01" value={state.immobilie.hypothek.festRate} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, festRate: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                     </div>
                   </div>
                 </div>
@@ -631,8 +631,8 @@ export const SettingsModal = () => {
 
         </div>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end">
-          <button onClick={closeSettingsModal} className="px-6 py-2 bg-blue-600 text-white font-medium rounded hover:bg-blue-700">Schliessen</button>
+        <div className="p-6 border-t border-slate-800 flex justify-end bg-slate-950/60">
+          <button onClick={closeSettingsModal} className="px-6 py-2 bg-emerald-600 text-white font-semibold rounded hover:bg-emerald-500 transition-colors">Schliessen</button>
         </div>
       </div>
     </div>

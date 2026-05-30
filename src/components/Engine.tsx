@@ -17,10 +17,8 @@ export const Engine = () => {
   const getCellColor = (value: number, invert: boolean = false) => {
     if (value === 0) return '';
     const isPositive = invert ? value < 0 : value > 0;
-    return isPositive ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900';
+    return isPositive ? 'bg-emerald-950/30 text-emerald-400 font-semibold' : 'bg-rose-950/30 text-rose-400 font-semibold';
   };
-
-
 
   const DataRow = ({
     label,
@@ -36,12 +34,12 @@ export const Engine = () => {
     onClickLabel?: () => void
   }) => {
     return (
-      <tr className={`border-b border-gray-200 ${isTotal ? 'bg-gray-50 font-bold' : 'hover:bg-gray-50'}`}>
-        <td className={`py-3 px-4 text-sm text-gray-800 whitespace-nowrap ${isTotal ? 'font-bold' : ''}`}>
+      <tr className={`border-b border-slate-800/50 ${isTotal ? 'bg-slate-950/50 font-bold' : 'hover:bg-slate-800/30 transition-colors duration-100'}`}>
+        <td className={`py-3 px-4 text-sm text-slate-200 whitespace-nowrap ${isTotal ? 'font-bold text-slate-100' : ''}`}>
           {onClickLabel ? (
-            <button onClick={onClickLabel} className="text-blue-600 hover:text-blue-800 hover:underline flex items-center space-x-1 focus:outline-none">
+            <button onClick={onClickLabel} className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center space-x-1 focus:outline-none transition-colors">
               <span>{label}</span> 
-              <svg className="w-4 h-4 text-gray-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <svg className="w-4 h-4 text-slate-500 ml-1 hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </button>
           ) : label}
         </td>
@@ -49,7 +47,7 @@ export const Engine = () => {
           const val = data[year][dataKey] as number;
           const bgClass = isTotal ? getCellColor(val, invertColor) : '';
           return (
-            <td key={year} className={`py-3 px-4 text-right text-sm whitespace-nowrap ${bgClass}`}>
+            <td key={year} className={`py-3 px-4 text-right text-sm font-mono text-slate-200 whitespace-nowrap ${bgClass}`}>
               {formatCHF(val)}
             </td>
           );
@@ -59,33 +57,33 @@ export const Engine = () => {
   };
 
   const CustomRow = ({ label, valueFn, isSub = false, onClickLabel }: { label: string, valueFn: (year: YearKey) => number, isSub?: boolean, onClickLabel?: () => void }) => (
-    <tr className="border-b border-gray-200 hover:bg-gray-50">
-      <td className={`py-2 px-4 text-sm text-gray-800 whitespace-nowrap ${isSub ? 'pl-8 text-gray-500' : ''}`}>
+    <tr className="border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors duration-100">
+      <td className={`py-2 px-4 text-sm text-slate-300 whitespace-nowrap ${isSub ? 'pl-8 text-slate-400' : ''}`}>
         {onClickLabel ? (
-          <button onClick={onClickLabel} className="text-blue-600 hover:text-blue-800 hover:underline flex items-center space-x-1 focus:outline-none">
+          <button onClick={onClickLabel} className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center space-x-1 focus:outline-none transition-colors">
             <span>{label}</span> 
-            <svg className="w-4 h-4 text-gray-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <svg className="w-4 h-4 text-slate-500 ml-1 hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
           </button>
         ) : label}
       </td>
       {YEARS.map(year => (
-        <td key={year} className="py-2 px-4 text-right text-sm whitespace-nowrap">
+        <td key={year} className="py-2 px-4 text-right text-sm font-mono text-slate-300 whitespace-nowrap">
           {formatCHF(valueFn(year))}
         </td>
       ))}
     </tr>
   );
 
-  const ExpandableHeaderRow = ({ label, dataKey, valueFn, expanded, setExpanded, className = "bg-gray-50 hover:bg-gray-100" }: { label: string, dataKey?: keyof YearData, valueFn?: (year: YearKey) => number, expanded: boolean, setExpanded: (v: boolean) => void, className?: string }) => (
-    <tr className={`border-b border-gray-200 cursor-pointer transition-colors ${className}`} onClick={() => setExpanded(!expanded)}>
-      <td className="py-3 px-4 text-sm text-gray-800 font-bold flex items-center select-none whitespace-nowrap">
-        <svg className={`w-4 h-4 mr-2 transition-transform ${expanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+  const ExpandableHeaderRow = ({ label, dataKey, valueFn, expanded, setExpanded, className = "bg-slate-900/60 hover:bg-slate-800/40" }: { label: string, dataKey?: keyof YearData, valueFn?: (year: YearKey) => number, expanded: boolean, setExpanded: (v: boolean) => void, className?: string }) => (
+    <tr className={`border-b border-slate-800 cursor-pointer transition-colors duration-100 ${className}`} onClick={() => setExpanded(!expanded)}>
+      <td className="py-3 px-4 text-sm text-slate-200 font-bold flex items-center select-none whitespace-nowrap">
+        <svg className={`w-4 h-4 mr-2 text-slate-400 transition-transform ${expanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
         {label}
       </td>
       {YEARS.map(year => {
         const val = valueFn ? valueFn(year) : dataKey ? (data[year][dataKey] as number) : 0;
         return (
-          <td key={year} className="py-3 px-4 text-right text-sm font-bold whitespace-nowrap">
+          <td key={year} className="py-3 px-4 text-right text-sm font-mono font-bold text-slate-200 whitespace-nowrap">
             {formatCHF(val)}
           </td>
         );
@@ -96,25 +94,25 @@ export const Engine = () => {
   return (
     <>
 
-    <div className="w-full overflow-x-auto bg-white rounded-lg shadow">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-blue-900 text-white">
+    <div className="w-full overflow-x-auto bg-slate-900 border border-slate-800 rounded-lg shadow-2xl">
+      <table className="min-w-full divide-y divide-slate-800">
+        <thead className="bg-slate-950 text-slate-100">
           <tr>
-            <th className="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider whitespace-nowrap">
+            <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap border-b border-slate-800">
               Kategorie / Parameter
             </th>
             {YEARS.map(year => (
-              <th key={year} className="py-3 px-4 text-right text-xs font-medium text-white uppercase tracking-wider">
+              <th key={year} className="py-3 px-4 text-right text-xs font-mono font-medium text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 {year}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-slate-900 divide-y divide-slate-800/40">
 
           {/* SECTION 1: EINKÜNFTE */}
           <tr>
-            <td colSpan={7} className="py-4 px-4 bg-gray-100 font-bold text-gray-900 text-lg uppercase">
+            <td colSpan={YEARS.length + 1} className="py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800">
               1. Einkünfte (Income)
             </td>
           </tr>
@@ -129,16 +127,16 @@ export const Engine = () => {
           
           <DataRow label="Total Ordentliche Bruttoeinkünfte" dataKey="totalGrossIncome" isTotal={true} />
 
-          {/* Kapitalbezüge (Ausserordentlich) */}
-          <tr className="bg-orange-50/50">
-             <td colSpan={7} className="py-2 px-4 font-semibold text-orange-800 text-sm border-b border-orange-200 mt-4">Ausserordentliche Zuflüsse (separat besteuert)</td>
+          {/* Capital Bezug */}
+          <tr className="bg-amber-950/20">
+             <td colSpan={YEARS.length + 1} className="py-2 px-4 font-semibold text-amber-400 text-sm border-b border-slate-800">Ausserordentliche Zuflüsse (separat besteuert)</td>
           </tr>
           <DataRow label="Kapitalbezüge (PK / Säule 3a)" dataKey="capitalWithdrawalAmount" />
 
 
           {/* SECTION 2: AUSGABEN */}
           <tr>
-            <td colSpan={7} className="py-4 px-4 bg-gray-100 font-bold text-gray-900 text-lg uppercase mt-8 border-t-4 border-gray-300">
+            <td colSpan={YEARS.length + 1} className="py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800">
               2. Ausgaben (Budget)
             </td>
           </tr>
@@ -156,7 +154,7 @@ export const Engine = () => {
 
           {/* SECTION 4: STEUERN */}
           <tr>
-            <td colSpan={7} className="py-4 px-4 bg-gray-100 font-bold text-gray-900 text-lg uppercase mt-8 border-t-4 border-gray-300">
+            <td colSpan={YEARS.length + 1} className="py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800">
               3. Steuern (Tarif B - Verheiratete)
             </td>
           </tr>
@@ -196,7 +194,7 @@ export const Engine = () => {
             </>
           )}
           
-          <ExpandableHeaderRow label="B. Sondersteuern auf Kapitalbezüge" className="bg-orange-50/50 hover:bg-orange-100/50 text-orange-900 border-t border-orange-200 mt-4" valueFn={(y) => data[y].capitalWithdrawalTax} expanded={expandedSondTax} setExpanded={setExpandedSondTax} />
+          <ExpandableHeaderRow label="B. Sondersteuern auf Kapitalbezüge" className="bg-amber-950/20 hover:bg-amber-900/30 text-amber-400 border-t border-slate-800" valueFn={(y) => data[y].capitalWithdrawalTax} expanded={expandedSondTax} setExpanded={setExpandedSondTax} />
           {expandedSondTax && (
             <>
               <DataRow label="Bemessungsgrundlage (Kapitalbezüge)" dataKey="capitalWithdrawalAmount" />
@@ -212,7 +210,7 @@ export const Engine = () => {
 
           {/* SECTION 5: CASH FLOW & WEALTH */}
           <tr>
-            <td colSpan={7} className="py-4 px-4 bg-gray-100 font-bold text-gray-900 text-lg uppercase mt-8 border-t-4 border-gray-300">
+            <td colSpan={YEARS.length + 1} className="py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800">
               4. Cash Flow & Vermögensentwicklung
             </td>
           </tr>

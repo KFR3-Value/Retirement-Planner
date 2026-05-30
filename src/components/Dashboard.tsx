@@ -14,17 +14,17 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded-lg shadow">
+      <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-lg shadow-xl">
         <div>
-           <h2 className="text-lg font-bold text-gray-800">Übersicht & Analyse</h2>
-           <p className="text-sm text-gray-500">Familie Frey, Bettwil (AG)</p>
+           <h2 className="text-lg font-bold text-slate-100 font-mono">Übersicht & Analyse</h2>
+           <p className="text-sm text-slate-400">Familie Frey, Bettwil (AG)</p>
         </div>
         <div className="flex items-center space-x-4">
-           <label className="text-sm font-medium text-gray-700">Analysejahr:</label>
+           <label className="text-sm font-medium text-slate-300">Analysejahr:</label>
            <select
              value={selectedYear}
              onChange={(e) => setSelectedYear(e.target.value as YearKey)}
-             className="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3 border bg-white"
+             className="border-slate-800 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 py-2 px-3 border bg-slate-950 text-slate-100 font-mono"
            >
              {YEARS.map(y => (
                <option key={y} value={y}>{y}</option>
@@ -35,21 +35,21 @@ export const Dashboard = () => {
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-red-500 flex flex-col justify-center">
-          <p className="text-sm text-gray-500 font-medium">Summe bezahlte Steuern (2026-2045)</p>
-          <p className="text-xl font-bold text-gray-800">{Math.round(cumulativeKPIs.totalTaxPaid).toLocaleString("de-CH")} CHF</p>
+        <div className="bg-slate-900 border border-slate-800 border-l-4 border-l-red-500 p-4 rounded-lg shadow flex flex-col justify-center">
+          <p className="text-sm text-slate-400 font-medium">Summe bezahlte Steuern (2026-2045)</p>
+          <p className="text-xl font-bold text-slate-100 font-mono">{Math.round(cumulativeKPIs.totalTaxPaid).toLocaleString("de-CH")} CHF</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500 flex flex-col justify-center">
-          <p className="text-sm text-gray-500 font-medium">Netto Vermögen per 2026</p>
-          <p className="text-xl font-bold text-gray-800">{data['2026'] ? Math.round(data['2026'].totalWealthEnd).toLocaleString("de-CH") : 0} CHF</p>
+        <div className="bg-slate-900 border border-slate-800 border-l-4 border-l-purple-500 p-4 rounded-lg shadow flex flex-col justify-center">
+          <p className="text-sm text-slate-400 font-medium">Netto Vermögen per 2026</p>
+          <p className="text-xl font-bold text-slate-100 font-mono">{data['2026'] ? Math.round(data['2026'].totalWealthEnd).toLocaleString("de-CH") : 0} CHF</p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 flex flex-col justify-center">
-          <p className="text-sm text-gray-500 font-medium">Netto Vermögen per 2045</p>
-          <p className="text-xl font-bold text-gray-800">{Math.round(cumulativeKPIs.netWealth2045).toLocaleString("de-CH")} CHF</p>
+        <div className="bg-slate-900 border border-slate-800 border-l-4 border-l-blue-500 p-4 rounded-lg shadow flex flex-col justify-center">
+          <p className="text-sm text-slate-400 font-medium">Netto Vermögen per 2045</p>
+          <p className="text-xl font-bold text-slate-100 font-mono">{Math.round(cumulativeKPIs.netWealth2045).toLocaleString("de-CH")} CHF</p>
         </div>
-        <div className={`bg-white p-4 rounded-lg shadow border-l-4 flex flex-col justify-center ${cumulativeKPIs.totalSavings >= 0 ? 'border-green-500' : 'border-orange-500'}`}>
-          <p className="text-sm text-gray-500 font-medium">Ersparnisse / Verzehr (2026-2045)</p>
-          <p className={`text-xl font-bold ${cumulativeKPIs.totalSavings >= 0 ? 'text-green-700' : 'text-orange-700'}`}>
+        <div className={`bg-slate-900 border border-slate-800 border-l-4 p-4 rounded-lg shadow flex flex-col justify-center ${cumulativeKPIs.totalSavings >= 0 ? 'border-l-emerald-500' : 'border-l-orange-500'}`}>
+          <p className="text-sm text-slate-400 font-medium">Ersparnisse / Verzehr (2026-2045)</p>
+          <p className={`text-xl font-bold font-mono ${cumulativeKPIs.totalSavings >= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
             {cumulativeKPIs.totalSavings > 0 ? '+' : ''}{Math.round(cumulativeKPIs.totalSavings).toLocaleString("de-CH")} CHF
           </p>
         </div>
@@ -57,31 +57,31 @@ export const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Coverage Card */}
-        <div className="bg-white p-6 rounded-lg shadow col-span-1">
-          <h3 className="text-md font-bold text-gray-800 mb-1 border-b pb-2">Garantierte Fixkostendeckung</h3>
-          <p className="text-xs text-gray-500 mb-4">(AHV + PK) / Fixe Kosten</p>
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-lg shadow-xl col-span-1">
+          <h3 className="text-md font-bold text-slate-100 mb-1 border-b border-slate-800 pb-2 font-mono">Garantierte Fixkostendeckung</h3>
+          <p className="text-xs text-slate-400 mb-4">(AHV + PK) / Fixe Kosten</p>
           <CoverageGauge ratio={activeData.coverageRatio} />
-          <div className="mt-4 text-sm text-center text-gray-600">
-             AHV + PK: <span className="font-semibold text-gray-800">{Math.round(activeData.guaranteedIncome).toLocaleString("de-CH")} CHF</span>
+          <div className="mt-4 text-sm text-center text-slate-300">
+             AHV + PK: <span className="font-semibold text-slate-100 font-mono">{Math.round(activeData.guaranteedIncome).toLocaleString("de-CH")} CHF</span>
              <br />
-             Fixkosten: <span className="font-semibold text-gray-800">{Math.round(activeData.fixedCosts).toLocaleString("de-CH")} CHF</span>
+             Fixkosten: <span className="font-semibold text-slate-100 font-mono">{Math.round(activeData.fixedCosts).toLocaleString("de-CH")} CHF</span>
           </div>
         </div>
 
         {/* Waterfall Card */}
-        <div className="bg-white p-6 rounded-lg shadow col-span-2">
-           <h3 className="text-md font-bold text-gray-800 mb-1 border-b pb-2">Cash Flow Breakdown ({selectedYear})</h3>
-           <p className="text-xs text-gray-500 mb-4">Von den Bruttoeinkünften zum Überschuss/Defizit</p>
+        <div className="bg-slate-900 border border-slate-800 p-6 rounded-lg shadow-xl col-span-2">
+           <h3 className="text-md font-bold text-slate-100 mb-1 border-b border-slate-800 pb-2 font-mono">Cash Flow Breakdown ({selectedYear})</h3>
+           <p className="text-xs text-slate-400 mb-4">Von den Bruttoeinkünften zum Überschuss/Defizit</p>
            <WaterfallChart data={activeData} />
         </div>
       </div>
 
       {/* Trajectory Card */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <div className="flex justify-between items-center border-b pb-2 mb-6">
+      <div className="bg-slate-900 border border-slate-800 p-6 rounded-lg shadow-xl">
+        <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-6">
            <div>
-             <h3 className="text-md font-bold text-gray-800 mb-1">Vermögensentwicklung (2026 - 2045)</h3>
-             <p className="text-xs text-gray-500">Projektion des Liquiditätsverzehrs vs. Immobilienwert</p>
+             <h3 className="text-md font-bold text-slate-100 mb-1 font-mono">Vermögensentwicklung (2026 - 2045)</h3>
+             <p className="text-xs text-slate-400">Projektion des Liquiditätsverzehrs vs. Immobilienwert</p>
            </div>
            <div className="flex items-center space-x-2">
               <input
@@ -89,9 +89,9 @@ export const Dashboard = () => {
                 id="inflationToggle"
                 checked={state.baseline.applyInflation}
                 onChange={(e) => updateState('baseline', { applyInflation: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-700 bg-slate-950 rounded"
               />
-              <label htmlFor="inflationToggle" className="text-sm font-medium text-gray-700">
+              <label htmlFor="inflationToggle" className="text-sm font-medium text-slate-300 select-none cursor-pointer">
                 Inflation ab 2031 ({state.baseline.inflationRate}%) auf Ausgaben
               </label>
            </div>

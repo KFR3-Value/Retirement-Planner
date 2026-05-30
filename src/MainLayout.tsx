@@ -48,24 +48,26 @@ export const MainLayout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <SettingsModal />
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-slate-900/80 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex-shrink-0 flex items-center">
-              <h1 className="text-xl font-bold text-blue-900">Familie Frey - Finanzplanung</h1>
+              <h1 className="text-xl font-bold text-emerald-400 tracking-wide font-mono">
+                Familie Frey <span className="text-slate-400 font-sans text-sm font-normal">| Finanzplanung</span>
+              </h1>
               
-              <div className="flex space-x-2 text-sm ml-6 border-l pl-6 border-gray-300">
+              <div className="flex space-x-2 text-sm ml-6 border-l pl-6 border-slate-800">
                 <button
                   onClick={handleExport}
-                  className="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700 shadow-sm transition-colors"
+                  className="px-3 py-1 bg-slate-800 border border-slate-700 rounded hover:bg-slate-700 text-slate-200 shadow-sm transition-all hover:scale-[1.02] duration-150 active:scale-[0.98]"
                 >
                   Szenario speichern
                 </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1 bg-white border border-gray-300 rounded hover:bg-gray-50 text-gray-700 shadow-sm transition-colors"
+                  className="px-3 py-1 bg-slate-800 border border-slate-700 rounded hover:bg-slate-700 text-slate-200 shadow-sm transition-all hover:scale-[1.02] duration-150 active:scale-[0.98]"
                 >
                   Szenario laden
                 </button>
@@ -81,19 +83,19 @@ export const MainLayout = () => {
             <nav className="flex space-x-8 items-center">
               <button
                 onClick={() => openSettingsModal('all')}
-                className="text-blue-600 font-medium hover:text-blue-800 transition-colors flex items-center"
+                className="text-emerald-400 font-medium hover:text-emerald-300 transition-colors flex items-center hover:scale-[1.02] active:scale-[0.98]"
               >
                 <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 Globale Annahmen
               </button>
-              <div className="h-6 w-px bg-gray-300"></div>
+              <div className="h-6 w-px bg-slate-800"></div>
               <button
                 onClick={() => setActiveTab('dashboard')}
                 className={`${
                   activeTab === 'dashboard'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+                    ? 'border-emerald-500 text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all`}
               >
                 Übersicht (Dashboard)
               </button>
@@ -101,9 +103,9 @@ export const MainLayout = () => {
                 onClick={() => setActiveTab('engine')}
                 className={`${
                   activeTab === 'engine'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors`}
+                    ? 'border-emerald-500 text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all`}
               >
                 Detaillierte Planung
               </button>
