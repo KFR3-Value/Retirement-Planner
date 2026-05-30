@@ -39,6 +39,10 @@ export const Dashboard = () => {
           <p className="text-sm text-gray-500 font-medium">Summe bezahlte Steuern (2026-2045)</p>
           <p className="text-xl font-bold text-gray-800">{Math.round(cumulativeKPIs.totalTaxPaid).toLocaleString("de-CH")} CHF</p>
         </div>
+        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500 flex flex-col justify-center">
+          <p className="text-sm text-gray-500 font-medium">Netto Vermögen per 2026</p>
+          <p className="text-xl font-bold text-gray-800">{data['2026'] ? Math.round(data['2026'].totalWealthEnd).toLocaleString("de-CH") : 0} CHF</p>
+        </div>
         <div className="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500 flex flex-col justify-center">
           <p className="text-sm text-gray-500 font-medium">Netto Vermögen per 2045</p>
           <p className="text-xl font-bold text-gray-800">{Math.round(cumulativeKPIs.netWealth2045).toLocaleString("de-CH")} CHF</p>

@@ -138,13 +138,26 @@ export const useCalculations = () => {
       };
 
       const calcSalaryForYear = () => {
-        const { startYear, startMonth, endYear, endMonth, monthlyGross, deductionRate } = state.salary;
-        const activeMonths = calcMonthsActive(yearNum, startYear, startMonth, endYear, endMonth);
-        if (activeMonths <= 0) return 0;
-
-        const grossAnnual = activeMonths * monthlyGross;
-        const netAnnual = grossAnnual * (1 - (deductionRate / 100));
-        return Math.max(0, netAnnual);
+        let totalNet = 0;
+        for (const stream of state.salaryStreams || []) {
+          const activeMonths = calcMonthsActive(yearNum, stream.startYear, stream.startMonth, stream.endYear, stream.endMonth);
+          if (activeMonths > 0) {
+            if (stream.inputType === 'brutto') {
+              const d = stream.deductions;
+              const totalDeduction =
+                (d?.ahvBasis ?? stream.amount) * (d?.ahv || 0) / 100 +
+                (d?.alvBasis ?? stream.amount) * (d?.alv || 0) / 100 +
+                (d?.nubvBasis ?? stream.amount) * (d?.nbuv || 0) / 100 +
+                (d?.ktgBasis  ?? stream.amount) * (d?.ktg  || 0) / 100 +
+                (d?.bvgBasis  ?? stream.amount) * (d?.bvg  || 0) / 100 +
+                (d?.otherBasis?? stream.amount) * (d?.other|| 0) / 100;
+              totalNet += activeMonths * (stream.amount - totalDeduction);
+            } else {
+              totalNet += activeMonths * stream.amount;
+            }
+          }
+        }
+        return Math.max(0, totalNet);
       };
       const salaryIncome = calcSalaryForYear();
 

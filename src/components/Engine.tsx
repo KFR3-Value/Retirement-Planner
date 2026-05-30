@@ -5,7 +5,7 @@ import { useUI } from '../context/UIContext';
 import { formatCHF } from '../utils/format';
 
 export const Engine = () => {
-  const { state, updateState } = usePlanning();
+  const { state } = usePlanning();
   const { data } = useCalculations();
   const { openSettingsModal } = useUI();
   
@@ -20,43 +20,7 @@ export const Engine = () => {
     return isPositive ? 'bg-green-50 text-green-900' : 'bg-red-50 text-red-900';
   };
 
-  const InputRow = ({
-    label,
-    valueFn,
-    onChange,
-    type = "number",
-    colSpan = 6,
-    isSub = false
-  }: {
-    label: string,
-    valueFn?: (year: YearKey) => string | number,
-    onChange?: (year: YearKey, value: any) => void,
-    type?: string,
-    colSpan?: number,
-    isSub?: boolean
-  }) => {
-    return (
-      <tr className="border-b border-gray-100 hover:bg-gray-50">
-        <td className={`py-2 px-4 text-sm whitespace-nowrap ${isSub ? 'pl-8 text-gray-500' : 'font-medium text-gray-700'}`}>{label}</td>
-        {valueFn ? YEARS.map(year => (
-          <td key={year} className="py-2 px-2 text-right">
-            {onChange ? (
-               <input
-                 type={type}
-                 value={valueFn(year)}
-                 onChange={(e) => onChange(year, type === 'number' ? Number(e.target.value) : e.target.value)}
-                 className="w-full text-right bg-white border border-gray-300 rounded px-2 py-1 text-sm focus:ring-blue-500 focus:border-blue-500"
-               />
-            ) : (
-               <span className="text-sm text-gray-900">{valueFn(year)}</span>
-            )}
-          </td>
-        )) : (
-          <td colSpan={colSpan} className="py-2 px-4 text-sm text-gray-500 italic">Global Input Configured Above</td>
-        )}
-      </tr>
-    );
-  };
+
 
   const DataRow = ({
     label,
@@ -254,9 +218,9 @@ export const Engine = () => {
           </tr>
           <DataRow label="Cash Flow (Überschuss / Defizit)" dataKey="surplusDeficit" isTotal={true} />
 
-          <DataRow label="Freies Vermögen (Liquid Assets) Ende Jahr" dataKey="liquidWealthEnd" onClickLabel={() => setIsSettingsModalOpen(true)} />
-          <DataRow label="Säule 3a Ende Jahr" dataKey="saeule3aEnd" onClickLabel={() => setIsSettingsModalOpen(true)} />
-          <DataRow label="Freizügigkeitskonto Ende Jahr" dataKey="fzkEnd" onClickLabel={() => setIsSettingsModalOpen(true)} />
+          <DataRow label="Freies Vermögen (Liquid Assets) Ende Jahr" dataKey="liquidWealthEnd" onClickLabel={() => openSettingsModal(3)} />
+          <DataRow label="Säule 3a Ende Jahr" dataKey="saeule3aEnd" onClickLabel={() => openSettingsModal(3)} />
+          <DataRow label="Freizügigkeitskonto Ende Jahr" dataKey="fzkEnd" onClickLabel={() => openSettingsModal(3)} />
           <DataRow label="Total Reinvermögen (inkl. Immobilien-Equity)" dataKey="totalWealthEnd" isTotal={true} />
 
         </tbody>

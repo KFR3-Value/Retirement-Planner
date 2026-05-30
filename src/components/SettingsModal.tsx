@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { usePlanning, YEARS } from '../context/PlanningContext';
 import { useUI } from '../context/UIContext';
 
@@ -13,6 +14,7 @@ const MonthSelect = ({ value, onChange, className = "border rounded px-2 py-1 fo
 export const SettingsModal = () => {
   const { state, updateState } = usePlanning();
   const { activeModalTab, closeSettingsModal } = useUI();
+  const [incomeTab, setIncomeTab] = useState<'ahv'|'lohn'|'pk'|'sonstige'>('ahv');
 
   if (!activeModalTab) return null;
 
@@ -40,6 +42,29 @@ export const SettingsModal = () => {
 
   const handleDeleteOtherIncome = (id: string) => {
     updateState('otherIncomeEvents', (state.otherIncomeEvents || []).filter(e => e.id !== id));
+  };
+
+  const handleAddSalaryStream = () => {
+    const newStream = { 
+      id: Date.now().toString(), 
+      description: 'Neuer Lohn', 
+      inputType: 'brutto', 
+      amount: 0, 
+      deductions: { ahv: 5.3, alv: 1.1, nbuv: 1.5, ktg: 0.5, bvg: 5.0, other: 1.6 },
+      startYear: 2026, 
+      startMonth: 0, 
+      endYear: 2026, 
+      endMonth: 11 
+    };
+    updateState('salaryStreams', [...(state.salaryStreams || []), newStream]);
+  };
+
+  const handleUpdateSalaryStream = (id: string, updates: any) => {
+    updateState('salaryStreams', (state.salaryStreams || []).map(e => e.id === id ? { ...e, ...updates } : e));
+  };
+
+  const handleDeleteSalaryStream = (id: string) => {
+    updateState('salaryStreams', (state.salaryStreams || []).filter(e => e.id !== id));
   };
 
   const handleUpdateAHVStream = (streamId: string, updates: any) => {
@@ -93,9 +118,30 @@ export const SettingsModal = () => {
           {(activeModalTab === 'all' || activeModalTab === 1) && (
             <section>
               <h3 className="text-lg font-bold text-blue-900 mb-4 border-b pb-2">1. Einkommen & Vorsorge</h3>
-              
-              {/* AHV Section Full Width */}
-              <div className="mb-10 bg-gray-50 p-6 rounded-lg border border-gray-200">
+
+              {/* Sub-tab bar */}
+              <div className="flex space-x-1 mb-6 border-b border-gray-200">
+                {(['ahv','lohn','pk','sonstige'] as const).map(tab => {
+                  const labels: Record<string,string> = { ahv:'AHV', lohn:'Lohn / Gehalt', pk:'Pensionskasse', sonstige:'Sonstige Einkünfte' };
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setIncomeTab(tab)}
+                      className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
+                        incomeTab === tab
+                          ? 'bg-white border border-b-white border-gray-200 text-blue-700 -mb-px z-10'
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {labels[tab]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* AHV Panel */}
+              {incomeTab === 'ahv' && (
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
                   <h4 className="text-lg font-bold text-gray-800">AHV Szenarien</h4>
                 </div>
@@ -160,72 +206,181 @@ export const SettingsModal = () => {
                   </div>
                 </div>
               </div>
+              )}
 
-              <div className="grid grid-cols-2 gap-6">
-
-                {/* PK & Lohn */}
-                <div className="space-y-6">
-                  <div>
-                    <h4 className="font-medium text-gray-700 mb-3">Pensionskasse</h4>
-                    <div className="grid grid-cols-2 gap-4 mb-3">
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">Start (Jahr / Monat)</span>
-                        <div className="flex space-x-2">
-                          <input type="number" value={state.pensionskasse.startYear} onChange={(e) => updateState('pensionskasse', { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <MonthSelect value={state.pensionskasse.startMonth} onChange={(val) => updateState('pensionskasse', { startMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">Total Kapital</span>
-                        <input type="number" value={state.pensionskasse.totalCapital} onChange={(e) => updateState('pensionskasse', { totalCapital: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+              {/* Pensionskasse Panel */}
+              {incomeTab === 'pk' && (
+              <div className="mb-10 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
+                  <h4 className="text-lg font-bold text-gray-800">Pensionskasse</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Start (Jahr / Monat)</span>
+                      <div className="flex space-x-2">
+                        <input type="number" value={state.pensionskasse.startYear} onChange={(e) => updateState('pensionskasse', { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
+                        <MonthSelect value={state.pensionskasse.startMonth} onChange={(val) => updateState('pensionskasse', { startMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">Rente %</span>
-                        <input type="number" value={state.pensionskasse.renteSplit} onChange={(e) => updateState('pensionskasse', { renteSplit: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={100} />
-                      </div>
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">UWS %</span>
-                        <input type="number" step="0.1" value={state.pensionskasse.umwandlungssatz} onChange={(e) => updateState('pensionskasse', { umwandlungssatz: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                      </div>
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Total Kapital</span>
+                      <input type="number" value={state.pensionskasse.totalCapital} onChange={(e) => updateState('pensionskasse', { totalCapital: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
                     </div>
                   </div>
-
-                  <div>
-                    <h4 className="font-medium text-gray-700 mb-3">Lohn (Temporär)</h4>
-                    <div className="grid grid-cols-2 gap-4 mb-3">
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">Bruttolohn/Monat</span>
-                        <input type="number" value={state.salary.monthlyGross} onChange={(e) => updateState('salary', { monthlyGross: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                      </div>
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">Abzüge (%)</span>
-                        <input type="number" value={state.salary.deductionRate} onChange={(e) => updateState('salary', { deductionRate: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" step="0.1" />
-                      </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">Rente %</span>
+                      <input type="number" value={state.pensionskasse.renteSplit} onChange={(e) => updateState('pensionskasse', { renteSplit: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" min={0} max={100} />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">Start (J/M)</span>
-                        <div className="flex space-x-2">
-                          <input type="number" value={state.salary.startYear} onChange={(e) => updateState('salary', { startYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <MonthSelect value={state.salary.startMonth} onChange={(val) => updateState('salary', { startMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-xs text-gray-500 block mb-1">Ende (J/M)</span>
-                        <div className="flex space-x-2">
-                          <input type="number" value={state.salary.endYear} onChange={(e) => updateState('salary', { endYear: Number(e.target.value) })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
-                          <MonthSelect value={state.salary.endMonth} onChange={(val) => updateState('salary', { endMonth: val })} className="w-20 border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500 bg-white" />
-                        </div>
-                      </div>
+                    <div>
+                      <span className="text-xs text-gray-500 block mb-1">UWS %</span>
+                      <input type="number" step="0.1" value={state.pensionskasse.umwandlungssatz} onChange={(e) => updateState('pensionskasse', { umwandlungssatz: Number(e.target.value) })} className="w-full border rounded px-2 py-1 focus:ring-blue-500 focus:border-blue-500" />
                     </div>
                   </div>
                 </div>
               </div>
-              
-              {/* Sonstige Einkünfte */}
-              <div className="mt-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
+              )}
+
+              {/* Lohn Panel */}
+              {incomeTab === 'lohn' && (
+              <div className="mb-10 bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
+                  <h4 className="text-lg font-bold text-gray-800">Lohn / Gehalt</h4>
+                  <button onClick={handleAddSalaryStream} className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">
+                    + Neuer Lohnstrom
+                  </button>
+                </div>
+                <div className="space-y-6">
+                  {(state.salaryStreams || []).map(stream => {
+                    const d = stream.deductions || { ahv:0, alv:0, nbuv:0, ktg:0, bvg:0, other:0 };
+                    const totalDeductionAmt =
+                      ((d.ahvBasis??stream.amount)*(d.ahv||0)/100) +
+                      ((d.alvBasis??stream.amount)*(d.alv||0)/100) +
+                      ((d.nubvBasis??stream.amount)*(d.nbuv||0)/100) +
+                      ((d.ktgBasis??stream.amount)*(d.ktg||0)/100) +
+                      ((d.bvgBasis??stream.amount)*(d.bvg||0)/100) +
+                      ((d.otherBasis??stream.amount)*(d.other||0)/100);
+                    const net = stream.inputType === 'brutto' ? stream.amount - totalDeductionAmt : stream.amount;
+                    const ausbezahlt = net;
+                    return (
+                    <div key={stream.id} className="bg-white border rounded-lg shadow-sm overflow-hidden">
+                      {/* Card header */}
+                      <div className="flex items-center justify-between bg-gray-100 px-4 py-2 border-b">
+                        <input type="text" value={stream.description} onChange={(e) => handleUpdateSalaryStream(stream.id, { description: e.target.value })} className="font-semibold text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-400 rounded px-1 w-56" />
+                        <div className="flex items-center space-x-2">
+                          <select value={stream.inputType} onChange={(e) => handleUpdateSalaryStream(stream.id, { inputType: e.target.value })} className="text-xs border rounded px-2 py-1 bg-white">
+                            <option value="brutto">Brutto-Eingabe</option>
+                            <option value="netto">Netto-Eingabe</option>
+                          </select>
+                          <button onClick={() => handleDeleteSalaryStream(stream.id)} className="text-red-400 hover:text-red-600 text-xs px-1">✕</button>
+                        </div>
+                      </div>
+
+                      <div className="px-4 py-3 space-y-1 text-sm">
+                        {/* Monatslohn row */}
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-gray-600 text-xs w-40">Monatslohn (Brutto)</span>
+                          <input type="number" value={stream.amount} onChange={(e) => handleUpdateSalaryStream(stream.id, { amount: Number(e.target.value) })} className="w-28 border rounded px-2 py-0.5 text-xs text-right focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+
+                        {/* Bruttolohn total */}
+                        <div className="flex justify-between items-center py-1.5 border-t border-b border-gray-300 font-bold">
+                          <span>5000 Bruttolohn</span>
+                          <span className="text-right w-28 pr-2">{stream.amount.toLocaleString('de-CH', {minimumFractionDigits:2})} CHF</span>
+                        </div>
+
+                        {/* Deductions — only for brutto */}
+                        {stream.inputType === 'brutto' && (
+                          <div className="space-y-1 pt-1">
+                            {/* header row */}
+                            <div className="grid grid-cols-[1fr_6rem_4rem_6rem] gap-2 text-[10px] text-gray-400 uppercase pb-0.5">
+                              <span>Position</span><span className="text-right">Basis</span><span className="text-right">Satz</span><span className="text-right">Betrag</span>
+                            </div>
+                            {[
+                              { key:'ahv',   basisKey:'ahvBasis',   label:'6100 AHV/IV/EO' },
+                              { key:'alv',   basisKey:'alvBasis',   label:'6200 ALV' },
+                              { key:'nbuv',  basisKey:'nubvBasis',  label:'6300 NBUV' },
+                              { key:'ktg',   basisKey:'ktgBasis',   label:'6350 KTG' },
+                              { key:'bvg',   basisKey:'bvgBasis',   label:'6400 BVG Risiko/Spar' },
+                              { key:'other', basisKey:'otherBasis', label:'Sonstige' },
+                            ].map(row => {
+                              const pct: number = (d as any)[row.key] || 0;
+                              const basis: number = (d as any)[row.basisKey] ?? stream.amount;
+                              const amt = basis * pct / 100;
+                              return (
+                                <div key={row.key} className="grid grid-cols-[1fr_6rem_4rem_6rem] gap-2 items-center text-xs py-0.5">
+                                  <span className="text-gray-600">{row.label}</span>
+                                  <input
+                                    type="number"
+                                    value={basis}
+                                    onChange={(e) => handleUpdateSalaryStream(stream.id, { deductions: { ...d, [row.basisKey]: Number(e.target.value) }})}
+                                    className="w-full border rounded px-1 py-0.5 text-xs text-right bg-yellow-50 focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                  <div className="flex items-center">
+                                    <input type="number" step="0.01" value={pct} onChange={(e) => handleUpdateSalaryStream(stream.id, { deductions: { ...d, [row.key]: Number(e.target.value) }})} className="w-full border rounded px-1 py-0.5 text-xs text-right" />
+                                    <span className="ml-0.5 text-gray-400">%</span>
+                                  </div>
+                                  <span className={`text-right font-medium ${amt < 0 ? 'text-green-600' : 'text-red-600'}`}>{amt === 0 ? '—' : `${amt < 0 ? '+' : '-'}${Math.abs(amt).toLocaleString('de-CH',{minimumFractionDigits:2})}`}</span>
+                                </div>
+                              );
+                            })}
+                            {/* Total deductions - sum per-basis */}
+                            <div className="flex justify-between items-center pt-1 border-t text-xs font-semibold text-red-600">
+                              <span>7950 Total Abzüge</span>
+                              <span>-{(
+                                ((d.ahvBasis??stream.amount)*(d.ahv||0)/100) +
+                                ((d.alvBasis??stream.amount)*(d.alv||0)/100) +
+                                ((d.nubvBasis??stream.amount)*(d.nbuv||0)/100) +
+                                ((d.ktgBasis??stream.amount)*(d.ktg||0)/100) +
+                                ((d.bvgBasis??stream.amount)*(d.bvg||0)/100) +
+                                ((d.otherBasis??stream.amount)*(d.other||0)/100)
+                              ).toLocaleString('de-CH',{minimumFractionDigits:2})} CHF</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Nettolohn */}
+                        <div className="flex justify-between items-center py-1.5 border-t border-b border-gray-300 font-bold">
+                          <span>8000 Nettolohn</span>
+                          <span className="text-green-700">{net.toLocaleString('de-CH',{minimumFractionDigits:2})} CHF</span>
+                        </div>
+                        <div className="flex justify-between items-center py-1 text-xs text-gray-500">
+                          <span>9000 Ausbezahlter Lohn (monatlich)</span>
+                          <span className="font-semibold text-gray-800">{ausbezahlt.toLocaleString('de-CH',{minimumFractionDigits:2})} CHF</span>
+                        </div>
+
+                        {/* Period */}
+                        <div className="flex space-x-4 pt-2 border-t mt-1">
+                          <div className="flex-1">
+                            <span className="text-[10px] text-gray-400 block mb-0.5">Von</span>
+                            <div className="flex space-x-1">
+                              <input type="number" value={stream.startYear} onChange={(e) => handleUpdateSalaryStream(stream.id, { startYear: Number(e.target.value) })} className="w-16 border rounded px-1 py-0.5 text-xs" />
+                              <MonthSelect value={stream.startMonth} onChange={(val) => handleUpdateSalaryStream(stream.id, { startMonth: val })} className="flex-1 border rounded px-1 py-0.5 text-xs bg-white" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-[10px] text-gray-400 block mb-0.5">Bis</span>
+                            <div className="flex space-x-1">
+                              <input type="number" value={stream.endYear} onChange={(e) => handleUpdateSalaryStream(stream.id, { endYear: Number(e.target.value) })} className="w-16 border rounded px-1 py-0.5 text-xs" />
+                              <MonthSelect value={stream.endMonth} onChange={(val) => handleUpdateSalaryStream(stream.id, { endMonth: val })} className="flex-1 border rounded px-1 py-0.5 text-xs bg-white" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    );
+                  })}
+                  {(!state.salaryStreams || state.salaryStreams.length === 0) && (
+                    <p className="text-gray-500 text-sm text-center py-4">Keine Lohnströme erfasst.</p>
+                  )}
+                </div>
+              </div>
+              )}
+
+              {/* Sonstige Panel */}
+              {incomeTab === 'sonstige' && (
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <div className="flex justify-between items-center mb-4 border-b pb-2">
                   <h4 className="text-md font-bold text-gray-800">Sonstige Einkünfte</h4>
                   <button onClick={handleAddOtherIncome} className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700">
@@ -271,7 +426,7 @@ export const SettingsModal = () => {
                   )}
                 </div>
               </div>
-              
+              )}
             </section>
           )}
 

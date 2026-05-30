@@ -14,6 +14,27 @@ export interface OtherIncomeEvent {
   endMonth: number;
 }
 
+export interface SalaryDeductions {
+  ahv: number;  ahvBasis?: number;
+  alv: number;  alvBasis?: number;
+  nbuv: number; nubvBasis?: number;
+  ktg: number;  ktgBasis?: number;
+  bvg: number;  bvgBasis?: number;
+  other: number; otherBasis?: number;
+}
+
+export interface SalaryStream {
+  id: string;
+  description: string;
+  inputType: 'brutto' | 'netto';
+  amount: number;
+  deductions: SalaryDeductions;
+  startYear: number;
+  startMonth: number;
+  endYear: number;
+  endMonth: number;
+}
+
 export interface AHVStream {
   id: string;
   startYear: number;
@@ -51,16 +72,8 @@ export interface PlanningState {
     renteSplit: number; // 0 to 100
     umwandlungssatz: number; // percentage
   };
-  salary: {
-    monthlyGross: number;
-    startYear: number;
-    startMonth: number;
-    endYear: number;
-    endMonth: number;
-    deductionRate: number; // percentage
-  };
+  salaryStreams: SalaryStream[];
   otherIncomeEvents: OtherIncomeEvent[];
-  eigenmietwert: Record<YearKey, number>;
 
   // Section 2: Ausgaben
   fixeKosten: {
@@ -148,14 +161,26 @@ const defaultState: PlanningState = {
     renteSplit: 50, // Default to 50% Rente, 50% Kapital
     umwandlungssatz: 5.0,
   },
-  salary: {
-    monthlyGross: 10000,
-    startYear: 2026,
-    startMonth: 0,
-    endYear: 2027,
-    endMonth: 1, // Jan 2027
-    deductionRate: 15, // Default 15% standard deductions
-  },
+  salaryStreams: [
+    {
+      id: 'salary-1',
+      description: 'Lohn Markus (Base 2026)',
+      inputType: 'brutto',
+      amount: 11636.40,
+      deductions: {
+        ahv: 4.66,  ahvBasis: 10236.40,
+        alv: 0.0,
+        nbuv: 0.77, nubvBasis: 11636.40,
+        ktg: 0.52,  ktgBasis: 11636.40,
+        bvg: 12.88, // BVG amount is fixed, so rate is effective
+        other: -3.17
+      },
+      startYear: 2026,
+      startMonth: 0,
+      endYear: 2026,
+      endMonth: 11
+    }
+  ],
   otherIncomeEvents: [],
   fixeKosten: {
     amortisation: 0,

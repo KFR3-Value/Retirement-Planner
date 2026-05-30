@@ -39,6 +39,7 @@ This file manages asynchronous workflows between the human user and AI agents. A
 - `[ ]` **3.2 Rente End Dates**: Add the option to specify an end date for any Rente (pension) stream.
 - `[x]` **3.3 AHV Scenarios**: Implement 3 distinct AHV scenarios (Monique drawing 3 years prior, User on 64th birthday, User 1 year later) and accurately reflect their impact on the AHV rent as specified in the underlying data.
 - `[ ]` **3.4 Tragbarkeitsrechner**: Implement a mortgage affordability calculator (Tragbarkeitsrechner) to display year-by-year whether bank affordability criteria are met.
+- `[x]` **3.5 Detailed Salary Modeling**: Refactor the Lohn (Salary) inputs to support multiple parallel salary streams (e.g., Markus and Monique separately), variable bonus assumptions, and custom deduction rates, allowing for more granular and dynamic modeling of employment income over time.
 
 ### 4. Master Task: Scenario & Sensitivity Analysis
 **Goal**: Build advanced analytical capabilities to simulate different pension withdrawal strategies and track specific wealth KPIs under varying conditions.
