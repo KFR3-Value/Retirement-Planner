@@ -5,17 +5,17 @@ export const WealthTrajectoryChart = ({ trajectory }: { trajectory: any[] }) => 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-gray-200 p-3 shadow rounded min-w-[200px]">
-          <p className="font-bold border-b pb-1 mb-2">Jahr {label}</p>
+        <div className="bg-slate-950 border border-slate-800 p-3 shadow-2xl rounded min-w-[200px] text-slate-200 font-mono text-xs">
+          <p className="font-bold border-b border-slate-800 pb-1.5 mb-2 text-slate-100 font-sans">Jahr {label}</p>
           {payload.map((p: any, idx: number) => (
-             <div key={idx} className="flex justify-between items-center text-sm py-1">
+             <div key={idx} className="flex justify-between items-center py-1">
                 <span style={{ color: p.color }} className="font-medium">{p.name}:</span>
-                <span className="ml-4">{formatCHF(p.value)}</span>
+                <span className="ml-4 text-slate-100">{formatCHF(p.value)}</span>
              </div>
           ))}
-          <div className="flex justify-between items-center text-sm py-1 mt-2 border-t pt-1 font-bold">
+          <div className="flex justify-between items-center py-1 mt-2 border-t border-slate-800 pt-1.5 font-bold text-slate-100">
             <span>Total Vermögen:</span>
-            <span>{formatCHF(payload[0].payload.totalWealth)}</span>
+            <span className="text-emerald-400">{formatCHF(payload[0].payload.totalWealth)}</span>
           </div>
         </div>
       );

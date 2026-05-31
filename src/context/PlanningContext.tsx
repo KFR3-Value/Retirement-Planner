@@ -57,6 +57,7 @@ export interface CapExEvent {
   amount: number;
   year: YearKey | string;
   isTaxDeductible?: boolean;
+  category?: 'housing' | 'living' | 'health';
 }
 
 export interface PlanningState {
@@ -75,31 +76,35 @@ export interface PlanningState {
   salaryStreams: SalaryStream[];
   otherIncomeEvents: OtherIncomeEvent[];
 
-  // Section 2: Ausgaben
-  fixeKosten: {
-    amortisation: number;
-    krankenkasse: {
-      base: number;
-      applyAgeIncrease: boolean;
-      ageIncreaseRate: number; // percentage
-    };
-    mobilitaet: number;
-  };
-  variableKosten: number;
-  capExEvents: CapExEvent[];
-
-  // Section 3: Immobilien
-  immobilie: {
+  // Domains
+  housing: {
     efhTaxValue: number;
+    bankLendingValue: number;
     eigenmietwert: number;
-    hypothek: {
-      saronAmount: number;
-      saronRate: number; // percentage
-      festAmount: number;
-      festRate: number; // percentage
-    };
+    saronAmount: number;
+    saronRate: number; // percentage
+    festAmount: number;
+    festRate: number; // percentage
     unterhaltRate: number; // percentage of EFH value
+    amortisation: number;
+    stromHeizung: number;
   };
+  living: {
+    haushaltEssen: number;
+    mobilitaet: number;
+    telefonHandyMedien: number;
+    kleiderFreizeit: number;
+    ferienReisen: number;
+    versicherungenSonstige: number;
+  };
+  health: {
+    krankenkasseBase: number;
+    applyAgeIncrease: boolean;
+    ageIncreaseRate: number; // percentage
+    zahnarztOptiker: number;
+    diversesReserve: number;
+  };
+  capExEvents: CapExEvent[];
 
   // Section 4: Vermögen
   assets: {
@@ -155,24 +160,27 @@ const defaultState: PlanningState = {
     ]
   },
   pensionskasse: {
-    startYear: 2026,
-    startMonth: 0,
-    totalCapital: 1200000,
-    renteSplit: 50, // Default to 50% Rente, 50% Kapital
-    umwandlungssatz: 5.0,
+    startYear: 2027,
+    startMonth: 1,
+    totalCapital: 1250000,
+    renteSplit: 50,
+    umwandlungssatz: 5.125
   },
   salaryStreams: [
     {
       id: 'salary-1',
       description: 'Lohn Markus (Base 2026)',
-      inputType: 'brutto',
-      amount: 11636.40,
+      inputType: 'netto',
+      amount: 9500,
       deductions: {
-        ahv: 4.66,  ahvBasis: 10236.40,
-        alv: 0.0,
-        nbuv: 0.77, nubvBasis: 11636.40,
-        ktg: 0.52,  ktgBasis: 11636.40,
-        bvg: 12.88, // BVG amount is fixed, so rate is effective
+        ahv: 4.66,
+        ahvBasis: 10236.4,
+        alv: 0,
+        nbuv: 0.77,
+        nubvBasis: 11636.4,
+        ktg: 0.52,
+        ktgBasis: 11636.4,
+        bvg: 12.88,
         other: -3.17
       },
       startYear: 2026,
@@ -182,47 +190,74 @@ const defaultState: PlanningState = {
     }
   ],
   otherIncomeEvents: [],
-  fixeKosten: {
-    amortisation: 0,
-    krankenkasse: {
-      base: 12000, // Estimated base CHF per year for couple
-      applyAgeIncrease: true,
-      ageIncreaseRate: 3.0,
-    },
-    mobilitaet: 8000, // Default estimate
-  },
-  variableKosten: 36000, // Default estimate (3k/mo)
-  capExEvents: [
-    { id: '1', description: 'Kauf Firmenfahrzeug Skoda (AG 341628)', amount: 20000, year: '2026', isTaxDeductible: false },
-    { id: '2', description: 'Renovation: OG Böden & Elternschlafzimmer', amount: 30000, year: '2026', isTaxDeductible: true },
-    { id: '3', description: 'Umgebung & Garten', amount: 40000, year: '2027', isTaxDeductible: true }
-  ],
-  immobilie: {
+  housing: {
     efhTaxValue: 810000,
-    eigenmietwert: 0,
-    hypothek: {
-      saronAmount: 175000,
-      saronRate: 0.86,
-      festAmount: 600000,
-      festRate: 1.68,
-    },
-    unterhaltRate: 1.0, // 1%
+    bankLendingValue: 1400000,
+    eigenmietwert: 16800,
+    saronAmount: 175000,
+    saronRate: 0.86,
+    festAmount: 600000,
+    festRate: 1.68,
+    unterhaltRate: 1,
+    amortisation: 0,
+    stromHeizung: 3600
   },
+  living: {
+    haushaltEssen: 19680,
+    mobilitaet: 7800,
+    telefonHandyMedien: 1800,
+    kleiderFreizeit: 6240,
+    ferienReisen: 9600,
+    versicherungenSonstige: 1848
+  },
+  health: {
+    krankenkasseBase: 14400,
+    applyAgeIncrease: true,
+    ageIncreaseRate: 3,
+    zahnarztOptiker: 2640,
+    diversesReserve: 9600
+  },
+  capExEvents: [
+    {
+      id: '1',
+      description: 'Kauf Firmenfahrzeug Skoda (AG 341628)',
+      amount: 20000,
+      year: '2026',
+      isTaxDeductible: false,
+      category: 'living'
+    },
+    {
+      id: '2',
+      description: 'Renovation: OG Böden & Elternschlafzimmer',
+      amount: 30000,
+      year: '2026',
+      isTaxDeductible: true,
+      category: 'housing'
+    },
+    {
+      id: '3',
+      description: 'Umgebung & Garten',
+      amount: 40000,
+      year: '2027',
+      isTaxDeductible: true,
+      category: 'housing'
+    }
+  ],
   assets: {
     saeule3a: {
-      balance: 0,
-      withdrawalYear: '',
+      balance: 20000,
+      withdrawalYear: '2027'
     },
     freizuegigkeitskonto: {
       balance: 40000,
-      withdrawalYear: '2027',
+      withdrawalYear: '2027'
     },
-    startingLiquidWealth: 450000,
+    startingLiquidWealth: 280000
   },
   baseline: {
     inflationRate: 1.5,
     applyInflation: true,
-    liquidYieldRate: 2.0,
+    liquidYieldRate: 2
   }
 };
 

@@ -4,9 +4,10 @@ import { Dashboard } from './components/Dashboard';
 import { usePlanning } from './context/PlanningContext';
 import { useUI } from './context/UIContext';
 import { SettingsModal } from './components/SettingsModal';
+import { AffordabilityAuditor } from './components/AffordabilityAuditor';
 
 export const MainLayout = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'engine'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'engine' | 'auditor'>('dashboard');
   const { state, loadState } = usePlanning();
   const { openSettingsModal } = useUI();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -109,13 +110,25 @@ export const MainLayout = () => {
               >
                 Detaillierte Planung
               </button>
+              <button
+                onClick={() => setActiveTab('auditor')}
+                className={`${
+                  activeTab === 'auditor'
+                    ? 'border-emerald-500 text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all`}
+              >
+                Tragbarkeits-Audit
+              </button>
             </nav>
           </div>
         </div>
       </header>
 
       <main className="flex-grow w-full max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {activeTab === 'dashboard' ? <Dashboard /> : <Engine />}
+        {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'engine' && <Engine />}
+        {activeTab === 'auditor' && <AffordabilityAuditor />}
       </main>
     </div>
   );

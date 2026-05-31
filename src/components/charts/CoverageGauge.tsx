@@ -11,11 +11,23 @@ export const CoverageGauge = ({ ratio }: { ratio: number }) => {
     ];
   }, [ratio]);
 
-  const COLORS = ['#10b981', '#f3f4f6']; // Emerald green, gray
+  const COLORS = ['#10b981', '#1e293b']; // Emerald green, dark slate
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-slate-950 border border-slate-800 p-2 shadow-2xl rounded text-slate-200 font-mono text-xs">
+          <p className="font-semibold text-slate-300">{payload[0].name}</p>
+          <p className="text-emerald-400 font-bold mt-0.5">{Number(payload[0].value).toFixed(1)}%</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="h-64 flex flex-col items-center justify-center relative">
-      <h3 className="text-sm font-semibold text-gray-500 mb-2">Fixkostendeckung</h3>
+      <h3 className="text-sm font-semibold text-slate-400 mb-2 font-mono">Fixkostendeckung</h3>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -33,13 +45,11 @@ export const CoverageGauge = ({ ratio }: { ratio: number }) => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip
-             formatter={(value: any) => [`${Number(value).toFixed(1)}%`, 'Anteil']}
-          />
+          <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute bottom-8 flex flex-col items-center">
-        <span className="text-3xl font-bold text-gray-800">{ratio.toFixed(1)}%</span>
+        <span className="text-3xl font-bold text-slate-100 font-mono">{ratio.toFixed(1)}%</span>
       </div>
     </div>
   );

@@ -19,7 +19,7 @@ export const WaterfallChart = ({ data }: { data: YearData }) => {
     current = taxEnd;
 
     // 3. Fixe Kosten (Negative)
-    const fixedCostsValue = data.mortgageInterest + data.amortisation + data.propertyMaintenance + data.krankenkasse + data.mobilitaet;
+    const fixedCostsValue = data.mortgageInterest + data.amortisation + data.propertyMaintenance + data.krankenkasse + data.mobilitaet + data.versicherungenSonstige + data.stromHeizung + data.telefonHandyMedien;
     const fixedStart = current;
     const fixedEnd = current - fixedCostsValue;
     current = fixedEnd;
@@ -72,9 +72,9 @@ export const WaterfallChart = ({ data }: { data: YearData }) => {
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-gray-200 p-2 shadow rounded">
-          <p className="text-sm font-semibold">{payload[0].payload.name}</p>
-          <p className="text-sm text-gray-700">{formatCHF(payload[0].payload.displayValue)}</p>
+        <div className="bg-slate-950 border border-slate-800 p-2 shadow-2xl rounded text-slate-100 font-mono text-xs">
+          <p className="font-semibold text-slate-200">{payload[0].payload.name}</p>
+          <p className="text-emerald-400 mt-1 font-bold">{formatCHF(payload[0].payload.displayValue)}</p>
         </div>
       );
     }

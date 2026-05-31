@@ -34,7 +34,7 @@ export const Dashboard = () => {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <div className="bg-slate-900 border border-slate-800 border-l-4 border-l-red-500 p-4 rounded-lg shadow flex flex-col justify-center">
           <p className="text-sm text-slate-400 font-medium">Summe bezahlte Steuern (2026-2045)</p>
           <p className="text-xl font-bold text-slate-100 font-mono">{Math.round(cumulativeKPIs.totalTaxPaid).toLocaleString("de-CH")} CHF</p>
@@ -51,6 +51,12 @@ export const Dashboard = () => {
           <p className="text-sm text-slate-400 font-medium">Ersparnisse / Verzehr (2026-2045)</p>
           <p className={`text-xl font-bold font-mono ${cumulativeKPIs.totalSavings >= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
             {cumulativeKPIs.totalSavings > 0 ? '+' : ''}{Math.round(cumulativeKPIs.totalSavings).toLocaleString("de-CH")} CHF
+          </p>
+        </div>
+        <div className={`bg-slate-900 border border-slate-800 border-l-4 p-4 rounded-lg shadow flex flex-col justify-center ${activeData.affordabilityRatio <= 33 ? 'border-l-emerald-500' : 'border-l-rose-500'}`}>
+          <p className="text-sm text-slate-400 font-medium font-sans">Tragbarkeit ({selectedYear})</p>
+          <p className={`text-xl font-bold font-mono ${activeData.affordabilityRatio <= 33 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {activeData.affordabilityRatio.toFixed(1)}%
           </p>
         </div>
       </div>

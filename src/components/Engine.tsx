@@ -141,14 +141,44 @@ export const Engine = () => {
             </td>
           </tr>
 
-          <DataRow label="Hypothekarzinsen" dataKey="mortgageInterest" onClickLabel={() => openSettingsModal(5)} />
-          <DataRow label="Liegenschaftsunterhalt (als % EFH)" dataKey="propertyMaintenance" onClickLabel={() => openSettingsModal(5)} />
-          <DataRow label="Krankenkasse & Versicherungen" dataKey="krankenkasse" onClickLabel={() => openSettingsModal(2)} />
+          {/* Wohnen & Liegenschaft */}
+          <tr className="bg-slate-950/30">
+            <td colSpan={YEARS.length + 1} className="py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800">Wohnen & Liegenschaft</td>
+          </tr>
+          <DataRow label="Hypothekarzinsen" dataKey="mortgageInterest" onClickLabel={() => openSettingsModal(4)} />
+          <DataRow label="Liegenschaftsunterhalt (als % EFH)" dataKey="propertyMaintenance" onClickLabel={() => openSettingsModal(4)} />
+          <DataRow label="Strom & Heizung (Nebenkosten)" dataKey="stromHeizung" onClickLabel={() => openSettingsModal(4)} />
+          <DataRow label="Amortisation" dataKey="amortisation" onClickLabel={() => openSettingsModal(4)} />
+          <DataRow label="Liegenschafts-Investitionen (CapEx)" dataKey="housingCapEx" onClickLabel={() => openSettingsModal(4)} />
+          <DataRow label="Total Wohnen & Liegenschaft" dataKey="housingTotal" isTotal={true} />
+
+          {/* Lebenshaltung & Konsum */}
+          <tr className="bg-slate-950/30">
+            <td colSpan={YEARS.length + 1} className="py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800">Lebenshaltung & Konsum</td>
+          </tr>
+          <DataRow label="Haushalt & Nahrung" dataKey="haushaltEssen" onClickLabel={() => openSettingsModal(2)} />
           <DataRow label="Mobilität" dataKey="mobilitaet" onClickLabel={() => openSettingsModal(2)} />
-          <DataRow label="Variable Kosten" dataKey="variableKosten" onClickLabel={() => openSettingsModal(2)} />
+          <DataRow label="Telefon, Handy & Medien" dataKey="telefonHandyMedien" onClickLabel={() => openSettingsModal(2)} />
+          <DataRow label="Kleider & Freizeit" dataKey="kleiderFreizeit" onClickLabel={() => openSettingsModal(2)} />
+          <DataRow label="Ferien & Reisen" dataKey="ferienReisen" onClickLabel={() => openSettingsModal(2)} />
+          <DataRow label="Versicherungen (Sonstige)" dataKey="versicherungenSonstige" onClickLabel={() => openSettingsModal(2)} />
+          <DataRow label="Konsum-Investitionen (CapEx)" dataKey="livingCapEx" onClickLabel={() => openSettingsModal(2)} />
+          <DataRow label="Total Lebenshaltung" dataKey="livingTotal" isTotal={true} />
 
-          <DataRow label="CapEx (Einmalige Investitionen)" dataKey="capEx" onClickLabel={() => openSettingsModal(4)} />
+          {/* Gesundheit & Diverses */}
+          <tr className="bg-slate-950/30">
+            <td colSpan={YEARS.length + 1} className="py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800">Gesundheit & Diverses</td>
+          </tr>
+          <DataRow label="Krankenkasse" dataKey="krankenkasse" onClickLabel={() => openSettingsModal(3)} />
+          <DataRow label="Zahnarzt & Optiker" dataKey="zahnarztOptiker" onClickLabel={() => openSettingsModal(3)} />
+          <DataRow label="Diverses & Reserve" dataKey="diversesReserve" onClickLabel={() => openSettingsModal(3)} />
+          <DataRow label="Gesundheits-Reserven (CapEx)" dataKey="healthCapEx" onClickLabel={() => openSettingsModal(3)} />
+          <DataRow label="Total Gesundheit & Diverses" dataKey="healthTotal" isTotal={true} />
 
+          {/* Total Ausgaben */}
+          <tr className="border-t-2 border-slate-800">
+            <td colSpan={YEARS.length + 1} className="py-1 bg-slate-950"></td>
+          </tr>
           <DataRow label="Total Ausgaben (exkl. Steuern)" dataKey="totalOutflowExclTaxes" isTotal={true} />
 
 
@@ -167,7 +197,7 @@ export const Engine = () => {
               <CustomRow label="+ Vermögensertrag" valueFn={(y) => data[y].wealthYieldIncome} isSub={true} />
               <CustomRow label="+ Sonstige Einkünfte" valueFn={(y) => data[y].otherIncome} isSub={true} />
               <CustomRow label="+ Eigenmietwert (nur steuerlich, bis 2028)" valueFn={(y) => data[y].eigenmietwert} isSub={true} onClickLabel={() => openSettingsModal(5)} />
-              <CustomRow label="- Abzug: Krankenkasse & Versicherungen" valueFn={(y) => -data[y].krankenkasse} isSub={true} onClickLabel={() => openSettingsModal(2)} />
+              <CustomRow label="- Abzug: Krankenkasse" valueFn={(y) => -data[y].krankenkasse} isSub={true} onClickLabel={() => openSettingsModal(2)} />
               <CustomRow label="- Abzug: Schuldzinsen (Hypothek)" valueFn={(y) => -data[y].mortgageInterest} isSub={true} onClickLabel={() => openSettingsModal(5)} />
               <CustomRow label="- Abzug: Liegenschaftsunterhalt" valueFn={(y) => -data[y].propertyMaintenance} isSub={true} onClickLabel={() => openSettingsModal(5)} />
               <CustomRow label="- Abzug: Werterhaltende Investitionen" valueFn={(y) => -data[y].deductibleCapEx} isSub={true} />
@@ -216,9 +246,24 @@ export const Engine = () => {
           </tr>
           <DataRow label="Cash Flow (Überschuss / Defizit)" dataKey="surplusDeficit" isTotal={true} />
 
-          <DataRow label="Freies Vermögen (Liquid Assets) Ende Jahr" dataKey="liquidWealthEnd" onClickLabel={() => openSettingsModal(3)} />
-          <DataRow label="Säule 3a Ende Jahr" dataKey="saeule3aEnd" onClickLabel={() => openSettingsModal(3)} />
-          <DataRow label="Freizügigkeitskonto Ende Jahr" dataKey="fzkEnd" onClickLabel={() => openSettingsModal(3)} />
+          <tr className="border-b border-slate-800 hover:bg-slate-800/20">
+            <td className="py-3 px-4 text-sm text-slate-200 font-semibold whitespace-nowrap">
+              Hypothekarische Tragbarkeit (Stress Test)
+            </td>
+            {YEARS.map(year => {
+              const val = data[year].affordabilityRatio;
+              const cellColor = val <= 33 ? 'text-emerald-450 font-bold' : 'text-rose-400 font-bold';
+              return (
+                <td key={year} className={`py-3 px-4 text-right text-sm font-mono whitespace-nowrap ${cellColor}`}>
+                  {val.toFixed(1)}%
+                </td>
+              );
+            })}
+          </tr>
+
+          <DataRow label="Freies Vermögen (Liquid Assets) Ende Jahr" dataKey="liquidWealthEnd" onClickLabel={() => openSettingsModal(5)} />
+          <DataRow label="Säule 3a Ende Jahr" dataKey="saeule3aEnd" onClickLabel={() => openSettingsModal(5)} />
+          <DataRow label="Freizügigkeitskonto Ende Jahr" dataKey="fzkEnd" onClickLabel={() => openSettingsModal(5)} />
           <DataRow label="Total Reinvermögen (inkl. Immobilien-Equity)" dataKey="totalWealthEnd" isTotal={true} />
 
         </tbody>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePlanning, YEARS } from '../context/PlanningContext';
 import { useUI } from '../context/UIContext';
+import { formatCHF } from '../utils/format';
 
 const MonthSelect = ({ value, onChange, className = "border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200" }: { value: number, onChange: (val: number) => void, className?: string }) => {
   const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
@@ -18,8 +19,8 @@ export const SettingsModal = () => {
 
   if (!activeModalTab) return null;
 
-  const handleAddCapEx = () => {
-    const newEvent = { id: Date.now().toString(), description: 'Neue Investition', amount: 0, year: '2026', isTaxDeductible: false };
+  const handleAddCapEx = (category: 'housing' | 'living' | 'health') => {
+    const newEvent = { id: Date.now().toString(), description: 'Neue Investition', amount: 0, year: '2026', isTaxDeductible: false, category };
     updateState('capExEvents', [...state.capExEvents, newEvent]);
   };
 
@@ -29,6 +30,89 @@ export const SettingsModal = () => {
 
   const handleDeleteCapEx = (id: string) => {
     updateState('capExEvents', state.capExEvents.filter(e => e.id !== id));
+  };
+
+  const CapExManager = ({ category, label }: { category: 'housing' | 'living' | 'health', label: string }) => {
+    const filtered = state.capExEvents.filter(event => {
+      if (event.category === category) return true;
+      if (!event.category) {
+        const isHousing = event.description.toLowerCase().includes('renovation') || event.description.toLowerCase().includes('garten');
+        if (category === 'housing' && isHousing) return true;
+        if (category === 'living' && !isHousing) return true;
+      }
+      return false;
+    });
+
+    return (
+      <div className="bg-slate-950/40 p-4 rounded-lg border border-slate-800 mt-6">
+        <div className="flex justify-between items-center mb-3 border-b border-slate-800 pb-2">
+          <h4 className="font-semibold text-slate-200 text-sm font-mono">{label}</h4>
+          <button 
+            onClick={() => handleAddCapEx(category)}
+            className="px-2.5 py-1 bg-emerald-600 text-white text-xs font-semibold rounded hover:bg-emerald-500 transition-colors"
+          >
+            + Einmalige Investition (CapEx)
+          </button>
+        </div>
+        <div className="space-y-3">
+          {filtered.map(event => (
+            <div key={event.id} className="flex space-x-3 items-center bg-slate-900 p-2 border border-slate-800 rounded shadow-md text-xs">
+              <div className="flex-grow">
+                <span className="text-[10px] text-slate-400 block mb-0.5">Beschreibung</span>
+                <input 
+                  type="text" 
+                  value={event.description} 
+                  onChange={(e) => handleUpdateCapEx(event.id, { description: e.target.value })} 
+                  className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500" 
+                />
+              </div>
+              <div className="w-28">
+                <span className="text-[10px] text-slate-400 block mb-0.5">Betrag (CHF)</span>
+                <input 
+                  type="number" 
+                  value={event.amount} 
+                  onChange={(e) => handleUpdateCapEx(event.id, { amount: Number(e.target.value) })} 
+                  className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-right" 
+                />
+              </div>
+              <div className="w-20">
+                <span className="text-[10px] text-slate-400 block mb-0.5">Jahr</span>
+                <select 
+                  value={event.year} 
+                  onChange={(e) => handleUpdateCapEx(event.id, { year: e.target.value })}
+                  className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                >
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div className="w-20 flex items-end pb-1.5 pl-2">
+                <label className="flex items-center space-x-1.5 cursor-pointer text-slate-300 animate-pulse-subtle" title="Steuerlich abziehbar?">
+                  <input 
+                    type="checkbox" 
+                    checked={event.isTaxDeductible || false}
+                    onChange={(e) => handleUpdateCapEx(event.id, { isTaxDeductible: e.target.checked })}
+                    className="h-3.5 w-3.5 text-emerald-600 focus:ring-emerald-500 border-slate-800 bg-slate-950 rounded"
+                  />
+                  <span>Abzug</span>
+                </label>
+              </div>
+              <div className="pt-4">
+                <button 
+                  onClick={() => handleDeleteCapEx(event.id)}
+                  className="text-rose-500 hover:text-rose-400 px-1 py-1 text-sm font-bold"
+                  title="Löschen"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-slate-500 text-xs text-center py-2">Keine einmaligen Investitionen in dieser Kategorie geplant.</p>
+          )}
+        </div>
+      </div>
+    );
   };
 
   const handleAddOtherIncome = () => {
@@ -166,42 +250,52 @@ export const SettingsModal = () => {
                         + Neuer Strom
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {state.ahv.scenarios.find(s => s.id === state.ahv.selectedScenarioId)?.streams.map(stream => (
-                        <div key={stream.id} className="flex flex-col space-y-3 bg-slate-900 p-4 border border-slate-800 rounded shadow-lg relative">
-                          <div className="absolute top-2 right-2">
-                            <button onClick={() => handleDeleteAHVStream(stream.id)} className="text-rose-400 hover:text-rose-300 text-xs">✕</button>
-                          </div>
-                          
-                          <div className="flex space-x-4">
-                            <div className="flex-1">
-                              <span className="text-xs text-slate-400 block mb-1">Start (J/M)</span>
-                              <div className="flex space-x-1">
-                                <input type="number" value={stream.startYear} onChange={(e) => handleUpdateAHVStream(stream.id, { startYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200 font-mono" />
-                                <MonthSelect value={stream.startMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { startMonth: val })} className="flex-1 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200" />
+                    <div className="max-h-[380px] overflow-y-auto pr-1 flex flex-col space-y-4">
+                      {(() => {
+                        const activeScenario = state.ahv.scenarios.find(s => s.id === state.ahv.selectedScenarioId);
+                        const sortedStreams = activeScenario 
+                          ? [...activeScenario.streams].sort((a, b) => {
+                              if (a.startYear !== b.startYear) return a.startYear - b.startYear;
+                              return a.startMonth - b.startMonth;
+                            })
+                          : [];
+                        
+                        return sortedStreams.map(stream => (
+                          <div key={stream.id} className="flex flex-col space-y-3 bg-slate-900 p-4 border border-slate-800 rounded shadow-lg relative">
+                            <div className="absolute top-2 right-2">
+                              <button onClick={() => handleDeleteAHVStream(stream.id)} className="text-rose-400 hover:text-rose-300 text-xs">✕</button>
+                            </div>
+                            
+                            <div className="flex space-x-4">
+                              <div className="flex-1">
+                                <span className="text-xs text-slate-400 block mb-1">Start (J/M)</span>
+                                <div className="flex space-x-1">
+                                  <input type="number" value={stream.startYear} onChange={(e) => handleUpdateAHVStream(stream.id, { startYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200 font-mono" />
+                                  <MonthSelect value={stream.startMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { startMonth: val })} className="flex-1 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200" />
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <span className="text-xs text-slate-400 block mb-1">Ende (J/M)</span>
+                                <div className="flex space-x-1">
+                                  <input type="number" value={stream.endYear} onChange={(e) => handleUpdateAHVStream(stream.id, { endYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200 font-mono" />
+                                  <MonthSelect value={stream.endMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { endMonth: val })} className="flex-1 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200" />
+                                </div>
                               </div>
                             </div>
-                            <div className="flex-1">
-                              <span className="text-xs text-slate-400 block mb-1">Ende (J/M)</span>
-                              <div className="flex space-x-1">
-                                <input type="number" value={stream.endYear} onChange={(e) => handleUpdateAHVStream(stream.id, { endYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200 font-mono" />
-                                <MonthSelect value={stream.endMonth} onChange={(val) => handleUpdateAHVStream(stream.id, { endMonth: val })} className="flex-1 border border-slate-800 rounded px-2 py-1 text-xs bg-slate-950 text-slate-200" />
+                            
+                            <div className="flex space-x-4">
+                              <div className="flex-1">
+                                <span className="text-xs text-slate-400 block mb-1">Markus (CHF/Mt)</span>
+                                <input type="number" value={stream.markusAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { markusAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
+                              </div>
+                              <div className="flex-1">
+                                <span className="text-xs text-slate-400 block mb-1">Monique (CHF/Mt)</span>
+                                <input type="number" value={stream.moniqueAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { moniqueAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
                               </div>
                             </div>
                           </div>
-                          
-                          <div className="flex space-x-4">
-                            <div className="flex-1">
-                              <span className="text-xs text-slate-400 block mb-1">Markus (CHF/Mt)</span>
-                              <input type="number" value={stream.markusAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { markusAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
-                            </div>
-                            <div className="flex-1">
-                              <span className="text-xs text-slate-400 block mb-1">Monique (CHF/Mt)</span>
-                              <input type="number" value={stream.moniqueAmount} onChange={(e) => handleUpdateAHVStream(stream.id, { moniqueAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -400,7 +494,7 @@ export const SettingsModal = () => {
                           <input type="number" value={event.monthlyAmount} onChange={(e) => handleUpdateOtherIncome(event.id, { monthlyAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
                         </div>
                         <div className="pt-5">
-                          <button onClick={() => handleDeleteOtherIncome(event.id)} className="text-rose-400 hover:text-rose-350 px-2 py-2" title="Löschen">✕</button>
+                          <button onClick={() => handleDeleteOtherIncome(event.id)} className="text-rose-400 hover:text-rose-300 px-2 py-2" title="Löschen">✕</button>
                         </div>
                       </div>
                       <div className="flex space-x-4">
@@ -430,197 +524,455 @@ export const SettingsModal = () => {
             </section>
           )}
 
-          {/* SECTION 2: Ausgaben & Hypotheken */}
           {(activeModalTab === 'all' || activeModalTab === 2) && (
             <section>
-              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">2. Ausgaben & Hypotheken</h3>
-              <div className="grid grid-cols-2 gap-6">
-                {/* Other Expenses */}
-                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800 col-span-2">
-                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Weitere Fixkosten</h4>
-                  <div>
-                    <span className="text-xs text-slate-400 block mb-1">Krankenkasse Base (CHF)</span>
-                    <input type="number" value={state.fixeKosten.krankenkasse.base} onChange={(e) => updateState('fixeKosten', { krankenkasse: { ...state.fixeKosten.krankenkasse, base: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Mobilität (CHF)</span>
-                      <input type="number" value={state.fixeKosten.mobilitaet} onChange={(e) => updateState('fixeKosten', { mobilitaet: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Variable Kosten (CHF)</span>
-                      <input type="number" value={state.variableKosten} onChange={(e) => updateState('variableKosten', Number(e.target.value))} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                    </div>
-                  </div>
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">2. Lebenshaltung & Konsum</h3>
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-800">
+                    <thead>
+                      <tr className="text-slate-400 text-xs font-mono uppercase text-left">
+                        <th className="pb-3 pr-4">Budget-Kategorie</th>
+                        <th className="pb-3 px-4 text-right w-36">Monatlich (CHF/Mt)</th>
+                        <th className="pb-3 pl-4 text-right w-36">Jährlich (CHF/Jahr)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/40 text-sm">
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Haushalt & Nahrung</div>
+                          <div className="text-[10px] text-slate-500">Lebensmittel, Haustiere, sonstige Haushaltskosten</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.living.haushaltEssen || 0) / 12)}
+                            onChange={(e) => updateState('living', { haushaltEssen: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.living.haushaltEssen || 0}
+                            onChange={(e) => updateState('living', { haushaltEssen: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Mobilität</div>
+                          <div className="text-[10px] text-slate-500">Auto, Motorrad, OeV Abos</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.living.mobilitaet || 0) / 12)}
+                            onChange={(e) => updateState('living', { mobilitaet: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.living.mobilitaet || 0}
+                            onChange={(e) => updateState('living', { mobilitaet: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Telefon, Handy & Medien</div>
+                          <div className="text-[10px] text-slate-500">Mobiltelefon, Internet, TV, Radio (Serafe)</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.living.telefonHandyMedien || 0) / 12)}
+                            onChange={(e) => updateState('living', { telefonHandyMedien: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.living.telefonHandyMedien || 0}
+                            onChange={(e) => updateState('living', { telefonHandyMedien: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Kleider & Freizeit</div>
+                          <div className="text-[10px] text-slate-500">Hobbies, Kultur, Restaurant, Kleidung</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.living.kleiderFreizeit || 0) / 12)}
+                            onChange={(e) => updateState('living', { kleiderFreizeit: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.living.kleiderFreizeit || 0}
+                            onChange={(e) => updateState('living', { kleiderFreizeit: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Ferien & Reisen</div>
+                          <div className="text-[10px] text-slate-500">Urlaub, Hotels, Flugtickets, Ausflüge</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.living.ferienReisen || 0) / 12)}
+                            onChange={(e) => updateState('living', { ferienReisen: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.living.ferienReisen || 0}
+                            onChange={(e) => updateState('living', { ferienReisen: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Versicherungen (Sonstige)</div>
+                          <div className="text-[10px] text-slate-500">Hausrat, Haftpflicht, Rechtsschutz</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.living.versicherungenSonstige || 0) / 12)}
+                            onChange={(e) => updateState('living', { versicherungenSonstige: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.living.versicherungenSonstige || 0}
+                            onChange={(e) => updateState('living', { versicherungenSonstige: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
+
+                <CapExManager category="living" label="Einmalige Konsum-Ausgaben (z.B. Fahrzeugkauf)" />
               </div>
             </section>
           )}
 
-          {/* SECTION 3: Vermögen & Rendite */}
           {(activeModalTab === 'all' || activeModalTab === 3) && (
             <section>
-              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">3. Vermögen & Rendite</h3>
-              <div className="grid grid-cols-2 gap-6">
-                {/* Assets */}
-                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
-                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Startkapital & Immobilien</h4>
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">3. Gesundheit & Diverses</h3>
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-800">
+                    <thead>
+                      <tr className="text-slate-400 text-xs font-mono uppercase text-left">
+                        <th className="pb-3 pr-4">Kategorie</th>
+                        <th className="pb-3 px-4 text-right w-36">Monatlich (CHF/Mt)</th>
+                        <th className="pb-3 pl-4 text-right w-36">Jährlich (CHF/Jahr)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/40 text-sm">
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Kranken- & Unfallversicherung (Grundprämie)</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">
+                            <label className="flex items-center space-x-1.5 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={state.health.applyAgeIncrease}
+                                onChange={(e) => updateState('health', { applyAgeIncrease: e.target.checked })}
+                                className="h-3 w-3 text-emerald-600 focus:ring-emerald-500 border-slate-800 bg-slate-950 rounded"
+                              />
+                              <span>Alters-Erhöhung (+{state.health.ageIncreaseRate}% p.a. ab 2027)</span>
+                            </label>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.health.krankenkasseBase || 0) / 12)}
+                            onChange={(e) => updateState('health', { krankenkasseBase: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.health.krankenkasseBase || 0}
+                            onChange={(e) => updateState('health', { krankenkasseBase: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Zahnarzt, Optiker & Franchise</div>
+                          <div className="text-[10px] text-slate-500">Zahnarztbesuche, Brillen, Medikamente (Selbstbehalt)</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.health.zahnarztOptiker || 0) / 12)}
+                            onChange={(e) => updateState('health', { zahnarztOptiker: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.health.zahnarztOptiker || 0}
+                            onChange={(e) => updateState('health', { zahnarztOptiker: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+
+                      <tr>
+                        <td className="py-3 pr-4 text-slate-200">
+                          <div>Diverses & Reserve</div>
+                          <div className="text-[10px] text-slate-500">Spenden, Vereinsbeiträge, Taschengeld, Unvorhergesehenes</div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <input
+                            type="number"
+                            value={Math.round((state.health.diversesReserve || 0) / 12)}
+                            onChange={(e) => updateState('health', { diversesReserve: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-3 pl-4">
+                          <input
+                            type="number"
+                            value={state.health.diversesReserve || 0}
+                            onChange={(e) => updateState('health', { diversesReserve: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-4 p-3 bg-slate-900 border border-slate-800 rounded grid grid-cols-2 gap-4 text-xs">
                   <div>
-                    <span className="text-xs text-slate-400 block mb-1">Startvermögen Liquide (CHF)</span>
-                    <input type="number" value={state.assets.startingLiquidWealth} onChange={(e) => updateState('assets', { startingLiquidWealth: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                  </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block mb-1">Rendite auf Liquides (%)</span>
-                    <input type="number" step="0.1" value={state.baseline.liquidYieldRate} onChange={(e) => updateState('baseline', { liquidYieldRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
+                    <span className="text-slate-400 block mb-1">Jährlicher Erhöhungssatz (%)</span>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={state.health.ageIncreaseRate}
+                      onChange={(e) => updateState('health', { ageIncreaseRate: Number(e.target.value) })}
+                      className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono"
+                    />
                   </div>
                 </div>
 
-                {/* Tied Assets */}
-                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
-                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Gebundenes Kapital</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Säule 3a Saldo</span>
-                      <input type="number" value={state.assets.saeule3a.balance} onChange={(e) => updateState('assets', { saeule3a: { ...state.assets.saeule3a, balance: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">3a Bezugsjahr</span>
-                      <input type="text" value={state.assets.saeule3a.withdrawalYear} onChange={(e) => updateState('assets', { saeule3a: { ...state.assets.saeule3a, withdrawalYear: e.target.value }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" placeholder="z.B. 2028" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">FZK Saldo</span>
-                      <input type="number" value={state.assets.freizuegigkeitskonto.balance} onChange={(e) => updateState('assets', { freizuegigkeitskonto: { ...state.assets.freizuegigkeitskonto, balance: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">FZK Bezugsjahr</span>
-                      <input type="text" value={state.assets.freizuegigkeitskonto.withdrawalYear} onChange={(e) => updateState('assets', { freizuegigkeitskonto: { ...state.assets.freizuegigkeitskonto, withdrawalYear: e.target.value }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" placeholder="z.B. 2027" />
-                    </div>
-                  </div>
-                </div>
+                <CapExManager category="health" label="Einmalige Gesundheits-Ausgaben / Reserven (CapEx)" />
               </div>
             </section>
           )}
 
-          {/* SECTION 4: Investitionsplan (CapEx) */}
           {(activeModalTab === 'all' || activeModalTab === 4) && (
             <section>
-              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800">
-                <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
-                  <h3 className="text-lg font-bold text-slate-200 font-mono">4. Investitionsplan (CapEx)</h3>
-                  <button 
-                    onClick={handleAddCapEx}
-                    className="px-3 py-1 bg-emerald-600 text-white text-sm font-semibold rounded hover:bg-emerald-500 transition-colors"
-                  >
-                    + Investition
-                  </button>
-                </div>
-                <div className="space-y-4">
-                  {state.capExEvents.map(event => (
-                    <div key={event.id} className="flex space-x-4 items-center bg-slate-900 p-3 border border-slate-800 rounded shadow-md">
-                      <div className="flex-grow">
-                        <span className="text-xs text-slate-400 block mb-1">Beschreibung</span>
-                        <input 
-                          type="text" 
-                          value={event.description} 
-                          onChange={(e) => handleUpdateCapEx(event.id, { description: e.target.value })} 
-                          className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500" 
-                        />
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">4. Wohnen & Immobilie</h3>
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800 space-y-6">
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-4 bg-slate-900 p-4 rounded border border-slate-800">
+                    <h4 className="font-semibold text-slate-200 text-xs uppercase tracking-wider font-mono border-b border-slate-800 pb-1.5">Werte & Steuern</h4>
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Belehnungswert (Bankwert) (CHF)</span>
+                      <input type="number" value={state.housing.bankLendingValue} onChange={(e) => updateState('housing', { bankLendingValue: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Steuerwert Liegenschaft (CHF)</span>
+                      <input type="number" value={state.housing.efhTaxValue} onChange={(e) => updateState('housing', { efhTaxValue: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Eigenmietwert (Steuern) (CHF)</span>
+                      <input type="number" value={state.housing.eigenmietwert} onChange={(e) => updateState('housing', { eigenmietwert: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 bg-slate-900 p-4 rounded border border-slate-800">
+                    <h4 className="font-semibold text-slate-200 text-xs uppercase tracking-wider font-mono border-b border-slate-800 pb-1.5">Hypothekarschulden</h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block mb-0.5">Saron Betrag</span>
+                        <input type="number" value={state.housing.saronAmount} onChange={(e) => updateState('housing', { saronAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono text-xs" />
                       </div>
-                      <div className="w-32">
-                        <span className="text-xs text-slate-400 block mb-1">Betrag (CHF)</span>
-                        <input 
-                          type="number" 
-                          value={event.amount} 
-                          onChange={(e) => handleUpdateCapEx(event.id, { amount: Number(e.target.value) })} 
-                          className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono" 
-                        />
-                      </div>
-                      <div className="w-24">
-                        <span className="text-xs text-slate-400 block mb-1">Jahr</span>
-                        <select 
-                          value={event.year} 
-                          onChange={(e) => handleUpdateCapEx(event.id, { year: e.target.value })}
-                          className="w-full border border-slate-800 bg-slate-950 text-slate-100 rounded px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500 font-mono"
-                        >
-                          {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                        </select>
-                      </div>
-                      <div className="w-24 flex items-end pb-2">
-                        <label className="flex items-center space-x-2 text-xs text-slate-300 cursor-pointer" title="Steuerlich abziehbar?">
-                          <input 
-                            type="checkbox" 
-                            checked={event.isTaxDeductible || false}
-                            onChange={(e) => handleUpdateCapEx(event.id, { isTaxDeductible: e.target.checked })}
-                            className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-800 bg-slate-950 rounded"
-                          />
-                          <span>Abziehbar</span>
-                        </label>
-                      </div>
-                      <div className="pt-5">
-                        <button 
-                          onClick={() => handleDeleteCapEx(event.id)}
-                          className="text-rose-400 hover:text-rose-350 px-2 py-2"
-                          title="Löschen"
-                        >
-                          ✕
-                        </button>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block mb-0.5">Saron Zins (%)</span>
+                        <input type="number" step="0.01" value={state.housing.saronRate} onChange={(e) => updateState('housing', { saronRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono text-xs" />
                       </div>
                     </div>
-                  ))}
-                  {state.capExEvents.length === 0 && (
-                    <p className="text-slate-500 text-sm text-center py-4">Keine Investitionen geplant.</p>
-                  )}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block mb-0.5">Fest Betrag</span>
+                        <input type="number" value={state.housing.festAmount} onChange={(e) => updateState('housing', { festAmount: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono text-xs" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block mb-0.5">Fest Zins (%)</span>
+                        <input type="number" step="0.01" value={state.housing.festRate} onChange={(e) => updateState('housing', { festRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono text-xs" />
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Amortisation (p.a.)</span>
+                      <input type="number" value={state.housing.amortisation} onChange={(e) => updateState('housing', { amortisation: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 bg-slate-900 p-4 rounded border border-slate-800 flex flex-col justify-between">
+                    <div>
+                      <h4 className="font-semibold text-slate-200 text-xs uppercase tracking-wider font-mono border-b border-slate-800 pb-1.5">Unterhalt & Stress-Kosten</h4>
+                      <div className="mt-3">
+                        <span className="text-xs text-slate-400 block mb-1">Unterhaltssatz (als % vom Steuerwert)</span>
+                        <input type="number" step="0.1" value={state.housing.unterhaltRate} onChange={(e) => updateState('housing', { unterhaltRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-slate-950 p-2.5 rounded border border-slate-800 text-[10px] space-y-1.5 font-mono text-slate-400">
+                      <div className="text-slate-200 font-semibold mb-1 text-[11px] font-sans">Kalkulatorische Stress-Kosten (Banken)</div>
+                      <div className="flex justify-between">
+                        <span>Kalkulatorischer Zins (5% stress):</span>
+                        <span className="text-rose-455">CHF {formatCHF(((state.housing.saronAmount || 0) + (state.housing.festAmount || 0)) * 0.05).replace('CHF', '')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Kalk. Unterhaltskosten (1% bankwert):</span>
+                        <span className="text-rose-455">CHF {formatCHF((state.housing.bankLendingValue || 0) * 0.01).replace('CHF', '')}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                <div className="bg-slate-900/50 p-4 rounded border border-slate-800">
+                  <h4 className="font-semibold text-slate-200 text-sm font-mono border-b border-slate-800 pb-2 mb-3">Laufende Nebenkosten der Liegenschaft</h4>
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-slate-400 text-xs font-mono uppercase text-left">
+                        <th>Kategorie</th>
+                        <th className="text-right w-36">Monatlich (CHF/Mt)</th>
+                        <th className="text-right w-36 pl-4">Jährlich (CHF/Jahr)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className="py-2 text-slate-200">
+                          <div>Strom & Heizung (Nebenkosten)</div>
+                          <div className="text-[10px] text-slate-500">Heizöl/Gas, Strom, Wasser, Kehricht, Kaminfeger</div>
+                        </td>
+                        <td className="py-2">
+                          <input
+                            type="number"
+                            value={Math.round((state.housing.stromHeizung || 0) / 12)}
+                            onChange={(e) => updateState('housing', { stromHeizung: Number(e.target.value) * 12 })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                        <td className="py-2 pl-4">
+                          <input
+                            type="number"
+                            value={state.housing.stromHeizung || 0}
+                            onChange={(e) => updateState('housing', { stromHeizung: Number(e.target.value) })}
+                            className="w-full border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <CapExManager category="housing" label="Einmalige Liegenschafts-Investitionen / Renovationen (CapEx)" />
               </div>
             </section>
           )}
 
-          {/* SECTION 5: Immobilien */}
           {(activeModalTab === 'all' || activeModalTab === 5) && (
             <section>
-              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">5. Immobilien (Eigenheim)</h3>
-              <div className="grid grid-cols-2 gap-6">
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">5. Vermögen & Finanzplan-Parameter</h3>
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800 space-y-6">
                 
-                {/* Steuerwerte */}
-                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
-                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Werte & Steuern</h4>
-                  <div>
-                    <span className="text-xs text-slate-400 block mb-1">Steuerwert Liegenschaft (CHF)</span>
-                    <input type="number" value={state.immobilie.efhTaxValue} onChange={(e) => updateState('immobilie', { efhTaxValue: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4 bg-slate-900 p-4 rounded border border-slate-800">
+                    <h4 className="font-semibold text-slate-200 text-sm font-mono border-b border-slate-800 pb-1.5">Verfügbares Vermögen (Start)</h4>
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Startvermögen Liquide (CHF)</span>
+                      <input type="number" value={state.assets.startingLiquidWealth} onChange={(e) => updateState('assets', { startingLiquidWealth: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Rendite auf freies Vermögen (%)</span>
+                      <input type="number" step="0.1" value={state.baseline.liquidYieldRate} onChange={(e) => updateState('baseline', { liquidYieldRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block mb-1">Eigenmietwert (CHF)</span>
-                    <input type="number" value={state.immobilie.eigenmietwert} onChange={(e) => updateState('immobilie', { eigenmietwert: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                  </div>
-                  <div>
-                    <span className="text-xs text-slate-400 block mb-1">Liegenschaftsunterhalt (als % vom Steuerwert)</span>
-                    <input type="number" step="0.1" value={state.immobilie.unterhaltRate} onChange={(e) => updateState('immobilie', { unterhaltRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
+
+                  <div className="space-y-4 bg-slate-900 p-4 rounded border border-slate-800">
+                    <h4 className="font-semibold text-slate-200 text-sm font-mono border-b border-slate-800 pb-1.5">Gebundenes Kapital (Vorsorgebezug)</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-xs text-slate-400 block mb-1">Säule 3a Saldo (CHF)</span>
+                        <input type="number" value={state.assets.saeule3a.balance} onChange={(e) => updateState('assets', { saeule3a: { ...state.assets.saeule3a, balance: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                      </div>
+                      <div>
+                        <span className="text-xs text-slate-400 block mb-1">Bezugsjahr</span>
+                        <input type="text" value={state.assets.saeule3a.withdrawalYear} onChange={(e) => updateState('assets', { saeule3a: { ...state.assets.saeule3a, withdrawalYear: e.target.value }})} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" placeholder="z.B. 2028" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-xs text-slate-400 block mb-1">Freizügigkeitskonto (CHF)</span>
+                        <input type="number" value={state.assets.freizuegigkeitskonto.balance} onChange={(e) => updateState('assets', { freizuegigkeitskonto: { ...state.assets.freizuegigkeitskonto, balance: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
+                      </div>
+                      <div>
+                        <span className="text-xs text-slate-400 block mb-1">Bezugsjahr</span>
+                        <input type="text" value={state.assets.freizuegigkeitskonto.withdrawalYear} onChange={(e) => updateState('assets', { freizuegigkeitskonto: { ...state.assets.freizuegigkeitskonto, withdrawalYear: e.target.value }})} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" placeholder="z.B. 2027" />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Hypotheken */}
-                <div className="space-y-4 bg-slate-950/40 p-4 rounded-lg border border-slate-800">
-                  <h4 className="font-semibold text-slate-200 font-mono text-sm">Hypotheken</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-900 p-4 rounded border border-slate-800">
+                  <h4 className="font-semibold text-slate-200 text-sm font-mono border-b border-slate-800 pb-1.5 mb-3">Globale Parameter</h4>
+                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <span className="text-xs text-slate-400 block mb-1">Saron Betrag</span>
-                      <input type="number" value={state.immobilie.hypothek.saronAmount} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, saronAmount: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
+                      <span className="text-xs text-slate-400 block mb-1">Jährlicher Inflationssatz (%)</span>
+                      <input type="number" step="0.1" value={state.baseline.inflationRate} onChange={(e) => updateState('baseline', { inflationRate: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-3 py-1.5 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono text-sm" />
                     </div>
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Saron Zins (%)</span>
-                      <input type="number" step="0.01" value={state.immobilie.hypothek.saronRate} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, saronRate: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Fest Betrag</span>
-                      <input type="number" value={state.immobilie.hypothek.festAmount} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, festAmount: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Fest Zins (%)</span>
-                      <input type="number" step="0.01" value={state.immobilie.hypothek.festRate} onChange={(e) => updateState('immobilie', { hypothek: { ...state.immobilie.hypothek, festRate: Number(e.target.value) }})} className="w-full border border-slate-800 rounded px-3 py-2 bg-slate-950 text-slate-100 focus:ring-emerald-500 focus:border-emerald-500 font-mono" />
+                    <div className="flex items-center pt-5">
+                      <label className="flex items-center space-x-2 text-sm text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={state.baseline.applyInflation}
+                          onChange={(e) => updateState('baseline', { applyInflation: e.target.checked })}
+                          className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-800 bg-slate-950 rounded"
+                        />
+                        <span>Inflation anwenden (ab 2031+)</span>
+                      </label>
                     </div>
                   </div>
                 </div>

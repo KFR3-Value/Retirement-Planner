@@ -18,9 +18,26 @@ export interface YearData {
   mortgageInterest: number;
   amortisation: number;
   propertyMaintenance: number;
+  stromHeizung: number;
+  housingCapEx: number;
+  housingTotal: number;
+
   krankenkasse: number;
+  zahnarztOptiker: number;
+  diversesReserve: number;
+  healthCapEx: number;
+  healthTotal: number;
+
+  haushaltEssen: number;
   mobilitaet: number;
-  variableKosten: number;
+  telefonHandyMedien: number;
+  kleiderFreizeit: number;
+  ferienReisen: number;
+  versicherungenSonstige: number;
+  livingCapEx: number;
+  livingTotal: number;
+
+  variableKosten: number; // Sum of living running costs + health running costs (except insurance)
   capEx: number;
   deductibleCapEx: number; // For tax deductions
   totalOutflowExclTaxes: number;
@@ -69,6 +86,7 @@ export interface YearData {
   fixedCosts: number;
   guaranteedIncome: number;
   coverageRatio: number;
+  affordabilityRatio: number;
 }
 
 import { calculateTotalTax } from '../utils/taxCalculations';
@@ -168,43 +186,73 @@ export const useCalculations = () => {
         return sum + (activeMonths * event.monthlyAmount);
       }, 0);
 
-      const totalGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + wealthYieldIncome + otherIncome;
+      // Banking Standard Assumption: Deemed yield of 4.0% on liquid assets for dynamic income calculation.
+      const deemedYield = currentLiquidWealth * 0.04;
+      const actualGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + wealthYieldIncome + otherIncome;
+      const totalGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + deemedYield + otherIncome;
       
       // Eigenmietwert only up until 2028 (inclusive)
       const isUpTo2028 = ['2026', '2027', '2028'].includes(yearKey);
-      const eigenmietwert = isUpTo2028 ? (Number(state.immobilie.eigenmietwert) || 0) : 0;
+      const eigenmietwert = isUpTo2028 ? (Number(state.housing.eigenmietwert) || 0) : 0;
 
       // --- EXPENSES ---
       const mortgageInterest =
-        (Number(state.immobilie.hypothek.saronAmount) || 0) * ((Number(state.immobilie.hypothek.saronRate) || 0) / 100) +
-        (Number(state.immobilie.hypothek.festAmount) || 0) * ((Number(state.immobilie.hypothek.festRate) || 0) / 100);
+        (Number(state.housing.saronAmount) || 0) * ((Number(state.housing.saronRate) || 0) / 100) +
+        (Number(state.housing.festAmount) || 0) * ((Number(state.housing.festRate) || 0) / 100);
 
-      const amortisation = Number(state.fixeKosten.amortisation) || 0;
-      const propertyMaintenance = (Number(state.immobilie.efhTaxValue) || 0) * ((Number(state.immobilie.unterhaltRate) || 0) / 100);
+      const amortisation = Number(state.housing.amortisation) || 0;
+      const propertyMaintenance = (Number(state.housing.efhTaxValue) || 0) * ((Number(state.housing.unterhaltRate) || 0) / 100);
+
+      // Banking Standard Assumptions for Affordability Stress Test:
+      // Deemed imputed interest rate of 5.0% on the total mortgage debt, and deemed maintenance of 1.0% on the bank lending value.
+      const bankLendingValue = Number(state.housing.bankLendingValue) || 1000000;
+      const mortgageDebt = (Number(state.housing.saronAmount) || 0) + (Number(state.housing.festAmount) || 0);
+      const imputedCosts = (mortgageDebt * 0.05) + (bankLendingValue * 0.01) + amortisation;
+      const affordabilityRatio = totalGrossIncome > 0 ? (imputedCosts / totalGrossIncome) * 100 : 0;
 
       // Krankenkasse age increase (3% per year starting from 2027)
-      let krankenkasse = Number(state.fixeKosten.krankenkasse.base) || 0;
-      if (state.fixeKosten.krankenkasse.applyAgeIncrease && index > 0) {
-        krankenkasse = krankenkasse * Math.pow(1 + ((Number(state.fixeKosten.krankenkasse.ageIncreaseRate) || 0) / 100), index);
+      let krankenkasse = Number(state.health.krankenkasseBase) || 0;
+      if (state.health.applyAgeIncrease && index > 0) {
+        krankenkasse = krankenkasse * Math.pow(1 + ((Number(state.health.ageIncreaseRate) || 0) / 100), index);
       }
 
-      const mobilitaet = Number(state.fixeKosten.mobilitaet) || 0;
-      const variableKosten = Number(state.variableKosten) || 0;
-      const capEx = state.capExEvents
-        .filter(event => event.year === yearKey)
+      const stromHeizung = Number(state.housing.stromHeizung) || 0;
+      
+      const haushaltEssen = Number(state.living.haushaltEssen) || 0;
+      const mobilitaet = Number(state.living.mobilitaet) || 0;
+      const telefonHandyMedien = Number(state.living.telefonHandyMedien) || 0;
+      const kleiderFreizeit = Number(state.living.kleiderFreizeit) || 0;
+      const ferienReisen = Number(state.living.ferienReisen) || 0;
+      const versicherungenSonstige = Number(state.living.versicherungenSonstige) || 0;
+      
+      const zahnarztOptiker = Number(state.health.zahnarztOptiker) || 0;
+      const diversesReserve = Number(state.health.diversesReserve) || 0;
+
+      const variableKosten = haushaltEssen + kleiderFreizeit + ferienReisen + zahnarztOptiker + diversesReserve;
+
+      // Categorized CapEx
+      const housingCapEx = state.capExEvents
+        .filter(event => event.year === yearKey && (event.category === 'housing' || (!event.category && (event.description.toLowerCase().includes('renovation') || event.description.toLowerCase().includes('garten')))))
         .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
 
-      // Apply inflation to 2031+ expenses
-      const totalOutflowExclTaxes = (
-        mortgageInterest +
-        amortisation +
-        propertyMaintenance +
-        krankenkasse +
-        mobilitaet +
-        variableKosten
-      ) * inflationFactor + capEx; // capEx in 2031+ acts as an annualized reserve
+      const healthCapEx = state.capExEvents
+        .filter(event => event.year === yearKey && event.category === 'health')
+        .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
 
-      const fixedCosts = (mortgageInterest + amortisation + propertyMaintenance + krankenkasse + mobilitaet) * inflationFactor;
+      const livingCapEx = state.capExEvents
+        .filter(event => event.year === yearKey && (event.category === 'living' || (!event.category && !event.description.toLowerCase().includes('renovation') && !event.description.toLowerCase().includes('garten'))))
+        .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
+
+      const capEx = housingCapEx + livingCapEx + healthCapEx;
+
+      // Domain Totals
+      const housingTotal = (mortgageInterest + amortisation + propertyMaintenance + stromHeizung) * inflationFactor + housingCapEx;
+      const livingTotal = (haushaltEssen + mobilitaet + telefonHandyMedien + kleiderFreizeit + ferienReisen + versicherungenSonstige) * inflationFactor + livingCapEx;
+      const healthTotal = (krankenkasse + zahnarztOptiker + diversesReserve) * inflationFactor + healthCapEx;
+
+      const totalOutflowExclTaxes = housingTotal + livingTotal + healthTotal;
+
+      const fixedCosts = (mortgageInterest + amortisation + propertyMaintenance + krankenkasse + stromHeizung + mobilitaet + telefonHandyMedien + versicherungenSonstige) * inflationFactor;
 
       // --- WITHDRAWALS & TAXES ---
       let capitalWithdrawalAmount = 0;
@@ -234,11 +282,11 @@ export const useCalculations = () => {
         .filter(event => event.year === yearKey && event.isTaxDeductible)
         .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
 
-      const taxableIncome = Math.max(0, totalGrossIncome + eigenmietwert - krankenkasse - mortgageInterest - propertyMaintenance - deductibleCapEx);
+      // Taxes must use actualGrossIncome (not the 4% deemed yield)
+      const taxableIncome = Math.max(0, actualGrossIncome + eigenmietwert - krankenkasse - mortgageInterest - propertyMaintenance - deductibleCapEx);
 
       // Wealth Tax
-      const mortgageDebt = (Number(state.immobilie.hypothek.saronAmount) || 0) + (Number(state.immobilie.hypothek.festAmount) || 0);
-      const efhTaxValue = Number(state.immobilie.efhTaxValue) || 0;
+      const efhTaxValue = Number(state.housing.efhTaxValue) || 0;
       const taxableWealth = Math.max(0, currentLiquidWealth + current3a + efhTaxValue - mortgageDebt);
 
       // Calculate taxes using exact Aargau Tarif B logic (Bettwil Steuerfuss)
@@ -251,7 +299,8 @@ export const useCalculations = () => {
       const totalTaxBurden = taxResult.totalTaxBurden;
 
       // --- SURPLUS & WEALTH UPDATE ---
-      const surplusDeficit = totalGrossIncome - totalOutflowExclTaxes - totalTaxBurden;
+      // Cash flow must use actualGrossIncome
+      const surplusDeficit = actualGrossIncome - totalOutflowExclTaxes - totalTaxBurden;
       currentLiquidWealth += surplusDeficit;
 
       // Calculate ratios
@@ -271,8 +320,22 @@ export const useCalculations = () => {
         mortgageInterest,
         amortisation,
         propertyMaintenance,
+        stromHeizung,
+        housingCapEx,
+        housingTotal,
         krankenkasse,
+        zahnarztOptiker,
+        diversesReserve,
+        healthCapEx,
+        healthTotal,
+        haushaltEssen,
         mobilitaet,
+        telefonHandyMedien,
+        kleiderFreizeit,
+        ferienReisen,
+        versicherungenSonstige,
+        livingCapEx,
+        livingTotal,
         variableKosten,
         capEx,
         deductibleCapEx,
@@ -297,7 +360,8 @@ export const useCalculations = () => {
         wealthTaxableBase: { liquid: currentLiquidWealth, pillar3a: current3a },
         fixedCosts,
         guaranteedIncome,
-        coverageRatio
+        coverageRatio,
+        affordabilityRatio
       };
     });
 
@@ -310,8 +374,8 @@ export const useCalculations = () => {
     let currentWealth = data['2031+'].liquidWealthEnd;
     const current3a = data['2031+'].saeule3aEnd;
     const currentFzk = data['2031+'].fzkEnd;
-    const mortgageDebt = (Number(state.immobilie.hypothek.saronAmount) || 0) + (Number(state.immobilie.hypothek.festAmount) || 0);
-    const realEstateEquity = (Number(state.immobilie.efhTaxValue) || 0) - mortgageDebt; // using tax value for equity approximation
+    const mortgageDebt = (Number(state.housing.saronAmount) || 0) + (Number(state.housing.festAmount) || 0);
+    const realEstateEquity = (Number(state.housing.efhTaxValue) || 0) - mortgageDebt; // using tax value for equity approximation
 
     // Base surplus logic for 2031+ onwards
     const annualSurplus = data['2031+'].surplusDeficit;
