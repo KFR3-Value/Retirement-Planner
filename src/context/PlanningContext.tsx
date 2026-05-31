@@ -125,6 +125,19 @@ export interface PlanningState {
     applyInflation: boolean;
     liquidYieldRate: number; // percentage
   };
+  taxDeductions: Record<YearKey, YearlyDeductions>;
+}
+
+export interface YearlyDeductions {
+  transport: number;
+  meal: number;
+  professional: number;
+  insuranceOverride?: number;
+  childcare: number;
+  alimony: number;
+  donations: number;
+  education: number;
+  other: number;
 }
 
 const defaultState: PlanningState = {
@@ -258,6 +271,14 @@ const defaultState: PlanningState = {
     inflationRate: 1.5,
     applyInflation: true,
     liquidYieldRate: 2
+  },
+  taxDeductions: {
+    '2026': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
+    '2027': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
+    '2028': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
+    '2029': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
+    '2030': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
+    '2031+': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 }
   }
 };
 

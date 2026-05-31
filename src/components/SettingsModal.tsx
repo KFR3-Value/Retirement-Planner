@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { usePlanning, YEARS } from '../context/PlanningContext';
+import { usePlanning, YEARS, type YearlyDeductions } from '../context/PlanningContext';
 import { useUI } from '../context/UIContext';
 import { formatCHF } from '../utils/format';
 
@@ -977,6 +977,78 @@ export const SettingsModal = () => {
                   </div>
                 </div>
 
+              </div>
+            </section>
+          )}
+
+          {(activeModalTab === 'all' || activeModalTab === 6) && (
+            <section>
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">6. Steuerabzüge (Multi-Year)</h3>
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800 space-y-6">
+                <p className="text-xs text-slate-400">
+                  Erfassen Sie hier Ihre steuerlichen Abzüge für die kommenden Planungsjahre. Gesetzliche Obergrenzen für den Kanton Aargau (AG) und die direkte Bundessteuer (CH) werden in den Berechnungen automatisch angewendet.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-slate-350 text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-950 text-slate-400 uppercase tracking-wider text-[10px] font-mono border-b border-slate-800">
+                        <th className="py-3 px-3 text-left font-medium w-64">Abzugsart</th>
+                        {YEARS.map(y => (
+                          <th key={y} className="py-3 px-3 text-right font-medium w-24">{y}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/40">
+                      {(
+                        [
+                          { label: 'Fahrkosten (Ziffer 10.1)', field: 'transport', help: 'Pendlerkosten. Capped bei max. 7\'000 CHF für Kanton (AG) und 3\'200 CHF für Bund (CH).' },
+                          { label: 'Auswärtige Verpflegung (Ziffer 10.2)', field: 'meal', help: 'Mehrkosten Mittagessen. Capped bei max. 3\'200 CHF (Kanton & Bund).' },
+                          { label: 'Übrige Berufskosten (Ziffer 10.3)', field: 'professional', help: 'Pauschale oder effektive Kosten für Arbeitsmittel etc.' },
+                          { label: 'Kinderdrittbetreuung (Ziffer 15.0)', field: 'childcare', help: 'Kosten für Fremdbetreuung. Capped bei max. 10\'000 CHF (AG) / 25\'000 CHF (CH) pro Kind.' },
+                          { label: 'Unterhaltsbeiträge (Ziffer 12.0)', field: 'alimony', help: 'Gezahlte Alimente an Ex-Partner/Kinder. Steuerlich voll abziehbar.' },
+                          { label: 'Spenden / Zuwendungen (Ziffer 15.3)', field: 'donations', help: 'Gemeinnützige Spenden. Capped bei max. 20% des Nettoeinkommens.' },
+                          { label: 'Aus- und Weiterbildung (Ziffer 15.5)', field: 'education', help: 'Berufsorientierte Aus- und Weiterbildungskosten. Capped bei max. 12\'000 CHF.' },
+                          { label: 'Übrige Abzüge (Ziffer 15.6)', field: 'other', help: 'Diverse andere gesetzlich zugelassene Abzüge.' }
+                        ] as { label: string; field: keyof YearlyDeductions; help: string }[]
+                      ).map(row => (
+                        <tr key={row.field} className="hover:bg-slate-900/30 transition-colors">
+                          <td className="py-3 px-3 font-medium">
+                            <span className="block text-slate-200">{row.label}</span>
+                            <span className="block text-[10px] text-slate-500 font-sans mt-0.5">{row.help}</span>
+                          </td>
+                          {YEARS.map(year => {
+                            const val = state.taxDeductions?.[year]?.[row.field] ?? 0;
+                            return (
+                              <td key={year} className="py-2 px-2 text-right">
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    value={val === 0 ? '' : val}
+                                    onChange={(e) => {
+                                      const newVal = Math.max(0, Number(e.target.value));
+                                      const currentYearDeds = state.taxDeductions[year] || {
+                                        transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0
+                                      };
+                                      updateState('taxDeductions', {
+                                        ...state.taxDeductions,
+                                        [year]: {
+                                          ...currentYearDeds,
+                                          [row.field]: newVal
+                                        }
+                                      });
+                                    }}
+                                    placeholder="0"
+                                    className="w-24 border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-200 text-right focus:ring-emerald-500 focus:border-emerald-500 font-mono text-xs"
+                                  />
+                                </div>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </section>
           )}

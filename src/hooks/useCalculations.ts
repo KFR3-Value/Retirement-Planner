@@ -81,6 +81,9 @@ export interface YearData {
   efhTaxValue: number;
   mortgageDebt: number;
   wealthTaxableBase: { liquid: number, pillar3a: number };
+  deductionsBreakdown?: any;
+  actualDeductionsCanton: number;
+  actualDeductionsFederal: number;
 
   // Dashboard Metrics
   fixedCosts: number;
@@ -89,7 +92,9 @@ export interface YearData {
   affordabilityRatio: number;
 }
 
-import { calculateTotalTax } from '../utils/taxCalculations';
+import { Aargau2025Strategy } from '../engines/tax/strategies/aargau_strategy';
+import type { ExpenseProfile } from '../engines/tax/tax_calculator';
+import multipliersData from '../data/multipliers_2024.json';
 export const useCalculations = () => {
   const { state } = usePlanning();
 
@@ -257,20 +262,48 @@ export const useCalculations = () => {
       // --- WITHDRAWALS & TAXES ---
       let capitalWithdrawalAmount = 0;
 
-      // Capital withdrawal logic (simplified for 2026 or designated year)
-      if (yearNum === state.pensionskasse.startYear && pkCapital > 0 && !pkCapitalWithdrawn) {
+      // Capital withdrawal logic (support withdrawal years >= 2031 in '2031+' column)
+      const isPensionskasseWithdrawal = () => {
+        if (pkCapitalWithdrawn || pkCapital <= 0) return false;
+        if (yearKey === '2031+') {
+          return state.pensionskasse.startYear >= 2031;
+        }
+        return yearNum === state.pensionskasse.startYear;
+      };
+
+      if (isPensionskasseWithdrawal()) {
         currentLiquidWealth += pkCapital;
         capitalWithdrawalAmount += pkCapital;
         pkCapitalWithdrawn = true;
       }
 
-      if (state.assets.saeule3a.withdrawalYear === yearKey) {
+      const isSaeule3aWithdrawal = () => {
+        const wYear = state.assets.saeule3a.withdrawalYear;
+        if (!wYear || current3a <= 0) return false;
+        if (yearKey === '2031+') {
+          const parsed = parseInt(wYear);
+          return !isNaN(parsed) && parsed >= 2031;
+        }
+        return wYear === yearKey;
+      };
+
+      if (isSaeule3aWithdrawal()) {
         currentLiquidWealth += current3a;
         capitalWithdrawalAmount += current3a;
         current3a = 0;
       }
 
-      if (state.assets.freizuegigkeitskonto.withdrawalYear === yearKey) {
+      const isFzkWithdrawal = () => {
+        const wYear = state.assets.freizuegigkeitskonto.withdrawalYear;
+        if (!wYear || currentFzk <= 0) return false;
+        if (yearKey === '2031+') {
+          const parsed = parseInt(wYear);
+          return !isNaN(parsed) && parsed >= 2031;
+        }
+        return wYear === yearKey;
+      };
+
+      if (isFzkWithdrawal()) {
         currentLiquidWealth += currentFzk;
         capitalWithdrawalAmount += currentFzk;
         currentFzk = 0;
@@ -282,21 +315,165 @@ export const useCalculations = () => {
         .filter(event => event.year === yearKey && event.isTaxDeductible)
         .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
 
-      // Taxes must use actualGrossIncome (not the 4% deemed yield)
-      const taxableIncome = Math.max(0, actualGrossIncome + eigenmietwert - krankenkasse - mortgageInterest - propertyMaintenance - deductibleCapEx);
+      // Initialize the Aargau strategy
+      const strategy = new Aargau2025Strategy();
 
-      // Wealth Tax
+      // Look up multipliers for Bettwil dynamically
+      const bettwilMultiplier = (multipliersData.response as any).find(
+        (m: any) => m.Location && m.Location.City === 'Bettwil'
+      );
+      const cantonMultiplier = bettwilMultiplier ? bettwilMultiplier.IncomeRateCanton / 100 : 1.11;
+      const municipalMultiplier = bettwilMultiplier ? bettwilMultiplier.IncomeRateCity / 100 : 1.02;
+      const churchMultiplier = bettwilMultiplier 
+        ? (bettwilMultiplier.IncomeRateRoman + bettwilMultiplier.IncomeRateProtestant) / 200 
+        : 0.19;
+
+      const multipliers = {
+        cantonal: cantonMultiplier,
+        municipal: municipalMultiplier,
+        church: churchMultiplier
+      };
+
+      const yearlyDeductions = state.taxDeductions?.[yearKey] || {
+        transport: 0,
+        meal: 0,
+        professional: 0,
+        childcare: 0,
+        alimony: 0,
+        donations: 0,
+        education: 0,
+        other: 0
+      };
+
+      const insuranceVal = (yearlyDeductions.insuranceOverride !== undefined && yearlyDeductions.insuranceOverride > 0)
+        ? yearlyDeductions.insuranceOverride
+        : krankenkasse;
+
+      // Construct ExpenseProfile for the deduction engine
+      const memberExpenses: ExpenseProfile[] = [{
+        transport: Number(yearlyDeductions.transport) || 0,
+        meal: Number(yearlyDeductions.meal) || 0,
+        professional: Number(yearlyDeductions.professional) || 0,
+        debtInterest: mortgageInterest,
+        maintenance: propertyMaintenance,
+        pillar3a: 0,
+        pillar2Buyin: 0,
+        insurance: insuranceVal,
+        childcare: Number(yearlyDeductions.childcare) || 0,
+        alimony: Number(yearlyDeductions.alimony) || 0,
+        donations: Number(yearlyDeductions.donations) || 0,
+        wealthManagement: 0,
+        others: deductibleCapEx + (Number(yearlyDeductions.education) || 0) + (Number(yearlyDeductions.other) || 0)
+      }];
+
+      // Run TaxDeductionEngine via strategy
+      const deductionsResult = strategy.calculateDeductions(
+        actualGrossIncome + eigenmietwert,
+        'married',
+        [], // childAges (no children modeled in state yet)
+        memberExpenses,
+        [salaryIncome]
+      );
+
+      // Taxable Income (Canton vs Federal)
+      const taxableIncome = Math.max(0, actualGrossIncome + eigenmietwert - deductionsResult.canton);
+      const taxableIncomeFederal = Math.max(0, actualGrossIncome + eigenmietwert - deductionsResult.federal);
+
+      // Wealth Tax (Aargau married tax-free allowance of 200,000 CHF is subtracted)
       const efhTaxValue = Number(state.housing.efhTaxValue) || 0;
       const taxableWealth = Math.max(0, currentLiquidWealth + current3a + efhTaxValue - mortgageDebt);
+      const netWealth = Math.max(0, taxableWealth - 200000);
 
-      // Calculate taxes using exact Aargau Tarif B logic (Bettwil Steuerfuss)
-      // Assuming multipliers: Canton 1.11, Bettwil 1.02, Church 0.19 (average)
-      const taxResult = calculateTotalTax(taxableIncome, taxableWealth, capitalWithdrawalAmount, { cantonal: 1.11, municipal: 1.02, church: 0.19 });
-      
-      const incomeTax = taxResult.incomeTax;
-      const wealthTax = taxResult.wealthTax;
-      const capitalWithdrawalTax = taxResult.capitalWithdrawalTax;
-      const totalTaxBurden = taxResult.totalTaxBurden;
+      // Calculate Simple Tax (100% basis)
+      const simpleTaxes = strategy.calculateSimpleTax(
+        taxableIncome,
+        taxableIncomeFederal,
+        netWealth,
+        'married'
+      );
+
+      // Apply Multipliers for Canton, Commune, and Church for ordinary taxes
+      const cantonalIncomeTax = simpleTaxes.simpleIncomeCanton * multipliers.cantonal;
+      const municipalIncomeTax = simpleTaxes.simpleIncomeCanton * multipliers.municipal;
+      const churchIncomeTax = simpleTaxes.simpleIncomeCanton * multipliers.church;
+      const federalIncomeTax = simpleTaxes.federalTax;
+
+      const cantonalWealthTax = simpleTaxes.simpleWealthCanton * multipliers.cantonal;
+      const municipalWealthTax = simpleTaxes.simpleWealthCanton * multipliers.municipal;
+      const churchWealthTax = simpleTaxes.simpleWealthCanton * multipliers.church;
+
+      // Capital Withdrawal Tax
+      let cantonalWithdrawalTax = 0;
+      let municipalWithdrawalTax = 0;
+      let churchWithdrawalTax = 0;
+      let federalWithdrawalTax = 0;
+
+      if (capitalWithdrawalAmount > 0) {
+        const capitalSimpleTaxes = strategy.calculateSimpleTax(capitalWithdrawalAmount, 0, 0, 'married');
+        
+        // Canton Aargau (AG): 30% of simple income tax, min 1% of the gross capital amount
+        const agWithdrawalTaxSimple = Math.max(
+          capitalWithdrawalAmount * 0.01,
+          capitalSimpleTaxes.simpleIncomeCanton * 0.30
+        );
+
+        // Federal (CH): 20% (1/5) of federal tax, min 2% of the gross capital amount
+        const federalWithdrawalTaxCalculated = Math.max(
+          capitalWithdrawalAmount * 0.02,
+          capitalSimpleTaxes.federalTax * 0.20
+        );
+
+        cantonalWithdrawalTax = agWithdrawalTaxSimple * multipliers.cantonal;
+        municipalWithdrawalTax = agWithdrawalTaxSimple * multipliers.municipal;
+        churchWithdrawalTax = agWithdrawalTaxSimple * multipliers.church;
+        federalWithdrawalTax = federalWithdrawalTaxCalculated;
+      }
+
+      // Ordinary Tax Summaries
+      const ordinaryCantonal = cantonalIncomeTax + cantonalWealthTax;
+      const ordinaryMunicipal = municipalIncomeTax + municipalWealthTax;
+      const ordinaryFederal = federalIncomeTax;
+      const ordinaryChurch = churchIncomeTax + churchWealthTax;
+
+      // Total Tax Summaries (including withdrawal taxes)
+      const totalCantonal = ordinaryCantonal + cantonalWithdrawalTax;
+      const totalMunicipal = ordinaryMunicipal + municipalWithdrawalTax;
+      const totalFederal = ordinaryFederal + federalWithdrawalTax;
+      const totalChurch = ordinaryChurch + churchWithdrawalTax;
+
+      const incomeTax = cantonalIncomeTax + municipalIncomeTax + federalIncomeTax + churchIncomeTax;
+      const wealthTax = cantonalWealthTax + municipalWealthTax + churchWealthTax;
+      const capitalWithdrawalTax = cantonalWithdrawalTax + municipalWithdrawalTax + federalWithdrawalTax + churchWithdrawalTax;
+      const totalTaxBurden = totalCantonal + totalMunicipal + totalFederal + totalChurch;
+
+      const taxResult = {
+        incomeTax,
+        wealthTax,
+        capitalWithdrawalTax,
+        totalTaxBurden,
+        breakdown: {
+          cantonal: totalCantonal,
+          municipal: totalMunicipal,
+          federal: totalFederal,
+          church: totalChurch
+        },
+        ordinaryBreakdown: {
+          cantonal: ordinaryCantonal,
+          municipal: ordinaryMunicipal,
+          federal: ordinaryFederal,
+          church: ordinaryChurch
+        },
+        withdrawalBreakdown: {
+          cantonal: cantonalWithdrawalTax,
+          municipal: municipalWithdrawalTax,
+          federal: federalWithdrawalTax,
+          church: churchWithdrawalTax
+        },
+        marginalRateInfo: {
+          simpleIncomeRate: simpleTaxes.simpleIncomeCanton / (taxableIncome || 1),
+          federalRate: simpleTaxes.federalTax / (taxableIncomeFederal || 1)
+        }
+      };
 
       // --- SURPLUS & WEALTH UPDATE ---
       // Cash flow must use actualGrossIncome
@@ -358,6 +535,9 @@ export const useCalculations = () => {
         efhTaxValue,
         mortgageDebt,
         wealthTaxableBase: { liquid: currentLiquidWealth, pillar3a: current3a },
+        deductionsBreakdown: deductionsResult.items,
+        actualDeductionsCanton: deductionsResult.canton,
+        actualDeductionsFederal: deductionsResult.federal,
         fixedCosts,
         guaranteedIncome,
         coverageRatio,

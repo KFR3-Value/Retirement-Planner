@@ -5,7 +5,6 @@ import { usePlanning } from './context/PlanningContext';
 import { useUI } from './context/UIContext';
 import { SettingsModal } from './components/SettingsModal';
 import { AffordabilityAuditor } from './components/AffordabilityAuditor';
-
 export const MainLayout = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'engine' | 'auditor'>('dashboard');
   const { state, loadState } = usePlanning();
@@ -120,6 +119,7 @@ export const MainLayout = () => {
               >
                 Tragbarkeits-Audit
               </button>
+
             </nav>
           </div>
         </div>
@@ -129,6 +129,7 @@ export const MainLayout = () => {
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'engine' && <Engine />}
         {activeTab === 'auditor' && <AffordabilityAuditor />}
+
       </main>
     </div>
   );

@@ -191,16 +191,25 @@ export const Engine = () => {
           <ExpandableHeaderRow label="Steuerbares Einkommen (nach Abzügen)" dataKey="taxableIncome" expanded={expandedIncome} setExpanded={setExpandedIncome} />
           {expandedIncome && (
             <>
-              <CustomRow label="+ Lohn (Netto)" valueFn={(y) => data[y].salaryIncome} isSub={true} />
-              <CustomRow label="+ AHV Rente" valueFn={(y) => data[y].ahvIncome} isSub={true} />
-              <CustomRow label="+ Pensionskassen-Rente" valueFn={(y) => data[y].pkRenteIncome} isSub={true} />
-              <CustomRow label="+ Vermögensertrag" valueFn={(y) => data[y].wealthYieldIncome} isSub={true} />
-              <CustomRow label="+ Sonstige Einkünfte" valueFn={(y) => data[y].otherIncome} isSub={true} />
-              <CustomRow label="+ Eigenmietwert (nur steuerlich, bis 2028)" valueFn={(y) => data[y].eigenmietwert} isSub={true} onClickLabel={() => openSettingsModal(5)} />
-              <CustomRow label="- Abzug: Krankenkasse" valueFn={(y) => -data[y].krankenkasse} isSub={true} onClickLabel={() => openSettingsModal(2)} />
-              <CustomRow label="- Abzug: Schuldzinsen (Hypothek)" valueFn={(y) => -data[y].mortgageInterest} isSub={true} onClickLabel={() => openSettingsModal(5)} />
-              <CustomRow label="- Abzug: Liegenschaftsunterhalt" valueFn={(y) => -data[y].propertyMaintenance} isSub={true} onClickLabel={() => openSettingsModal(5)} />
-              <CustomRow label="- Abzug: Werterhaltende Investitionen" valueFn={(y) => -data[y].deductibleCapEx} isSub={true} />
+              <CustomRow label="+ Lohn (Netto)" valueFn={(y) => data[y].salaryIncome} isSub={true} onClickLabel={() => openSettingsModal(1)} />
+              <CustomRow label="+ AHV Rente" valueFn={(y) => data[y].ahvIncome} isSub={true} onClickLabel={() => openSettingsModal(1)} />
+              <CustomRow label="+ Pensionskassen-Rente" valueFn={(y) => data[y].pkRenteIncome} isSub={true} onClickLabel={() => openSettingsModal(1)} />
+              <CustomRow label="+ Vermögensertrag" valueFn={(y) => data[y].wealthYieldIncome} isSub={true} onClickLabel={() => openSettingsModal(5)} />
+              <CustomRow label="+ Sonstige Einkünfte" valueFn={(y) => data[y].otherIncome} isSub={true} onClickLabel={() => openSettingsModal(1)} />
+              <CustomRow label="+ Eigenmietwert (nur steuerlich, bis 2028)" valueFn={(y) => data[y].eigenmietwert} isSub={true} onClickLabel={() => openSettingsModal(4)} />
+              <CustomRow label="- Abzug: Fahrkosten (Ziffer 10.1)" valueFn={(y) => -(data[y].deductionsBreakdown?.transport?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Auswärtige Verpflegung (Ziffer 10.2)" valueFn={(y) => -(data[y].deductionsBreakdown?.meal?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Übrige Berufskosten (Ziffer 10.3)" valueFn={(y) => -(data[y].deductionsBreakdown?.professional?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Schuldzinsen (Ziffer 11.0)" valueFn={(y) => -data[y].mortgageInterest} isSub={true} onClickLabel={() => openSettingsModal(4)} />
+              <CustomRow label="- Abzug: Liegenschaftsunterhalt (Ziffer 11.1)" valueFn={(y) => -data[y].propertyMaintenance} isSub={true} onClickLabel={() => openSettingsModal(4)} />
+              <CustomRow label="- Abzug: Krankenkassen- & Vers. Prämien (Ziffer 14.0)" valueFn={(y) => -(data[y].deductionsBreakdown?.insurance?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(3)} />
+              <CustomRow label="- Abzug: Alimente (Ziffer 12.0)" valueFn={(y) => -(data[y].deductionsBreakdown?.alimony?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Kinderdrittbetreuung (Ziffer 15.0)" valueFn={(y) => -(data[y].deductionsBreakdown?.childcare?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Spenden (Ziffer 15.3)" valueFn={(y) => -(data[y].deductionsBreakdown?.donations?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Aus- und Weiterbildung (Ziffer 15.5)" valueFn={(y) => -(state.taxDeductions?.[y]?.education || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Übrige Abzüge (Ziffer 15.6)" valueFn={(y) => -(state.taxDeductions?.[y]?.other || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Zweitverdienerabzug (Ziffer 16.0)" valueFn={(y) => -(data[y].deductionsBreakdown?.dual_income?.canton || 0)} isSub={true} />
+              <CustomRow label="- Abzug: Werterhaltende Investitionen (CapEx)" valueFn={(y) => -data[y].deductibleCapEx} isSub={true} onClickLabel={() => openSettingsModal(4)} />
             </>
           )}
           
