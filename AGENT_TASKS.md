@@ -35,20 +35,30 @@ This file manages asynchronous workflows between the human user and AI agents. A
 ### 3. Master Task: Income Variables & AHV Scenarios
 **Goal**: Enhance income planning with precise temporal controls and implement multiple AHV withdrawal scenarios.
 
-- `[x]` **3.1 Detailed Income Phasing**: Implement detailed month inputs for all income variables to specify exactly when they start and end.
-- `[ ]` **3.2 Rente End Dates**: Add the option to specify an end date for any Rente (pension) stream.
-- `[x]` **3.3 AHV Scenarios**: Implement 3 distinct AHV scenarios (Monique drawing 3 years prior, User on 64th birthday, User 1 year later) and accurately reflect their impact on the AHV rent as specified in the underlying data.
-- `[x]` **3.4 Tragbarkeitsrechner**: Implement a mortgage affordability calculator (Tragbarkeitsrechner) to display year-by-year whether bank affordability criteria are met.
-- `[x]` **3.5 Detailed Salary Modeling**: Refactor the Lohn (Salary) inputs to support multiple parallel salary streams (e.g., Markus and Monique separately), variable bonus assumptions, and custom deduction rates, allowing for more granular and dynamic modeling of employment income over time.
+- [x] **3.1 Detailed Income Phasing**: Implement detailed month inputs for all income variables to specify exactly when they start and end.
+- [x] **3.2 Rente End Dates**: Add the option to specify an end date for any Rente (pension) stream.
+- [x] **3.3 AHV Scenarios**: Implement 3 distinct AHV scenarios (Monique drawing 3 years prior, User on 64th birthday, User 1 year later) and accurately reflect their impact on the AHV rent as specified in the underlying data.
+- [x] **3.4 Tragbarkeitsrechner**: Implement a mortgage affordability calculator (Tragbarkeitsrechner) to display year-by-year whether bank affordability criteria are met.
+- [x] **3.5 Detailed Salary Modeling**: Refactor the Lohn (Salary) inputs to support multiple parallel salary streams (e.g., Markus and Monique separately), variable bonus assumptions, and custom deduction rates, allowing for more granular and dynamic modeling of employment income over time.
 
 ### 4. Master Task: Scenario & Sensitivity Analysis
 **Goal**: Build advanced analytical capabilities to simulate different pension withdrawal strategies and track specific wealth KPIs under varying conditions.
 
-- `[ ]` **4.1 Wealth Definitions Refactoring**: Implement two explicit definitions of wealth across the platform: "Total Vermögen" (including pension fund capital) and "Liquid Vermögen" (strictly liquid assets).
-- `[ ]` **4.2 Sensitivity Analysis Module**: Build a sensitivity analysis tool to evaluate the impact of different Pensionskasse Rente vs. Kapital splits.
-- `[ ]` **4.3 Scenario KPIs**: Implement comparative KPIs for the analysis, specifically tracking "Net Wealth per 2045" (for both wealth definitions) and the "Risk/Probability of dropping below starting wealth".
+- [x] **4.1 Wealth Definitions Refactoring**: Implement two explicit definitions of wealth across the platform: "Total Vermögen" (including pension fund capital) and "Liquid Vermögen" (strictly liquid assets).
+- [x] **4.2 Sensitivity Analysis Module**: Build a sensitivity analysis tool to evaluate the impact of different Pensionskasse Rente vs. Kapital splits.
+- [x] **4.3 Scenario KPIs**: Implement comparative KPIs for the analysis, specifically tracking "Net Wealth per 2045" (for both wealth definitions) and the "Risk/Probability of dropping below starting wealth".
+
+### 5. Master Task: Partner Death Scenario Modeling (Ablebensszenario)
+**Goal**: Model the financial impact of a partner's death in a given year.
+
+- [x] **5.1 State Schema & Context Updates**: Add ownership, Pensionskasse shares, and survivor settings to the Planning State.
+- [x] **5.2 Settings UI Enhancement**: Implement tab 7 and Eigentümer selectors on Salaries, Other Incomes, and PK share in `SettingsModal.tsx`.
+- [x] **5.3 Calculation Engine Transitions**: Calculate monthly transitions for AHV Verwitwetenrente, Pensionskasse survivor rents, scaled variable living expenses, and single civil status tax filing.
+- [x] **5.4 Dashboard Alert Banner**: Add a persistent alert banner when the simulation is active with settings shortcuts.
+- [x] **5.5 Verification**: Confirm successful production build and correct engine outputs.
 
 ---
 
 ## Archive (Completed Master Tasks)
 *(Move fully completed Master Tasks here to keep the Active section clean)*
+

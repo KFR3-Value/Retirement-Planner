@@ -38,15 +38,23 @@ export const WealthTrajectoryChart = ({ trajectory }: { trajectory: any[] }) => 
           <Area
              type="monotone"
              dataKey="liquidWealth"
-             name="Liquides Vermögen (inkl. 3a)"
+             name="Liquides Vermögen (Cash)"
              stackId="1"
              stroke="#3b82f6"
              fill="#93c5fd"
           />
           <Area
              type="monotone"
+             dataKey="pensionWealth"
+             name="Vorsorgekapital (PK, 3a, FZK)"
+             stackId="1"
+             stroke="#8b5cf6"
+             fill="#c084fc"
+          />
+          <Area
+             type="monotone"
              dataKey="realEstateEquity"
-             name="Immobilien (Netto)"
+             name="Immobilien-Eigenkapital"
              stackId="1"
              stroke="#10b981"
              fill="#6ee7b7"

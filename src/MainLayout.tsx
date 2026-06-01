@@ -5,8 +5,9 @@ import { usePlanning } from './context/PlanningContext';
 import { useUI } from './context/UIContext';
 import { SettingsModal } from './components/SettingsModal';
 import { AffordabilityAuditor } from './components/AffordabilityAuditor';
+import { SensitivityAnalysis } from './components/SensitivityAnalysis';
 export const MainLayout = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'engine' | 'auditor'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'engine' | 'auditor' | 'sensitivity'>('dashboard');
   const { state, loadState } = usePlanning();
   const { openSettingsModal } = useUI();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -119,17 +120,50 @@ export const MainLayout = () => {
               >
                 Tragbarkeits-Audit
               </button>
-
+              <button
+                onClick={() => setActiveTab('sensitivity')}
+                className={`${
+                  activeTab === 'sensitivity'
+                    ? 'border-emerald-500 text-emerald-400'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all`}
+              >
+                Sensitivitäts-Analyse
+              </button>
             </nav>
           </div>
         </div>
       </header>
 
       <main className="flex-grow w-full max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        {state.survivor && state.survivor.deceasedPartner !== 'Keiner' && (
+          <div className="bg-amber-950/40 border border-amber-800/80 rounded-lg p-4 flex items-center justify-between shadow-lg mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-amber-500/10 rounded-full text-amber-500">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-amber-400 font-mono">Todesfall-Simulation AKTIV</h4>
+                <p className="text-xs text-slate-300">
+                  Die Berechnungen und Vermögensentwicklungen simulieren das Ableben von <strong className="text-amber-300">{state.survivor.deceasedPartner}</strong> im Jahr <strong className="text-amber-300">{state.survivor.deathYear}</strong>.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => openSettingsModal(7)}
+              className="px-3 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 text-xs font-semibold rounded border border-amber-600/40 transition-colors whitespace-nowrap"
+            >
+              Einstellungen anpassen
+            </button>
+          </div>
+        )}
+
         {activeTab === 'dashboard' && <Dashboard />}
         {activeTab === 'engine' && <Engine />}
         {activeTab === 'auditor' && <AffordabilityAuditor />}
-
+        {activeTab === 'sensitivity' && <SensitivityAnalysis />}
       </main>
     </div>
   );

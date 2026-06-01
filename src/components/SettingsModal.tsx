@@ -116,7 +116,7 @@ export const SettingsModal = () => {
   };
 
   const handleAddOtherIncome = () => {
-    const newEvent = { id: Date.now().toString(), description: 'Zusatzeinkommen', monthlyAmount: 0, startYear: 2026, startMonth: 0, endYear: 2030, endMonth: 11 };
+    const newEvent = { id: Date.now().toString(), description: 'Zusatzeinkommen', monthlyAmount: 0, startYear: 2026, startMonth: 0, endYear: 2030, endMonth: 11, owner: 'Gemeinsam' };
     updateState('otherIncomeEvents', [...(state.otherIncomeEvents || []), newEvent]);
   };
 
@@ -138,7 +138,8 @@ export const SettingsModal = () => {
       startYear: 2026, 
       startMonth: 0, 
       endYear: 2026, 
-      endMonth: 11 
+      endMonth: 11,
+      owner: 'Markus'
     };
     updateState('salaryStreams', [...(state.salaryStreams || []), newStream]);
   };
@@ -304,32 +305,85 @@ export const SettingsModal = () => {
 
               {/* Pensionskasse Panel */}
               {incomeTab === 'pk' && (
-              <div className="mb-10 bg-slate-950/40 p-6 rounded-lg border border-slate-800">
-                <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
-                  <h4 className="text-md font-bold text-slate-200 font-mono">Pensionskasse</h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Start (Jahr / Monat)</span>
-                      <div className="flex space-x-2">
-                        <input type="number" value={state.pensionskasse.startYear} onChange={(e) => updateState('pensionskasse', { startYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
-                        <MonthSelect value={state.pensionskasse.startMonth} onChange={(val) => updateState('pensionskasse', { startMonth: val })} className="w-20 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200" />
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Card Markus */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                      <h4 className="text-sm font-bold text-emerald-400 font-mono">Pensionskasse Markus</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Start (Jahr / Monat)</span>
+                          <div className="flex space-x-2">
+                            <input type="number" value={state.pensionskasseMarkus.startYear} onChange={(e) => updateState('pensionskasseMarkus', { startYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" />
+                            <MonthSelect value={state.pensionskasseMarkus.startMonth} onChange={(val) => updateState('pensionskasseMarkus', { startMonth: val })} className="w-24 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 text-xs" />
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Ende (Jahr / Monat)</span>
+                          <div className="flex space-x-2">
+                            <input type="number" value={state.pensionskasseMarkus.endYear ?? 2099} onChange={(e) => updateState('pensionskasseMarkus', { endYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" />
+                            <MonthSelect value={state.pensionskasseMarkus.endMonth ?? 11} onChange={(val) => updateState('pensionskasseMarkus', { endMonth: val })} className="w-24 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 text-xs" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Total Kapital (CHF)</span>
+                          <input type="number" value={state.pensionskasseMarkus.totalCapital} onChange={(e) => updateState('pensionskasseMarkus', { totalCapital: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Bezug als Rente (%)</span>
+                          <input type="number" value={state.pensionskasseMarkus.renteSplit} onChange={(e) => updateState('pensionskasseMarkus', { renteSplit: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" min={0} max={100} />
+                          <span className="text-[10px] text-slate-500 mt-1 block">Kapitalbezug: {100 - state.pensionskasseMarkus.renteSplit}%</span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Umwandlungssatz (UWS %)</span>
+                          <input type="number" step="0.001" value={state.pensionskasseMarkus.umwandlungssatz} onChange={(e) => updateState('pensionskasseMarkus', { umwandlungssatz: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" />
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Total Kapital</span>
-                      <input type="number" value={state.pensionskasse.totalCapital} onChange={(e) => updateState('pensionskasse', { totalCapital: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
-                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">Rente %</span>
-                      <input type="number" value={state.pensionskasse.renteSplit} onChange={(e) => updateState('pensionskasse', { renteSplit: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" min={0} max={100} />
+
+                  {/* Card Monique */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-lg p-5">
+                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                      <h4 className="text-sm font-bold text-rose-400 font-mono">Pensionskasse Monique</h4>
                     </div>
-                    <div>
-                      <span className="text-xs text-slate-400 block mb-1">UWS %</span>
-                      <input type="number" step="0.1" value={state.pensionskasse.umwandlungssatz} onChange={(e) => updateState('pensionskasse', { umwandlungssatz: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Start (Jahr / Monat)</span>
+                          <div className="flex space-x-2">
+                            <input type="number" value={state.pensionskasseMonique.startYear} onChange={(e) => updateState('pensionskasseMonique', { startYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" />
+                            <MonthSelect value={state.pensionskasseMonique.startMonth} onChange={(val) => updateState('pensionskasseMonique', { startMonth: val })} className="w-24 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 text-xs" />
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Ende (Jahr / Monat)</span>
+                          <div className="flex space-x-2">
+                            <input type="number" value={state.pensionskasseMonique.endYear ?? 2099} onChange={(e) => updateState('pensionskasseMonique', { endYear: Number(e.target.value) })} className="w-20 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" />
+                            <MonthSelect value={state.pensionskasseMonique.endMonth ?? 11} onChange={(val) => updateState('pensionskasseMonique', { endMonth: val })} className="w-24 border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 text-xs" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Total Kapital (CHF)</span>
+                          <input type="number" value={state.pensionskasseMonique.totalCapital} onChange={(e) => updateState('pensionskasseMonique', { totalCapital: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Bezug als Rente (%)</span>
+                          <input type="number" value={state.pensionskasseMonique.renteSplit} onChange={(e) => updateState('pensionskasseMonique', { renteSplit: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" min={0} max={100} />
+                          <span className="text-[10px] text-slate-500 mt-1 block">Kapitalbezug: {100 - state.pensionskasseMonique.renteSplit}%</span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Umwandlungssatz (UWS %)</span>
+                          <input type="number" step="0.001" value={state.pensionskasseMonique.umwandlungssatz} onChange={(e) => updateState('pensionskasseMonique', { umwandlungssatz: Number(e.target.value) })} className="w-full border border-slate-800 rounded px-2 py-1 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono text-xs" />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -372,6 +426,20 @@ export const SettingsModal = () => {
                       </div>
 
                       <div className="px-4 py-3 space-y-1 text-sm">
+                        {/* Eigentümer row */}
+                        <div className="flex justify-between items-center py-1">
+                          <span className="text-slate-400 text-xs w-40">Eigentümer</span>
+                          <select
+                            value={stream.owner || 'Markus'}
+                            onChange={(e) => handleUpdateSalaryStream(stream.id, { owner: e.target.value })}
+                            className="w-28 border border-slate-800 rounded px-2 py-0.5 text-xs bg-slate-950 text-slate-200 focus:ring-emerald-500 focus:border-emerald-500 font-mono"
+                          >
+                            <option value="Markus">Markus</option>
+                            <option value="Monique">Monique</option>
+                            <option value="Gemeinsam">Gemeinsam</option>
+                          </select>
+                        </div>
+
                         {/* Monatslohn row */}
                         <div className="flex justify-between items-center py-1">
                           <span className="text-slate-400 text-xs w-40">Monatslohn (Brutto)</span>
@@ -498,6 +566,18 @@ export const SettingsModal = () => {
                         </div>
                       </div>
                       <div className="flex space-x-4">
+                        <div>
+                          <span className="text-xs text-slate-400 block mb-1">Eigentümer</span>
+                          <select
+                            value={event.owner || 'Gemeinsam'}
+                            onChange={(e) => handleUpdateOtherIncome(event.id, { owner: e.target.value })}
+                            className="w-32 border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono"
+                          >
+                            <option value="Markus">Markus</option>
+                            <option value="Monique">Monique</option>
+                            <option value="Gemeinsam">Gemeinsam</option>
+                          </select>
+                        </div>
                         <div>
                           <span className="text-xs text-slate-400 block mb-1">Start (J/M)</span>
                           <div className="flex space-x-2">
@@ -1048,6 +1128,87 @@ export const SettingsModal = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {(activeModalTab === 'all' || activeModalTab === 7) && (
+            <section>
+              <h3 className="text-lg font-bold text-emerald-400 mb-4 border-b border-slate-800 pb-2 font-mono">7. Todesfall-Simulation (Ablebensszenario)</h3>
+              <div className="bg-slate-950/40 p-6 rounded-lg border border-slate-800">
+                <p className="text-xs text-slate-400 mb-6">
+                  Simulieren Sie das Ableben eines Ehepartners in einem bestimmten Planungsjahr. Der Rechner passt ab diesem Jahr automatisch das steuerbare Einkommen (AHV Verwitwetenrente, Pensionskassen-Hinterlassenenrente 60%), den Zivililschutzstatus (Steuertarif Alleinstehend) und die Lebenshaltungskosten an.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Left Column */}
+                  <div className="space-y-4">
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Verstorbene Person</span>
+                      <select
+                        value={state.survivor?.deceasedPartner || 'Keiner'}
+                        onChange={(e) => updateState('survivor', { deceasedPartner: e.target.value })}
+                        className="w-full border border-slate-800 rounded px-2 py-1.5 focus:ring-emerald-500 focus:focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono"
+                      >
+                        <option value="Keiner">Keiner (Normaler Verlauf)</option>
+                        <option value="Markus">Markus</option>
+                        <option value="Monique">Monique</option>
+                      </select>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Todesjahr (Simulation ab Jahr)</span>
+                      <input
+                        type="number"
+                        min={2026}
+                        max={2060}
+                        value={state.survivor?.deathYear ?? 2035}
+                        onChange={(e) => updateState('survivor', { deathYear: Number(e.target.value) })}
+                        disabled={state.survivor?.deceasedPartner === 'Keiner'}
+                        className="w-full border border-slate-800 rounded px-2 py-1.5 focus:ring-emerald-500 focus:focus:border-emerald-500 bg-slate-950 text-slate-200 font-mono disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+                  {/* Right Column */}
+                  <div className="space-y-4">
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Ausgaben-Kürzung für Hinterbliebene (%)</span>
+                      <div className="flex items-center space-x-4">
+                        <input
+                          type="range"
+                          min="30"
+                          max="100"
+                          step="5"
+                          value={state.survivor?.expenseReductionFactor ?? 70}
+                          onChange={(e) => updateState('survivor', { expenseReductionFactor: Number(e.target.value) })}
+                          disabled={state.survivor?.deceasedPartner === 'Keiner'}
+                          className="flex-grow h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 disabled:opacity-50"
+                        />
+                        <span className="text-sm font-bold text-slate-200 font-mono w-12 text-right">
+                          {state.survivor?.expenseReductionFactor ?? 70}%
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 block mt-1">Variabler Konsumbedarf (Essen, Reisen, Diverses) wird auf diesen Wert reduziert. Wohnen bleibt bei 100%.</span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-400 block mb-1">Witwenrente PK des deceased Anteils (%)</span>
+                      <div className="flex items-center space-x-4">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          step="5"
+                          value={state.survivor?.pkSurvivorRate ?? 60}
+                          onChange={(e) => updateState('survivor', { pkSurvivorRate: Number(e.target.value) })}
+                          disabled={state.survivor?.deceasedPartner === 'Keiner'}
+                          className="flex-grow h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 disabled:opacity-50"
+                        />
+                        <span className="text-sm font-bold text-slate-200 font-mono w-12 text-right">
+                          {state.survivor?.pkSurvivorRate ?? 60}%
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 block mt-1">Witwen/Witwerrentensätze liegen in der Schweiz gesetzlich/reglementarisch meist bei 60%.</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>

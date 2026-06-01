@@ -270,10 +270,12 @@ export const Engine = () => {
             })}
           </tr>
 
-          <DataRow label="Freies Vermögen (Liquid Assets) Ende Jahr" dataKey="liquidWealthEnd" onClickLabel={() => openSettingsModal(5)} />
+          <DataRow label="Freies Vermögen (Liquide) Ende Jahr" dataKey="liquidWealthEnd" onClickLabel={() => openSettingsModal(5)} />
           <DataRow label="Säule 3a Ende Jahr" dataKey="saeule3aEnd" onClickLabel={() => openSettingsModal(5)} />
           <DataRow label="Freizügigkeitskonto Ende Jahr" dataKey="fzkEnd" onClickLabel={() => openSettingsModal(5)} />
-          <DataRow label="Total Reinvermögen (inkl. Immobilien-Equity)" dataKey="totalWealthEnd" isTotal={true} />
+          <DataRow label="Pensionskasse Guthaben Ende Jahr" dataKey="pensionskasseCapitalEnd" onClickLabel={() => openSettingsModal(1)} />
+          <CustomRow label="Immobilien Eigenkapital (Steuerwert - Hypothek)" valueFn={(y) => data[y].efhTaxValue - data[y].mortgageDebt} onClickLabel={() => openSettingsModal(4)} />
+          <DataRow label="Total Reinvermögen (inkl. PK & Immobilien)" dataKey="totalWealthEnd" isTotal={true} />
 
         </tbody>
       </table>

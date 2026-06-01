@@ -166,7 +166,7 @@ export const AffordabilityAuditor = () => {
       <div className="flex justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-lg shadow-xl">
         <div>
            <h2 className="text-lg font-bold text-slate-100 font-mono">Affordability Auditor (Tragbarkeitsrechner)</h2>
-           <p className="text-sm text-slate-400">Detaillierte Schritt-für-Schritt Auditierung nach Schweizer Bankenstandard (2026 - 2045)</p>
+           <p className="text-sm text-slate-400">Detaillierte Schritt-für-Schritt Auditierung nach Schweizer Bankenstandard (2026 - 2060)</p>
         </div>
         <div className="text-xs text-slate-400 bg-slate-950 px-3 py-1.5 border border-slate-800 rounded font-mono">
           Aktives Prüfjahr: <span className="text-emerald-400 font-bold">{selectedYear}</span>

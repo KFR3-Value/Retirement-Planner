@@ -12,6 +12,7 @@ export interface OtherIncomeEvent {
   startMonth: number;
   endYear: number;
   endMonth: number;
+  owner?: 'Markus' | 'Monique' | 'Gemeinsam';
 }
 
 export interface SalaryDeductions {
@@ -33,6 +34,7 @@ export interface SalaryStream {
   startMonth: number;
   endYear: number;
   endMonth: number;
+  owner?: 'Markus' | 'Monique' | 'Gemeinsam';
 }
 
 export interface AHVStream {
@@ -60,19 +62,24 @@ export interface CapExEvent {
   category?: 'housing' | 'living' | 'health';
 }
 
+export interface PensionskasseState {
+  startYear: number;
+  startMonth: number;
+  endYear?: number;
+  endMonth?: number;
+  totalCapital: number;
+  renteSplit: number; // 0 to 100
+  umwandlungssatz: number; // percentage
+}
+
 export interface PlanningState {
   // Section 1: Einkünfte
   ahv: {
     selectedScenarioId: string;
     scenarios: AHVScenarioDef[];
   };
-  pensionskasse: {
-    startYear: number;
-    startMonth: number;
-    totalCapital: number;
-    renteSplit: number; // 0 to 100
-    umwandlungssatz: number; // percentage
-  };
+  pensionskasseMarkus: PensionskasseState;
+  pensionskasseMonique: PensionskasseState;
   salaryStreams: SalaryStream[];
   otherIncomeEvents: OtherIncomeEvent[];
 
@@ -126,6 +133,12 @@ export interface PlanningState {
     liquidYieldRate: number; // percentage
   };
   taxDeductions: Record<YearKey, YearlyDeductions>;
+  survivor?: {
+    deceasedPartner: 'Keiner' | 'Markus' | 'Monique';
+    deathYear: number;
+    expenseReductionFactor: number; // percentage
+    pkSurvivorRate: number; // percentage
+  };
 }
 
 export interface YearlyDeductions {
@@ -172,12 +185,23 @@ const defaultState: PlanningState = {
       }
     ]
   },
-  pensionskasse: {
+  pensionskasseMarkus: {
     startYear: 2027,
     startMonth: 1,
+    endYear: 2099,
+    endMonth: 11,
     totalCapital: 1250000,
     renteSplit: 50,
     umwandlungssatz: 5.125
+  },
+  pensionskasseMonique: {
+    startYear: 2030,
+    startMonth: 9,
+    endYear: 2099,
+    endMonth: 11,
+    totalCapital: 0,
+    renteSplit: 100,
+    umwandlungssatz: 5.0
   },
   salaryStreams: [
     {
@@ -199,7 +223,8 @@ const defaultState: PlanningState = {
       startYear: 2026,
       startMonth: 0,
       endYear: 2026,
-      endMonth: 11
+      endMonth: 11,
+      owner: 'Markus'
     }
   ],
   otherIncomeEvents: [],
@@ -279,6 +304,12 @@ const defaultState: PlanningState = {
     '2029': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
     '2030': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
     '2031+': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 }
+  },
+  survivor: {
+    deceasedPartner: 'Keiner',
+    deathYear: 2035,
+    expenseReductionFactor: 70,
+    pkSurvivorRate: 60
   }
 };
 
