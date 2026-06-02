@@ -13,6 +13,8 @@ export interface YearData {
   otherIncome: number;
   eigenmietwert: number; // Fictitious tax income
   totalGrossIncome: number;
+  actualGrossIncome: number;
+  stressGrossIncome: number;
   capitalWithdrawalAmount: number; // Exceptional income
 
   // Expenses (Ausgaben)
@@ -137,10 +139,10 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     const index = y - 2026;
     const yearKey = (y <= 2030 ? String(y) : '2031+') as YearKey;
 
-    // Calculate Inflation Factor (applied to expenses from 2031+)
+    // Calculate Inflation Factor
     let inflationFactor = 1.0;
-    if (y >= 2031 && state.baseline.applyInflation) {
-       inflationFactor = Math.pow(1 + (state.baseline.inflationRate / 100), y - 2030);
+    if (state.baseline.applyInflation) {
+       inflationFactor = Math.pow(1 + (state.baseline.inflationRate / 100), y - 2026);
     }
 
     const isDeceased = deceasedPartner !== 'Keiner' && y >= deathYear;
@@ -249,7 +251,11 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
 
     // --- WEALTH YIELD ---
     const yieldRate = liquidYieldRateOverride !== undefined ? liquidYieldRateOverride : state.baseline.liquidYieldRate;
-    const wealthYieldIncome = currentLiquidWealth * (yieldRate / 100);
+    const taxableYieldRate = Math.min(1.5, yieldRate);
+    const taxFreeYieldRate = Math.max(0, yieldRate - taxableYieldRate);
+    
+    const wealthYieldIncome = currentLiquidWealth * (taxableYieldRate / 100);
+    const taxFreeAppreciation = currentLiquidWealth * (taxFreeYieldRate / 100);
 
     // --- OTHER INCOME ---
     const otherIncome = state.otherIncomeEvents.reduce((sum, event) => {
@@ -262,7 +268,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
 
     const deemedYield = currentLiquidWealth * 0.04;
     const actualGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + wealthYieldIncome + otherIncome;
-    const totalGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + deemedYield + otherIncome;
+    const totalGrossIncome = actualGrossIncome;
+    const stressGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + deemedYield + otherIncome;
     
     const isUpTo2028 = y <= 2028;
     const eigenmietwert = isUpTo2028 ? (Number(state.housing.eigenmietwert) || 0) : 0;
@@ -273,12 +280,15 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       (Number(state.housing.festAmount) || 0) * ((Number(state.housing.festRate) || 0) / 100);
 
     const amortisation = Number(state.housing.amortisation) || 0;
-    const propertyMaintenance = (Number(state.housing.efhTaxValue) || 0) * ((Number(state.housing.unterhaltRate) || 0) / 100);
+    
+    // Apply inflation universally to individual expense lines (except mortgage interest and amortisation)
+    const propertyMaintenance = (Number(state.housing.efhTaxValue) || 0) * ((Number(state.housing.unterhaltRate) || 0) / 100) * inflationFactor;
+    const stromHeizung = (Number(state.housing.stromHeizung) || 0) * inflationFactor;
 
     const bankLendingValue = Number(state.housing.bankLendingValue) || 1000000;
     const mortgageDebt = (Number(state.housing.saronAmount) || 0) + (Number(state.housing.festAmount) || 0);
     const imputedCosts = (mortgageDebt * 0.05) + (bankLendingValue * 0.01) + amortisation;
-    const affordabilityRatio = totalGrossIncome > 0 ? (imputedCosts / totalGrossIncome) * 100 : 0;
+    const affordabilityRatio = stressGrossIncome > 0 ? (imputedCosts / stressGrossIncome) * 100 : 0;
 
     // Krankenkasse premium drops to 50% for single survivor
     let krankenkasse = Number(state.health.krankenkasseBase) || 0;
@@ -288,21 +298,20 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     if (state.health.applyAgeIncrease && index > 0) {
       krankenkasse = krankenkasse * Math.pow(1 + ((Number(state.health.ageIncreaseRate) || 0) / 100), index);
     }
-
-    const stromHeizung = Number(state.housing.stromHeizung) || 0;
+    krankenkasse = krankenkasse * inflationFactor;
 
     // Apply expense reduction factor to variable expenses
     const expenseReduction = isDeceased ? (state.survivor?.expenseReductionFactor ?? 70) / 100 : 1.0;
     
-    const haushaltEssen = (Number(state.living.haushaltEssen) || 0) * expenseReduction;
-    const mobilitaet = Number(state.living.mobilitaet) || 0;
-    const telefonHandyMedien = Number(state.living.telefonHandyMedien) || 0;
-    const kleiderFreizeit = (Number(state.living.kleiderFreizeit) || 0) * expenseReduction;
-    const ferienReisen = (Number(state.living.ferienReisen) || 0) * expenseReduction;
-    const versicherungenSonstige = Number(state.living.versicherungenSonstige) || 0;
+    const haushaltEssen = (Number(state.living.haushaltEssen) || 0) * expenseReduction * inflationFactor;
+    const mobilitaet = (Number(state.living.mobilitaet) || 0) * inflationFactor;
+    const telefonHandyMedien = (Number(state.living.telefonHandyMedien) || 0) * inflationFactor;
+    const kleiderFreizeit = (Number(state.living.kleiderFreizeit) || 0) * expenseReduction * inflationFactor;
+    const ferienReisen = (Number(state.living.ferienReisen) || 0) * expenseReduction * inflationFactor;
+    const versicherungenSonstige = (Number(state.living.versicherungenSonstige) || 0) * inflationFactor;
     
-    const zahnarztOptiker = (Number(state.health.zahnarztOptiker) || 0) * expenseReduction;
-    const diversesReserve = (Number(state.health.diversesReserve) || 0) * expenseReduction;
+    const zahnarztOptiker = (Number(state.health.zahnarztOptiker) || 0) * expenseReduction * inflationFactor;
+    const diversesReserve = (Number(state.health.diversesReserve) || 0) * expenseReduction * inflationFactor;
 
     const variableKosten = haushaltEssen + kleiderFreizeit + ferienReisen + zahnarztOptiker + diversesReserve;
 
@@ -320,12 +329,12 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
 
     const capEx = housingCapEx + livingCapEx + healthCapEx;
 
-    const housingTotal = (mortgageInterest + amortisation + propertyMaintenance + stromHeizung) * inflationFactor + housingCapEx;
-    const livingTotal = (haushaltEssen + mobilitaet + telefonHandyMedien + kleiderFreizeit + ferienReisen + versicherungenSonstige) * inflationFactor + livingCapEx;
-    const healthTotal = (krankenkasse + zahnarztOptiker + diversesReserve) * inflationFactor + healthCapEx;
+    const housingTotal = mortgageInterest + amortisation + propertyMaintenance + stromHeizung + housingCapEx;
+    const livingTotal = haushaltEssen + mobilitaet + telefonHandyMedien + kleiderFreizeit + ferienReisen + versicherungenSonstige + livingCapEx;
+    const healthTotal = krankenkasse + zahnarztOptiker + diversesReserve + healthCapEx;
 
     const totalOutflowExclTaxes = housingTotal + livingTotal + healthTotal;
-    const fixedCosts = (mortgageInterest + amortisation + propertyMaintenance + krankenkasse + stromHeizung + mobilitaet + telefonHandyMedien + versicherungenSonstige) * inflationFactor;
+    const fixedCosts = mortgageInterest + amortisation + propertyMaintenance + krankenkasse + stromHeizung + mobilitaet + telefonHandyMedien + versicherungenSonstige;
 
     // --- WITHDRAWALS & TAXES ---
     let capitalWithdrawalAmount = 0;
@@ -444,12 +453,19 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       ? yearlyDeductions.insuranceOverride
       : krankenkasse;
 
+    let deductionMortgageInterest = mortgageInterest;
+    let deductionPropertyMaintenance = propertyMaintenance;
+    if (y > 2028) {
+      deductionPropertyMaintenance = 0;
+      deductionMortgageInterest = Math.min(mortgageInterest, wealthYieldIncome);
+    }
+
     const memberExpenses: ExpenseProfile[] = [{
       transport: Number(yearlyDeductions.transport) || 0,
       meal: Number(yearlyDeductions.meal) || 0,
       professional: Number(yearlyDeductions.professional) || 0,
-      debtInterest: mortgageInterest,
-      maintenance: propertyMaintenance,
+      debtInterest: deductionMortgageInterest,
+      maintenance: deductionPropertyMaintenance,
       pillar3a: 0,
       pillar2Buyin: 0,
       insurance: insuranceVal,
@@ -560,7 +576,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     };
 
     const surplusDeficit = actualGrossIncome - totalOutflowExclTaxes - totalTaxBurden;
-    currentLiquidWealth += surplusDeficit;
+    currentLiquidWealth += surplusDeficit + taxFreeAppreciation;
 
     const guaranteedIncome = ahvIncome + pkRenteIncome;
     const coverageRatio = fixedCosts > 0 ? (guaranteedIncome / fixedCosts) * 100 : 0;
@@ -602,6 +618,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       otherIncome,
       eigenmietwert,
       totalGrossIncome,
+      actualGrossIncome,
+      stressGrossIncome,
       capitalWithdrawalAmount,
       mortgageInterest,
       amortisation,
@@ -663,9 +681,9 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     });
   }
 
-  // Populate planning columns (2026, 2027, 2028, 2029, 2030, 2031+)
+  // Populate planning columns (2026 to 2060)
   YEARS.forEach(yearKey => {
-    const yearNum = yearKey === '2031+' ? 2031 : parseInt(yearKey);
+    const yearNum = parseInt(yearKey);
     result[yearKey] = yearResults[yearNum];
   });
 
@@ -712,6 +730,22 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
     const u2 = Math.random();
     const randStdNormal = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
     return mean + stdDev * randStdNormal;
+  };
+  
+  const strategy = new Aargau2025Strategy();
+  const bettwilMultiplier = (multipliersData.response as any).find(
+    (m: any) => m.Location && m.Location.City === 'Bettwil'
+  );
+  const cantonMultiplier = bettwilMultiplier ? bettwilMultiplier.IncomeRateCanton / 100 : 1.11;
+  const municipalMultiplier = bettwilMultiplier ? bettwilMultiplier.IncomeRateCity / 100 : 1.02;
+  const churchMultiplier = bettwilMultiplier 
+    ? (bettwilMultiplier.IncomeRateRoman + bettwilMultiplier.IncomeRateProtestant) / 200 
+    : 0.19;
+
+  const multipliers = {
+    cantonal: cantonMultiplier,
+    municipal: municipalMultiplier,
+    church: churchMultiplier
   };
   
   for (let r = 0; r < runs; r++) {
@@ -782,22 +816,40 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
         activeFzk = 0;
       }
       
-      // 2. Base Cash Flow (deterministic items except yield)
-      const baseCashFlow = detYear.surplusDeficit - detYear.wealthYieldIncome;
+      // 2. Base Cash Flow (deterministic items except yield and wealth tax)
+      const baseCashFlow = detYear.surplusDeficit - detYear.wealthYieldIncome + detYear.wealthTax;
       
       // 3. Volatile Yield (mean = baseline yield, stdDev = 5.5% volatility)
       const meanYield = (liquidYieldRateOverride !== undefined ? liquidYieldRateOverride : state.baseline.liquidYieldRate) / 100;
       const stdDev = 0.055;
-      const randomYield = Math.max(-0.15, randomNormal(meanYield, stdDev)); // floor at -15%
+      const randomYield = randomNormal(meanYield, stdDev); // no floor at -15%
       const randomYieldIncome = cash * randomYield;
       
+      // Recalculate stochastic wealth tax
+      const isDeceased = deceasedPartner !== 'Keiner' && year >= deathYear;
+      const civilStatus = isDeceased ? 'single' : 'married';
+      const efhTaxValue = Number(state.housing.efhTaxValue) || 0;
+      const mortgageDebt = (Number(state.housing.saronAmount) || 0) + (Number(state.housing.festAmount) || 0);
+      const taxableWealth = Math.max(0, cash + active3a + efhTaxValue - mortgageDebt);
+      const netWealth = Math.max(0, taxableWealth - (civilStatus === 'married' ? 200000 : 100000));
+      
+      const simpleTaxes = strategy.calculateSimpleTax(0, 0, netWealth, civilStatus);
+      const stochasticWealthTax = (simpleTaxes.simpleWealthCanton * multipliers.cantonal) +
+                                  (simpleTaxes.simpleWealthCanton * multipliers.municipal) +
+                                  (simpleTaxes.simpleWealthCanton * multipliers.church);
+      
       // 4. Update Cash
-      cash += baseCashFlow + randomYieldIncome;
+      cash += baseCashFlow + randomYieldIncome - stochasticWealthTax;
+      
+      // Ensure the cash balance floors at zero
+      if (cash < 0) {
+        cash = 0;
+      }
       
       if (cash < startingWealth) {
         droppedBelowStarting = true;
       }
-      if (cash < 0) {
+      if (cash <= 0) {
         depleted = true;
       }
     }

@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
-export type YearKey = '2026' | '2027' | '2028' | '2029' | '2030' | '2031+';
+export type YearKey = string;
 
-export const YEARS: YearKey[] = ['2026', '2027', '2028', '2029', '2030', '2031+'];
+export const YEARS: YearKey[] = Array.from({ length: 2060 - 2026 + 1 }, (_, i) => String(2026 + i));
 
 export interface OtherIncomeEvent {
   id: string;
@@ -297,14 +297,10 @@ const defaultState: PlanningState = {
     applyInflation: true,
     liquidYieldRate: 2
   },
-  taxDeductions: {
-    '2026': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
-    '2027': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
-    '2028': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
-    '2029': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
-    '2030': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 },
-    '2031+': { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 }
-  },
+  taxDeductions: YEARS.reduce((acc, y) => {
+    acc[y] = { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 };
+    return acc;
+  }, {} as Record<string, YearlyDeductions>),
   survivor: {
     deceasedPartner: 'Keiner',
     deathYear: 2035,

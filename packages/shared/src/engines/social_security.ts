@@ -26,12 +26,14 @@ export interface SocialDeductions {
 export function calculateEmployeeSocialDeductions(
     gross: number,
     _age: number,
-    isRetired: boolean = false
+    isRetired: boolean = false,
+    activeMonths: number = 12
 ): SocialDeductions {
     // AHV/IV/EO starts in the year the person turns 18 (if employed)
     // or 21 (if non-active). 
     // For simplicity, we assume 18+ as per current engine.
-    const ahvBase = isRetired ? Math.max(0, gross - 16800) : gross; // 16,800 allowance for retired
+    const exemption = 1400 * activeMonths;
+    const ahvBase = isRetired ? Math.max(0, gross - exemption) : gross; // pro-rated allowance for retired
     const ahv = ahvBase * (AHV_IV_EO_RATE_EMPLOYEE / 100);
 
     // ALV stops at retirement age.

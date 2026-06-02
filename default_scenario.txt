@@ -94,12 +94,23 @@
       }
     ]
   },
-  "pensionskasse": {
+  "pensionskasseMarkus": {
     "startYear": 2027,
     "startMonth": 1,
+    "endYear": 2099,
+    "endMonth": 11,
     "totalCapital": 1250000,
     "renteSplit": 50,
     "umwandlungssatz": 5.125
+  },
+  "pensionskasseMonique": {
+    "startYear": 2030,
+    "startMonth": 9,
+    "endYear": 2099,
+    "endMonth": 11,
+    "totalCapital": 0,
+    "renteSplit": 100,
+    "umwandlungssatz": 5
   },
   "salaryStreams": [
     {
@@ -121,7 +132,8 @@
       "startYear": 2026,
       "startMonth": 0,
       "endYear": 2026,
-      "endMonth": 11
+      "endMonth": 11,
+      "owner": "Markus"
     }
   ],
   "otherIncomeEvents": [],
@@ -138,11 +150,11 @@
     "stromHeizung": 3600
   },
   "living": {
-    "haushaltEssen": 19680,
+    "haushaltEssen": 18000,
     "mobilitaet": 7800,
     "telefonHandyMedien": 1800,
     "kleiderFreizeit": 6240,
-    "ferienReisen": 9600,
+    "ferienReisen": 8000,
     "versicherungenSonstige": 1848
   },
   "health": {
@@ -150,7 +162,7 @@
     "applyAgeIncrease": true,
     "ageIncreaseRate": 3,
     "zahnarztOptiker": 2640,
-    "diversesReserve": 9600
+    "diversesReserve": 0
   },
   "capExEvents": [
     {
@@ -193,5 +205,73 @@
     "inflationRate": 1.5,
     "applyInflation": true,
     "liquidYieldRate": 2
+  },
+  "taxDeductions": {
+    "2026": {
+      "transport": 0,
+      "meal": 0,
+      "professional": 0,
+      "childcare": 0,
+      "alimony": 0,
+      "donations": 0,
+      "education": 0,
+      "other": 0
+    },
+    "2027": {
+      "transport": 0,
+      "meal": 0,
+      "professional": 0,
+      "childcare": 0,
+      "alimony": 0,
+      "donations": 0,
+      "education": 0,
+      "other": 0
+    },
+    "2028": {
+      "transport": 0,
+      "meal": 0,
+      "professional": 0,
+      "childcare": 0,
+      "alimony": 0,
+      "donations": 0,
+      "education": 0,
+      "other": 0
+    },
+    "2029": {
+      "transport": 0,
+      "meal": 0,
+      "professional": 0,
+      "childcare": 0,
+      "alimony": 0,
+      "donations": 0,
+      "education": 0,
+      "other": 0
+    },
+    "2030": {
+      "transport": 0,
+      "meal": 0,
+      "professional": 0,
+      "childcare": 0,
+      "alimony": 0,
+      "donations": 0,
+      "education": 0,
+      "other": 0
+    },
+    "2031+": {
+      "transport": 0,
+      "meal": 0,
+      "professional": 0,
+      "childcare": 0,
+      "alimony": 0,
+      "donations": 0,
+      "education": 0,
+      "other": 0
+    }
+  },
+  "survivor": {
+    "deceasedPartner": "Keiner",
+    "deathYear": 2035,
+    "expenseReductionFactor": 70,
+    "pkSurvivorRate": 60
   }
 }

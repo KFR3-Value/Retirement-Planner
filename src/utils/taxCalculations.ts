@@ -27,17 +27,18 @@ const AARGAU_INCOME_BRACKETS = [
   { limit: Infinity, rate: 0.11 }
 ];
 
-export const calculateAargauSimpleIncomeTax = (taxableIncome: number): number => {
+export const calculateAargauSimpleIncomeTax = (taxableIncome: number, civilStatus: 'single' | 'married' = 'married'): number => {
   if (taxableIncome <= 0) return 0;
   
   // For married (Tarif B), income is halved for the bracket calculation
-  const halfIncome = taxableIncome / 2;
+  const isMarried = civilStatus === 'married';
+  const incomeForTax = isMarried ? taxableIncome / 2 : taxableIncome;
   let tax = 0;
   let previousLimit = 0;
 
   for (const bracket of AARGAU_INCOME_BRACKETS) {
-    if (halfIncome > previousLimit) {
-      const taxableInThisBracket = Math.min(halfIncome, bracket.limit) - previousLimit;
+    if (incomeForTax > previousLimit) {
+      const taxableInThisBracket = Math.min(incomeForTax, bracket.limit) - previousLimit;
       tax += taxableInThisBracket * bracket.rate;
       previousLimit = bracket.limit;
     } else {
@@ -45,8 +46,8 @@ export const calculateAargauSimpleIncomeTax = (taxableIncome: number): number =>
     }
   }
 
-  // The calculated tax is then doubled
-  return tax * 2;
+  // The calculated tax is then doubled if married
+  return isMarried ? tax * 2 : tax;
 };
 
 
@@ -60,17 +61,20 @@ const AARGAU_WEALTH_BRACKETS = [
   { limit: Infinity, rate: 0.0016 }
 ];
 
-export const calculateAargauSimpleWealthTax = (taxableWealth: number): number => {
-  // Aargau tax-free allowance for married couples is 200,000 CHF
-  const netWealth = Math.max(0, taxableWealth - 200000);
+export const calculateAargauSimpleWealthTax = (taxableWealth: number, civilStatus: 'single' | 'married' = 'married'): number => {
+  // Aargau tax-free allowance for married couples is 200,000 CHF, single is 100,000 CHF
+  const isMarried = civilStatus === 'married';
+  const allowance = isMarried ? 200000 : 100000;
+  const netWealth = Math.max(0, taxableWealth - allowance);
   if (netWealth <= 0) return 0;
   
+  const wealthForTax = isMarried ? netWealth / 2 : netWealth;
   let tax = 0;
   let previousLimit = 0;
 
   for (const bracket of AARGAU_WEALTH_BRACKETS) {
-    if (netWealth > previousLimit) {
-      const taxableInThisBracket = Math.min(netWealth, bracket.limit) - previousLimit;
+    if (wealthForTax > previousLimit) {
+      const taxableInThisBracket = Math.min(wealthForTax, bracket.limit) - previousLimit;
       tax += taxableInThisBracket * bracket.rate;
       previousLimit = bracket.limit;
     } else {
@@ -78,7 +82,7 @@ export const calculateAargauSimpleWealthTax = (taxableWealth: number): number =>
     }
   }
 
-  return tax;
+  return isMarried ? tax * 2 : tax;
 };
 
 
@@ -129,19 +133,15 @@ export const calculateFederalTax = (taxableIncome: number): number => {
 
 
 // Capital Withdrawal Tax (Kapitalbezugssteuer)
-export const calculateCapitalWithdrawalTax = (amount: number): number => {
+export const calculateCapitalWithdrawalTax = (amount: number, civilStatus: 'single' | 'married' = 'married'): number => {
   if (amount <= 0) return 0;
   
   // Federal tax for capital withdrawals is 1/5 of the ordinary federal tax rate
   const federalWithdrawalTax = calculateFederalTax(amount) / 5;
 
   // Aargau cantonal/municipal tax for capital withdrawals 
-  // It is generally taxed as ordinary income, but at the rate that would apply to 1/3 of the amount.
-  // We approximate this by calculating the simple tax on the full amount and taking a fraction,
-  // or calculating the tax rate for 1/3 of the amount.
-  // Accurate Aargau rule: Tax rate corresponds to the tax rate applicable to the entire amount, but divided.
-  // Let's use a very close approximation: The simple tax on the capital withdrawal is roughly 1/3 of the normal simple tax.
-  const aargauWithdrawalTax = calculateAargauSimpleIncomeTax(amount) / 3;
+  // Calculate simple income tax on exactly one-third of the amount, and multiply by 3
+  const aargauWithdrawalTax = calculateAargauSimpleIncomeTax(amount / 3, civilStatus) * 3;
 
   // Returning the base components so multipliers can be applied correctly
   return {
@@ -162,17 +162,18 @@ export const calculateTotalTax = (
   taxableIncome: number, 
   taxableWealth: number, 
   capitalWithdrawals: number,
-  multipliers: TaxMultipliers = { cantonal: 1.11, municipal: 1.02, church: 0.19 }
+  multipliers: TaxMultipliers = { cantonal: 1.11, municipal: 1.02, church: 0.19 },
+  civilStatus: 'single' | 'married' = 'married'
 ) => {
   // 1. Income Tax
-  const simpleIncomeTax = calculateAargauSimpleIncomeTax(taxableIncome);
+  const simpleIncomeTax = calculateAargauSimpleIncomeTax(taxableIncome, civilStatus);
   const cantonalIncomeTax = simpleIncomeTax * multipliers.cantonal;
   const municipalIncomeTax = simpleIncomeTax * multipliers.municipal;
   const churchIncomeTax = simpleIncomeTax * multipliers.church;
   const federalIncomeTax = calculateFederalTax(taxableIncome);
 
   // 2. Wealth Tax
-  const simpleWealthTax = calculateAargauSimpleWealthTax(taxableWealth);
+  const simpleWealthTax = calculateAargauSimpleWealthTax(taxableWealth, civilStatus);
   const cantonalWealthTax = simpleWealthTax * multipliers.cantonal;
   const municipalWealthTax = simpleWealthTax * multipliers.municipal;
   const churchWealthTax = simpleWealthTax * multipliers.church; // Church tax on wealth is common
@@ -184,7 +185,7 @@ export const calculateTotalTax = (
   let federalWithdrawalTax = 0;
 
   if (capitalWithdrawals > 0) {
-    const withdrawalTaxes: any = calculateCapitalWithdrawalTax(capitalWithdrawals);
+    const withdrawalTaxes: any = calculateCapitalWithdrawalTax(capitalWithdrawals, civilStatus);
     cantonalWithdrawalTax = withdrawalTaxes.aargauSimple * multipliers.cantonal;
     municipalWithdrawalTax = withdrawalTaxes.aargauSimple * multipliers.municipal;
     churchWithdrawalTax = withdrawalTaxes.aargauSimple * multipliers.church;

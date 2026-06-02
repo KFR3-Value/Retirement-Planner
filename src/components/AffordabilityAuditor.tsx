@@ -24,7 +24,7 @@ export const AffordabilityAuditor = () => {
   const activeTotalImputedCosts = activeImputedInterest + activeImputedMaintenance + activeAmortisation;
 
   // Deemed yield for active year (Stress test income adjustments)
-  const activeTotalStressIncome = activeData.totalGrossIncome;
+  const activeTotalStressIncome = activeData.stressGrossIncome;
 
   const statusColor = activeData.affordabilityRatio <= 33 ? 'text-emerald-400 border-emerald-500/20 bg-emerald-950/20' : 'text-rose-400 border-rose-500/20 bg-rose-950/20';
   const statusLabel = activeData.affordabilityRatio <= 33 ? 'Tragbar (Konform)' : 'Kritisch (Nicht konform)';
@@ -200,10 +200,10 @@ export const AffordabilityAuditor = () => {
             {/* SECTION 1: STRESS-EINKOMMEN */}
             <ExpandableHeaderRow 
               label="1. Stress-Einkommen (Income for Stress Test)" 
-              valueFn={(y) => data[y].totalGrossIncome} 
+              valueFn={(y) => data[y].stressGrossIncome} 
               expanded={expandedIncome} 
               setExpanded={setExpandedIncome} 
-              className="bg-emerald-950/15 hover:bg-emerald-950/25 text-emerald-450 border-b border-slate-850" 
+              className="bg-emerald-950/15 hover:bg-emerald-950/25 text-emerald-455 border-b border-slate-850" 
             />
 
             {expandedIncome && (
@@ -215,7 +215,7 @@ export const AffordabilityAuditor = () => {
                 <DataRow 
                   label="Kalk. Vermögensertrag (4% Deemed Yield)*" 
                   isSub={true} 
-                  valueFn={(y) => data[y].totalGrossIncome - data[y].salaryIncome - data[y].ahvIncome - data[y].pkRenteIncome - data[y].otherIncome} 
+                  valueFn={(y) => data[y].stressGrossIncome - data[y].salaryIncome - data[y].ahvIncome - data[y].pkRenteIncome - data[y].otherIncome} 
                   className="text-emerald-350/90 font-medium"
                 />
               </>
