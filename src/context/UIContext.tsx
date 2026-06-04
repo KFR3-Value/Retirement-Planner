@@ -6,18 +6,25 @@ interface UIContextType {
   activeModalTab: ModalTab;
   openSettingsModal: (tab: ModalTab) => void;
   closeSettingsModal: () => void;
+  isDrawerOpen: boolean;
+  openDrawer: () => void;
+  closeDrawer: () => void;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider = ({ children }: { children: ReactNode }) => {
   const [activeModalTab, setActiveModalTab] = useState<ModalTab>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   
   return (
     <UIContext.Provider value={{
       activeModalTab,
       openSettingsModal: setActiveModalTab,
-      closeSettingsModal: () => setActiveModalTab(null)
+      closeSettingsModal: () => setActiveModalTab(null),
+      isDrawerOpen,
+      openDrawer: () => setIsDrawerOpen(true),
+      closeDrawer: () => setIsDrawerOpen(false)
     }}>
       {children}
     </UIContext.Provider>
@@ -29,3 +36,4 @@ export const useUI = () => {
   if (!context) throw new Error('useUI must be used within UIProvider');
   return context;
 };
+

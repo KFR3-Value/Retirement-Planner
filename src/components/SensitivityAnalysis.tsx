@@ -17,11 +17,11 @@ import {
 
 export const SensitivityAnalysis = () => {
   const { state, updateState } = usePlanning();
-  const [customSplit, setCustomSplit] = useState(state.pensionskasseMarkus.renteSplit);
-  const [customYield, setCustomYield] = useState(state.baseline.liquidYieldRate);
+  const [customSplit, setCustomSplit] = useState(state.scenarioOverrides.pensionskasseMarkus.renteSplit);
+  const [customYield, setCustomYield] = useState(state.globalAssumptions.liquidYieldRate);
   const [chartMode, setChartMode] = useState<'total' | 'liquid'>('total');
 
-  const isApplied = state.pensionskasseMarkus.renteSplit === customSplit && state.pensionskasseMonique.renteSplit === customSplit && state.baseline.liquidYieldRate === customYield;
+  const isApplied = state.scenarioOverrides.pensionskasseMarkus.renteSplit === customSplit && state.scenarioOverrides.pensionskasseMonique.renteSplit === customSplit && state.globalAssumptions.liquidYieldRate === customYield;
 
   // Run projections for all scenarios (applying custom yield sensitivity to all strategies)
   const proj100 = useMemo(() => runProjection(state, 100, customYield), [state, customYield]);
@@ -84,21 +84,27 @@ export const SensitivityAnalysis = () => {
     if (deathYear === null) {
       return {
         ...state,
-        survivor: {
-          deceasedPartner: 'Keiner',
-          deathYear: 2035,
-          expenseReductionFactor: state.survivor?.expenseReductionFactor ?? 70,
-          pkSurvivorRate: state.survivor?.pkSurvivorRate ?? 60
+        scenarioOverrides: {
+          ...state.scenarioOverrides,
+          survivor: {
+            deceasedPartner: 'Keiner',
+            deathYear: 2035,
+            expenseReductionFactor: state.scenarioOverrides.survivor?.expenseReductionFactor ?? 70,
+            pkSurvivorRate: state.scenarioOverrides.survivor?.pkSurvivorRate ?? 60
+          }
         }
       };
     }
     return {
       ...state,
-      survivor: {
-        deceasedPartner: 'Markus',
-        deathYear,
-        expenseReductionFactor: state.survivor?.expenseReductionFactor ?? 70,
-        pkSurvivorRate: state.survivor?.pkSurvivorRate ?? 60
+      scenarioOverrides: {
+        ...state.scenarioOverrides,
+        survivor: {
+          deceasedPartner: 'Markus',
+          deathYear,
+          expenseReductionFactor: state.scenarioOverrides.survivor?.expenseReductionFactor ?? 70,
+          pkSurvivorRate: state.scenarioOverrides.survivor?.pkSurvivorRate ?? 60
+        }
       }
     };
   };
@@ -296,7 +302,7 @@ export const SensitivityAnalysis = () => {
                 Rente: <span className="text-emerald-400">{formatCHF(metricsCustom.monthlyRente * 12)} / Jahr</span> ({formatCHF(metricsCustom.monthlyRente)} / Mon.)
               </div>
               <div className="text-sm font-bold text-slate-200 font-mono">
-                Kapitalbezug: <span className="text-indigo-400">{formatCHF((state.pensionskasseMarkus.totalCapital + state.pensionskasseMonique.totalCapital) * ((100 - customSplit) / 100))}</span> einmalig
+                Kapitalbezug: <span className="text-indigo-400">{formatCHF((state.scenarioOverrides.pensionskasseMarkus.totalCapital + state.scenarioOverrides.pensionskasseMonique.totalCapital) * ((100 - customSplit) / 100))}</span> einmalig
               </div>
               <div className="text-sm font-bold text-slate-200 font-mono">
                 Rendite: <span className="text-amber-400">{customYield.toFixed(2)}% p.a.</span>
@@ -403,7 +409,7 @@ export const SensitivityAnalysis = () => {
         </table>
         
         <div className="mt-4 space-y-1 text-[11px] text-slate-500 leading-normal">
-          <p>¹ <span className="font-semibold">Drawdown-Risiko:</span> Die stochastische Wahrscheinlichkeit (Monte Carlo, 100 Pfade mit 5.5% Renditevolatilität), dass das liquide Vermögen während des Planungszeitraums unter das Startkapital ({formatCHF(state.assets.startingLiquidWealth)}) fällt.</p>
+          <p>¹ <span className="font-semibold">Drawdown-Risiko:</span> Die stochastische Wahrscheinlichkeit (Monte Carlo, 100 Pfade mit 5.5% Renditevolatilität), dass das liquide Vermögen während des Planungszeitraums unter das Startkapital ({formatCHF(state.clientBaseline.assets.startingLiquidWealth)}) fällt.</p>
           <p>² <span className="font-semibold">Liquiditätserschöpfung:</span> Die stochastische Wahrscheinlichkeit, dass das liquide Vermögen während der Pensionierungsjahre komplett aufgezehrt wird (Kontostand &lt; 0 CHF).</p>
         </div>
       </div>
@@ -648,7 +654,7 @@ export const SensitivityAnalysis = () => {
         </div>
 
         <div className="mt-4 text-[11px] text-slate-500 leading-normal">
-          <p><span className="font-semibold">Annahmen:</span> Witwenrente AHV = Max(Eigene×1.2, Verstorbene×0.8), gedeckelt bei 2'450 CHF/Mt. PK-Witwenrente = {state.survivor?.pkSurvivorRate ?? 60}% des Verstorbenen-Anteils. Variable Lebenshaltung auf {state.survivor?.expenseReductionFactor ?? 70}% reduziert. Steuertarif wechselt auf Alleinstehend.</p>
+          <p><span className="font-semibold">Annahmen:</span> Witwenrente AHV = Max(Eigene×1.2, Verstorbene×0.8), gedeckelt bei 2'450 CHF/Mt. PK-Witwenrente = {state.scenarioOverrides.survivor?.pkSurvivorRate ?? 60}% des Verstorbenen-Anteils. Variable Lebenshaltung auf {state.scenarioOverrides.survivor?.expenseReductionFactor ?? 70}% reduziert. Steuertarif wechselt auf Alleinstehend.</p>
         </div>
       </div>
 

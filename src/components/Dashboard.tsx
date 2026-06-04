@@ -107,12 +107,12 @@ export const Dashboard = () => {
               <input
                 type="checkbox"
                 id="inflationToggle"
-                checked={state.baseline.applyInflation}
-                onChange={(e) => updateState('baseline', { applyInflation: e.target.checked })}
+                checked={state.globalAssumptions.applyInflation}
+                onChange={(e) => updateState('globalAssumptions', { applyInflation: e.target.checked })}
                 className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-700 bg-slate-950 rounded"
               />
               <label htmlFor="inflationToggle" className="text-sm font-medium text-slate-300 select-none cursor-pointer">
-                Inflation ab 2031 ({state.baseline.inflationRate}%) auf Ausgaben
+                Inflation ab 2031 ({state.globalAssumptions.inflationRate}%) auf Ausgaben
               </label>
            </div>
         </div>

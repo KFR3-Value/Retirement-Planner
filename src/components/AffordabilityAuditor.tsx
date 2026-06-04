@@ -14,7 +14,7 @@ export const AffordabilityAuditor = () => {
 
   const activeData = data[selectedYear];
 
-  const bankLendingValue = state.housing.bankLendingValue || 1000000;
+  const bankLendingValue = state.clientBaseline.housing.bankLendingValue || 1000000;
   
   // Imputed stress costs for active year (for detail panel)
   const activeMortgageDebt = activeData.mortgageDebt;
@@ -223,8 +223,8 @@ export const AffordabilityAuditor = () => {
 
             {/* SECTION 2: KALKULATORISCHE KOSTEN */}
             <ExpandableHeaderRow 
-              label="2. Kalkulatorische Kosten (Stress-Test Expenses)" 
-              valueFn={(y) => (data[y].mortgageDebt * 0.05) + ((state.housing.bankLendingValue || 1000000) * 0.01) + data[y].amortisation} 
+              label="2. Jährliche Kalkulatorische Kosten (Stress-Test Expenses)" 
+              valueFn={(y) => (data[y].mortgageDebt * 0.05) + ((state.clientBaseline.housing.bankLendingValue || 1000000) * 0.01) + data[y].amortisation} 
               expanded={expandedCosts} 
               setExpanded={setExpandedCosts} 
               className="bg-rose-950/10 hover:bg-rose-950/20 text-rose-455 border-b border-slate-850" 

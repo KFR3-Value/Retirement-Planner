@@ -549,30 +549,98 @@ export interface ProjectionResult {
 }
 
 export interface GlobalAssumptions {
-  inflation: number; // Was inflation (percent)
-  inflationRate?: number; // Legacy or alternative?
-  marketReturn: number;
-  wealthTax: number; // Allowance or rate basis? Inline had wealthTax AND wealthTaxRate
-  wealthTaxRate: number;
-  childAllowancePerChild: number;
-
-  address?: string;
-  zip?: string;
-  city?: string;
-  location_id?: string;
-
+  inflationRate: number;
+  applyInflation: boolean;
+  liquidYieldRate: number;
   taxMultiplierCanton: number;
   taxMultiplierCommune: number;
   taxMultiplierChurch: number;
-  /** Per-confession church multipliers for mixed-confession splitting */
-  taxMultiplierChurchRef?: number;
-  taxMultiplierChurchRom?: number;
-
-  // New Allocation Logic
-  sharedCostAllocation?: 'gross' | 'gross_excl_bonus' | 'net' | 'equal';
-
-  expectedReturnPillar3a: number; // Added Phase 15
+  baseUmwandlungssatzMarkus: number;
+  baseUmwandlungssatzMonique: number;
 }
+
+export interface ClientBaseline {
+  ahv: {
+    selectedScenarioId: string;
+    scenarios: any[];
+  };
+  salaryStreams: any[];
+  otherIncomeEvents?: any[];
+  living: {
+    haushaltEssen: number;
+    mobilitaet: number;
+    telefonHandyMedien: number;
+    kleiderFreizeit: number;
+    ferienReisen: number;
+    versicherungenSonstige: number;
+  };
+  health: {
+    krankenkasseBase: number;
+    applyAgeIncrease: boolean;
+    ageIncreaseRate: number;
+    zahnarztOptiker: number;
+    diversesReserve: number;
+  };
+  housing: {
+    efhTaxValue: number;
+    bankLendingValue: number;
+    eigenmietwert: number;
+    saronAmount: number;
+    saronRate: number;
+    festAmount: number;
+    festRate: number;
+    unterhaltRate: number;
+    stromHeizung: number;
+    amortisation: number;
+  };
+  assets: {
+    saeule3a: {
+      balance: number;
+      withdrawalYear: string;
+    };
+    freizuegigkeitskonto: {
+      balance: number;
+      withdrawalYear: string;
+    };
+    startingLiquidWealth: number;
+  };
+}
+
+export interface ScenarioOverrides {
+  pensionskasseMarkus: {
+    startYear: number;
+    startMonth: number;
+    endYear?: number;
+    endMonth?: number;
+    totalCapital: number;
+    renteSplit: number;
+    umwandlungssatz: number;
+  };
+  pensionskasseMonique: {
+    startYear: number;
+    startMonth: number;
+    endYear?: number;
+    endMonth?: number;
+    totalCapital: number;
+    renteSplit: number;
+    umwandlungssatz: number;
+  };
+  capExEvents: any[];
+  taxDeductions: Record<string, any>;
+  survivor?: {
+    deceasedPartner: 'Keiner' | 'Markus' | 'Monique';
+    deathYear: number;
+    expenseReductionFactor: number;
+    pkSurvivorRate: number;
+  };
+}
+
+export interface PlanningState {
+  globalAssumptions: GlobalAssumptions;
+  clientBaseline: ClientBaseline;
+  scenarioOverrides: ScenarioOverrides;
+}
+
 
 export interface YearlyAssumption {
   year: number;

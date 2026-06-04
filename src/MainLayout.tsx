@@ -4,12 +4,14 @@ import { Dashboard } from './components/Dashboard';
 import { usePlanning } from './context/PlanningContext';
 import { useUI } from './context/UIContext';
 import { SettingsModal } from './components/SettingsModal';
+import { GlobalSettingsDrawer } from './components/GlobalSettingsDrawer';
+import { LiveFeedbackBar } from './components/LiveFeedbackBar';
 import { AffordabilityAuditor } from './components/AffordabilityAuditor';
 import { SensitivityAnalysis } from './components/SensitivityAnalysis';
 export const MainLayout = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'engine' | 'auditor' | 'sensitivity'>('dashboard');
   const { state, loadState } = usePlanning();
-  const { openSettingsModal } = useUI();
+  const { openSettingsModal, openDrawer } = useUI();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = () => {
@@ -51,6 +53,7 @@ export const MainLayout = () => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <SettingsModal />
+      <GlobalSettingsDrawer />
       <header className="bg-slate-900/80 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -83,8 +86,8 @@ export const MainLayout = () => {
             </div>
             <nav className="flex space-x-8 items-center">
               <button
-                onClick={() => openSettingsModal('all')}
-                className="text-emerald-400 font-medium hover:text-emerald-300 transition-colors flex items-center hover:scale-[1.02] active:scale-[0.98]"
+                onClick={openDrawer}
+                className="text-emerald-400 font-medium hover:text-emerald-355 transition-colors flex items-center hover:scale-[1.02] active:scale-[0.98]"
               >
                 <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 Globale Annahmen
@@ -134,9 +137,11 @@ export const MainLayout = () => {
           </div>
         </div>
       </header>
+      <LiveFeedbackBar />
+
 
       <main className="flex-grow w-full max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {state.survivor && state.survivor.deceasedPartner !== 'Keiner' && (
+        {state.scenarioOverrides.survivor && state.scenarioOverrides.survivor.deceasedPartner !== 'Keiner' && (
           <div className="bg-amber-950/40 border border-amber-800/80 rounded-lg p-4 flex items-center justify-between shadow-lg mb-6">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-amber-500/10 rounded-full text-amber-500">
@@ -147,7 +152,7 @@ export const MainLayout = () => {
               <div>
                 <h4 className="text-sm font-bold text-amber-400 font-mono">Todesfall-Simulation AKTIV</h4>
                 <p className="text-xs text-slate-300">
-                  Die Berechnungen und Vermögensentwicklungen simulieren das Ableben von <strong className="text-amber-300">{state.survivor.deceasedPartner}</strong> im Jahr <strong className="text-amber-300">{state.survivor.deathYear}</strong>.
+                  Die Berechnungen und Vermögensentwicklungen simulieren das Ableben von <strong className="text-amber-300">{state.scenarioOverrides.survivor.deceasedPartner}</strong> im Jahr <strong className="text-amber-300">{state.scenarioOverrides.survivor.deathYear}</strong>.
                 </p>
               </div>
             </div>

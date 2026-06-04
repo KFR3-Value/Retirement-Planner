@@ -3,6 +3,7 @@ import { usePlanning, YEARS, type YearKey } from '../context/PlanningContext';
 import { useCalculations, type YearData } from '../hooks/useCalculations';
 import { useUI } from '../context/UIContext';
 import { formatCHF } from '../utils/format';
+import { ScenarioTimeline } from './ScenarioTimeline';
 
 export const Engine = () => {
   const { state } = usePlanning();
@@ -92,9 +93,10 @@ export const Engine = () => {
   );
 
   return (
-    <>
+    <div className="space-y-6">
+      <ScenarioTimeline />
 
-    <div className="w-full overflow-x-auto bg-slate-900 border border-slate-800 rounded-lg shadow-2xl">
+      <div className="w-full overflow-x-auto bg-slate-900 border border-slate-800 rounded-lg shadow-2xl">
       <table className="min-w-full divide-y divide-slate-800">
         <thead className="bg-slate-950 text-slate-100">
           <tr>
@@ -121,7 +123,7 @@ export const Engine = () => {
           <DataRow label="Lohn (Netto)" dataKey="salaryIncome" onClickLabel={() => openSettingsModal(1)} />
           <DataRow label="AHV Rente" dataKey="ahvIncome" onClickLabel={() => openSettingsModal(1)} />
           <DataRow label="Pensionskassen-Rente" dataKey="pkRenteIncome" onClickLabel={() => openSettingsModal(1)} />
-          <DataRow label={`Vermögensertrag (${state.baseline.liquidYieldRate}% auf Liquides)`} dataKey="wealthYieldIncome" onClickLabel={() => openSettingsModal(3)} />
+          <DataRow label={`Vermögensertrag (${state.globalAssumptions.liquidYieldRate}% auf Liquides)`} dataKey="wealthYieldIncome" onClickLabel={() => openSettingsModal(3)} />
 
           <DataRow label="Sonstige Einkünfte" dataKey="otherIncome" onClickLabel={() => openSettingsModal(1)} />
           
@@ -206,8 +208,8 @@ export const Engine = () => {
               <CustomRow label="- Abzug: Alimente (Ziffer 12.0)" valueFn={(y) => -(data[y].deductionsBreakdown?.alimony?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
               <CustomRow label="- Abzug: Kinderdrittbetreuung (Ziffer 15.0)" valueFn={(y) => -(data[y].deductionsBreakdown?.childcare?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
               <CustomRow label="- Abzug: Spenden (Ziffer 15.3)" valueFn={(y) => -(data[y].deductionsBreakdown?.donations?.canton || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
-              <CustomRow label="- Abzug: Aus- und Weiterbildung (Ziffer 15.5)" valueFn={(y) => -(state.taxDeductions?.[y]?.education || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
-              <CustomRow label="- Abzug: Übrige Abzüge (Ziffer 15.6)" valueFn={(y) => -(state.taxDeductions?.[y]?.other || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Aus- und Weiterbildung (Ziffer 15.5)" valueFn={(y) => -(state.scenarioOverrides.taxDeductions?.[y]?.education || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
+              <CustomRow label="- Abzug: Übrige Abzüge (Ziffer 15.6)" valueFn={(y) => -(state.scenarioOverrides.taxDeductions?.[y]?.other || 0)} isSub={true} onClickLabel={() => openSettingsModal(6)} />
               <CustomRow label="- Abzug: Zweitverdienerabzug (Ziffer 16.0)" valueFn={(y) => -(data[y].deductionsBreakdown?.dual_income?.canton || 0)} isSub={true} />
               <CustomRow label="- Abzug: Werterhaltende Investitionen (CapEx)" valueFn={(y) => -data[y].deductibleCapEx} isSub={true} onClickLabel={() => openSettingsModal(4)} />
             </>
@@ -280,6 +282,6 @@ export const Engine = () => {
         </tbody>
       </table>
     </div>
-    </>
+  </div>
   );
 };

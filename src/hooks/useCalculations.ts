@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { usePlanning, type YearKey, YEARS, type PlanningState } from '../context/PlanningContext';
+import { usePlanning, type YearKey, YEARS, type PlanningState, defaultState } from '../context/PlanningContext';
 
 export interface YearData {
   year: YearKey;
@@ -98,28 +98,98 @@ export interface YearData {
 import { Aargau2025Strategy } from '../engines/tax/strategies/aargau_strategy';
 import type { ExpenseProfile } from '../engines/tax/tax_calculator';
 import multipliersData from '../data/multipliers_2024.json';
+
+function resolveVal(state: PlanningState, path: string): any {
+  const parts = path.split('.');
+  
+  // Helper to safely get nested value
+  const getNested = (obj: any, pathParts: string[]): any => {
+    let curr = obj;
+    for (const part of pathParts) {
+      if (curr === null || curr === undefined) return undefined;
+      curr = curr[part];
+    }
+    return curr;
+  };
+
+  // 1. Try ScenarioOverrides
+  const valOverrides = getNested(state.scenarioOverrides, parts);
+  if (valOverrides !== undefined) return valOverrides;
+
+  // 2. Try ClientBaseline
+  const valBaseline = getNested(state.clientBaseline, parts);
+  if (valBaseline !== undefined) return valBaseline;
+
+  // 3. Try GlobalAssumptions
+  const valAssumptions = getNested(state.globalAssumptions, parts);
+  if (valAssumptions !== undefined) return valAssumptions;
+
+  // 4. Try flat fallback on any level if parts has length > 1
+  if (parts.length > 1) {
+    const lastPart = parts[parts.length - 1];
+    if ((state.scenarioOverrides as any)[lastPart] !== undefined) return (state.scenarioOverrides as any)[lastPart];
+    if ((state.clientBaseline as any)[lastPart] !== undefined) return (state.clientBaseline as any)[lastPart];
+    if ((state.globalAssumptions as any)[lastPart] !== undefined) return (state.globalAssumptions as any)[lastPart];
+  }
+
+  return undefined;
+}
+
+const resolveNum = (state: PlanningState, path: string, fallback: number): number => {
+  const v = resolveVal(state, path);
+  if (v === undefined || v === null) return fallback;
+  const num = Number(v);
+  return isNaN(num) ? fallback : num;
+};
+
+const resolveBool = (state: PlanningState, path: string, fallback: boolean): boolean => {
+  const v = resolveVal(state, path);
+  if (v === undefined || v === null) return fallback;
+  return Boolean(v);
+};
+
+const resolveStr = (state: PlanningState, path: string, fallback: string): string => {
+  const v = resolveVal(state, path);
+  if (v === undefined || v === null) return fallback;
+  return String(v);
+};
+
 export function runProjection(state: PlanningState, pkRenteSplitOverride?: number, liquidYieldRateOverride?: number) {
   const result: Record<YearKey, YearData> = {} as any;
   const yearResults: Record<number, YearData> = {};
   const trajectory: any[] = [];
 
-  let currentLiquidWealth = state.assets.startingLiquidWealth;
-  let current3a = state.assets.saeule3a.balance;
-  let currentFzk = state.assets.freizuegigkeitskonto.balance;
+  let currentLiquidWealth = resolveNum(state, 'assets.startingLiquidWealth', defaultState.clientBaseline.assets.startingLiquidWealth);
+  let current3a = resolveNum(state, 'assets.saeule3a.balance', defaultState.clientBaseline.assets.saeule3a.balance);
+  let currentFzk = resolveNum(state, 'assets.freizuegigkeitskonto.balance', defaultState.clientBaseline.assets.freizuegigkeitskonto.balance);
   let pkCapitalWithdrawnMarkus = false;
   let pkCapitalWithdrawnMonique = false;
 
-  const renteSplitMarkus = pkRenteSplitOverride !== undefined ? pkRenteSplitOverride : state.pensionskasseMarkus.renteSplit;
-  const renteSplitMonique = pkRenteSplitOverride !== undefined ? pkRenteSplitOverride : state.pensionskasseMonique.renteSplit;
+  const renteSplitMarkus = pkRenteSplitOverride !== undefined 
+    ? pkRenteSplitOverride 
+    : resolveNum(state, 'pensionskasseMarkus.renteSplit', defaultState.scenarioOverrides.pensionskasseMarkus.renteSplit);
+  const renteSplitMonique = pkRenteSplitOverride !== undefined 
+    ? pkRenteSplitOverride 
+    : resolveNum(state, 'pensionskasseMonique.renteSplit', defaultState.scenarioOverrides.pensionskasseMonique.renteSplit);
 
-  const pkRenteFullYearMarkus = state.pensionskasseMarkus.totalCapital * (renteSplitMarkus / 100) * (state.pensionskasseMarkus.umwandlungssatz / 100);
-  const pkRenteFullYearMonique = state.pensionskasseMonique.totalCapital * (renteSplitMonique / 100) * (state.pensionskasseMonique.umwandlungssatz / 100);
+  const totalCapitalMarkus = resolveNum(state, 'pensionskasseMarkus.totalCapital', defaultState.scenarioOverrides.pensionskasseMarkus.totalCapital);
+  const totalCapitalMonique = resolveNum(state, 'pensionskasseMonique.totalCapital', defaultState.scenarioOverrides.pensionskasseMonique.totalCapital);
 
-  const pkCapitalMarkus = state.pensionskasseMarkus.totalCapital * ((100 - renteSplitMarkus) / 100);
-  const pkCapitalMonique = state.pensionskasseMonique.totalCapital * ((100 - renteSplitMonique) / 100);
+  const umwandlungssatzMarkus = resolveVal(state, 'pensionskasseMarkus.umwandlungssatz') 
+    ?? resolveVal(state, 'baseUmwandlungssatzMarkus') 
+    ?? defaultState.scenarioOverrides.pensionskasseMarkus.umwandlungssatz;
+  const umwandlungssatzMonique = resolveVal(state, 'pensionskasseMonique.umwandlungssatz') 
+    ?? resolveVal(state, 'baseUmwandlungssatzMonique') 
+    ?? defaultState.scenarioOverrides.pensionskasseMonique.umwandlungssatz;
 
-  const deceasedPartner = state.survivor?.deceasedPartner || 'Keiner';
-  const deathYear = state.survivor?.deathYear ?? 2035;
+  const pkRenteFullYearMarkus = totalCapitalMarkus * (renteSplitMarkus / 100) * (Number(umwandlungssatzMarkus) / 100);
+  const pkRenteFullYearMonique = totalCapitalMonique * (renteSplitMonique / 100) * (Number(umwandlungssatzMonique) / 100);
+
+  const pkCapitalMarkus = totalCapitalMarkus * ((100 - renteSplitMarkus) / 100);
+  const pkCapitalMonique = totalCapitalMonique * ((100 - renteSplitMonique) / 100);
+
+  const deceasedPartner = resolveStr(state, 'survivor.deceasedPartner', defaultState.scenarioOverrides.survivor?.deceasedPartner ?? 'Keiner');
+  const deathYear = resolveNum(state, 'survivor.deathYear', defaultState.scenarioOverrides.survivor?.deathYear ?? 2035);
 
   const calcMonthsActive = (y: number, sYear: number, sMonth: number, eYear: number, eMonth: number) => {
     if (y < sYear || y > eYear) return 0;
@@ -140,9 +210,11 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     const yearKey = (y <= 2030 ? String(y) : '2031+') as YearKey;
 
     // Calculate Inflation Factor
+    const applyInflation = resolveBool(state, 'applyInflation', defaultState.globalAssumptions.applyInflation);
+    const inflationRate = resolveNum(state, 'inflationRate', defaultState.globalAssumptions.inflationRate);
     let inflationFactor = 1.0;
-    if (state.baseline.applyInflation) {
-       inflationFactor = Math.pow(1 + (state.baseline.inflationRate / 100), y - 2026);
+    if (applyInflation) {
+       inflationFactor = Math.pow(1 + (inflationRate / 100), y - 2026);
     }
 
     const isDeceased = deceasedPartner !== 'Keiner' && y >= deathYear;
@@ -150,7 +222,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
 
     // --- INCOME ---
     let ahvIncome = 0;
-    const activeScenario = state.ahv.scenarios.find(s => s.id === state.ahv.selectedScenarioId) || state.ahv.scenarios[0];
+    const ahvState = resolveVal(state, 'ahv') ?? defaultState.clientBaseline.ahv;
+    const activeScenario = ahvState.scenarios.find((s: any) => s.id === ahvState.selectedScenarioId) || ahvState.scenarios[0];
 
     for (let m = 0; m < 12; m++) {
       let markusRent = 0;
@@ -186,19 +259,32 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
 
     // --- PENSIONSKASSE RENTE ---
     let pkRenteIncome = 0;
-    const pkEndYearMarkus = state.pensionskasseMarkus.endYear ?? 2099;
-    const pkEndMonthMarkus = state.pensionskasseMarkus.endMonth ?? 11;
-    const pkEndYearMonique = state.pensionskasseMonique.endYear ?? 2099;
-    const pkEndMonthMonique = state.pensionskasseMonique.endMonth ?? 11;
+    const pkStartYearMarkus = resolveNum(state, 'pensionskasseMarkus.startYear', defaultState.scenarioOverrides.pensionskasseMarkus.startYear);
+    const pkStartMonthMarkus = resolveNum(state, 'pensionskasseMarkus.startMonth', defaultState.scenarioOverrides.pensionskasseMarkus.startMonth);
+    const pkEndYearMarkus = resolveVal(state, 'pensionskasseMarkus.endYear') !== undefined 
+      ? resolveNum(state, 'pensionskasseMarkus.endYear', 2099) 
+      : (defaultState.scenarioOverrides.pensionskasseMarkus.endYear ?? 2099);
+    const pkEndMonthMarkus = resolveVal(state, 'pensionskasseMarkus.endMonth') !== undefined 
+      ? resolveNum(state, 'pensionskasseMarkus.endMonth', 11) 
+      : (defaultState.scenarioOverrides.pensionskasseMarkus.endMonth ?? 11);
+
+    const pkStartYearMonique = resolveNum(state, 'pensionskasseMonique.startYear', defaultState.scenarioOverrides.pensionskasseMonique.startYear);
+    const pkStartMonthMonique = resolveNum(state, 'pensionskasseMonique.startMonth', defaultState.scenarioOverrides.pensionskasseMonique.startMonth);
+    const pkEndYearMonique = resolveVal(state, 'pensionskasseMonique.endYear') !== undefined 
+      ? resolveNum(state, 'pensionskasseMonique.endYear', 2099) 
+      : (defaultState.scenarioOverrides.pensionskasseMonique.endYear ?? 2099);
+    const pkEndMonthMonique = resolveVal(state, 'pensionskasseMonique.endMonth') !== undefined 
+      ? resolveNum(state, 'pensionskasseMonique.endMonth', 11) 
+      : (defaultState.scenarioOverrides.pensionskasseMonique.endMonth ?? 11);
 
     for (let m = 0; m < 12; m++) {
       // 1. Markus PK Rente Contribution
       let rentMarkus = 0;
-      const isRetiredMarkus = y > state.pensionskasseMarkus.startYear || (y === state.pensionskasseMarkus.startYear && m >= state.pensionskasseMarkus.startMonth);
+      const isRetiredMarkus = y > pkStartYearMarkus || (y === pkStartYearMarkus && m >= pkStartMonthMarkus);
       const isActiveMarkus = isRetiredMarkus && (y < pkEndYearMarkus || (y === pkEndYearMarkus && m <= pkEndMonthMarkus));
       if (isActiveMarkus) {
         if (deceasedPartner === 'Markus' && y >= deathYear) {
-          const pkSurvivorRate = state.survivor?.pkSurvivorRate ?? 60;
+          const pkSurvivorRate = resolveNum(state, 'survivor.pkSurvivorRate', defaultState.scenarioOverrides.survivor?.pkSurvivorRate ?? 60);
           rentMarkus = (pkRenteFullYearMarkus / 12) * (pkSurvivorRate / 100);
         } else {
           rentMarkus = pkRenteFullYearMarkus / 12;
@@ -207,11 +293,11 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
 
       // 2. Monique PK Rente Contribution
       let rentMonique = 0;
-      const isRetiredMonique = y > state.pensionskasseMonique.startYear || (y === state.pensionskasseMonique.startYear && m >= state.pensionskasseMonique.startMonth);
+      const isRetiredMonique = y > pkStartYearMonique || (y === pkStartYearMonique && m >= pkStartMonthMonique);
       const isActiveMonique = isRetiredMonique && (y < pkEndYearMonique || (y === pkEndYearMonique && m <= pkEndMonthMonique));
       if (isActiveMonique) {
         if (deceasedPartner === 'Monique' && y >= deathYear) {
-          const pkSurvivorRate = state.survivor?.pkSurvivorRate ?? 60;
+          const pkSurvivorRate = resolveNum(state, 'survivor.pkSurvivorRate', defaultState.scenarioOverrides.survivor?.pkSurvivorRate ?? 60);
           rentMonique = (pkRenteFullYearMonique / 12) * (pkSurvivorRate / 100);
         } else {
           rentMonique = pkRenteFullYearMonique / 12;
@@ -224,7 +310,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     // --- SALARY INCOME ---
     const calcSalaryForYear = () => {
       let totalNet = 0;
-      for (const stream of state.salaryStreams || []) {
+      const salaryStreams = resolveVal(state, 'salaryStreams') ?? defaultState.clientBaseline.salaryStreams;
+      for (const stream of salaryStreams || []) {
         if (isDeceased && stream.owner === deceasedPartner) {
           continue; // Deceased salary drops to 0 starting from the year of death
         }
@@ -250,7 +337,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     const salaryIncome = calcSalaryForYear();
 
     // --- WEALTH YIELD ---
-    const yieldRate = liquidYieldRateOverride !== undefined ? liquidYieldRateOverride : state.baseline.liquidYieldRate;
+    const liquidYieldRate = resolveNum(state, 'liquidYieldRate', defaultState.globalAssumptions.liquidYieldRate);
+    const yieldRate = liquidYieldRateOverride !== undefined ? liquidYieldRateOverride : liquidYieldRate;
     const taxableYieldRate = Math.min(1.5, yieldRate);
     const taxFreeYieldRate = Math.max(0, yieldRate - taxableYieldRate);
     
@@ -258,7 +346,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     const taxFreeAppreciation = currentLiquidWealth * (taxFreeYieldRate / 100);
 
     // --- OTHER INCOME ---
-    const otherIncome = state.otherIncomeEvents.reduce((sum, event) => {
+    const otherIncomeEvents = resolveVal(state, 'otherIncomeEvents') ?? defaultState.clientBaseline.otherIncomeEvents;
+    const otherIncome = (otherIncomeEvents || []).reduce((sum: number, event: any) => {
       if (isDeceased && event.owner === deceasedPartner) {
         return sum; // Deceased other income drops to 0 starting from the year of death
       }
@@ -272,60 +361,87 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     const stressGrossIncome = salaryIncome + ahvIncome + pkRenteIncome + deemedYield + otherIncome;
     
     const isUpTo2028 = y <= 2028;
-    const eigenmietwert = isUpTo2028 ? (Number(state.housing.eigenmietwert) || 0) : 0;
+    const eigenmietwertVal = resolveNum(state, 'housing.eigenmietwert', defaultState.clientBaseline.housing.eigenmietwert);
+    const eigenmietwert = isUpTo2028 ? eigenmietwertVal : 0;
 
     // --- EXPENSES ---
-    const mortgageInterest =
-      (Number(state.housing.saronAmount) || 0) * ((Number(state.housing.saronRate) || 0) / 100) +
-      (Number(state.housing.festAmount) || 0) * ((Number(state.housing.festRate) || 0) / 100);
+    const housingSaronAmount = resolveNum(state, 'housing.saronAmount', defaultState.clientBaseline.housing.saronAmount);
+    const housingSaronRate = resolveNum(state, 'housing.saronRate', defaultState.clientBaseline.housing.saronRate);
+    const housingFestAmount = resolveNum(state, 'housing.festAmount', defaultState.clientBaseline.housing.festAmount);
+    const housingFestRate = resolveNum(state, 'housing.festRate', defaultState.clientBaseline.housing.festRate);
 
-    const amortisation = Number(state.housing.amortisation) || 0;
+    const mortgageInterest =
+      (housingSaronAmount * (housingSaronRate / 100)) +
+      (housingFestAmount * (housingFestRate / 100));
+
+    const amortisation = resolveNum(state, 'housing.amortisation', defaultState.clientBaseline.housing.amortisation);
     
     // Apply inflation universally to individual expense lines (except mortgage interest and amortisation)
-    const propertyMaintenance = (Number(state.housing.efhTaxValue) || 0) * ((Number(state.housing.unterhaltRate) || 0) / 100) * inflationFactor;
-    const stromHeizung = (Number(state.housing.stromHeizung) || 0) * inflationFactor;
+    const housingEfhTaxValue = resolveNum(state, 'housing.efhTaxValue', defaultState.clientBaseline.housing.efhTaxValue);
+    const housingUnterhaltRate = resolveNum(state, 'housing.unterhaltRate', defaultState.clientBaseline.housing.unterhaltRate);
+    const propertyMaintenance = housingEfhTaxValue * (housingUnterhaltRate / 100) * inflationFactor;
+    
+    const housingStromHeizung = resolveNum(state, 'housing.stromHeizung', defaultState.clientBaseline.housing.stromHeizung);
+    const stromHeizung = housingStromHeizung * inflationFactor;
 
-    const bankLendingValue = Number(state.housing.bankLendingValue) || 1000000;
-    const mortgageDebt = (Number(state.housing.saronAmount) || 0) + (Number(state.housing.festAmount) || 0);
+    const bankLendingValue = resolveNum(state, 'housing.bankLendingValue', defaultState.clientBaseline.housing.bankLendingValue);
+    const mortgageDebt = housingSaronAmount + housingFestAmount;
     const imputedCosts = (mortgageDebt * 0.05) + (bankLendingValue * 0.01) + amortisation;
     const affordabilityRatio = stressGrossIncome > 0 ? (imputedCosts / stressGrossIncome) * 100 : 0;
 
     // Krankenkasse premium drops to 50% for single survivor
-    let krankenkasse = Number(state.health.krankenkasseBase) || 0;
+    const healthKrankenkasseBase = resolveNum(state, 'health.krankenkasseBase', defaultState.clientBaseline.health.krankenkasseBase);
+    const healthApplyAgeIncrease = resolveBool(state, 'health.applyAgeIncrease', defaultState.clientBaseline.health.applyAgeIncrease);
+    const healthAgeIncreaseRate = resolveNum(state, 'health.ageIncreaseRate', defaultState.clientBaseline.health.ageIncreaseRate);
+
+    let krankenkasse = healthKrankenkasseBase;
     if (isDeceased) {
       krankenkasse = krankenkasse * 0.5;
     }
-    if (state.health.applyAgeIncrease && index > 0) {
-      krankenkasse = krankenkasse * Math.pow(1 + ((Number(state.health.ageIncreaseRate) || 0) / 100), index);
+    if (healthApplyAgeIncrease && index > 0) {
+      krankenkasse = krankenkasse * Math.pow(1 + (healthAgeIncreaseRate / 100), index);
     }
     krankenkasse = krankenkasse * inflationFactor;
 
     // Apply expense reduction factor to variable expenses
-    const expenseReduction = isDeceased ? (state.survivor?.expenseReductionFactor ?? 70) / 100 : 1.0;
+    const expenseReductionFactor = resolveNum(state, 'survivor.expenseReductionFactor', defaultState.scenarioOverrides.survivor?.expenseReductionFactor ?? 70);
+    const expenseReduction = isDeceased ? (expenseReductionFactor / 100) : 1.0;
     
-    const haushaltEssen = (Number(state.living.haushaltEssen) || 0) * expenseReduction * inflationFactor;
-    const mobilitaet = (Number(state.living.mobilitaet) || 0) * inflationFactor;
-    const telefonHandyMedien = (Number(state.living.telefonHandyMedien) || 0) * inflationFactor;
-    const kleiderFreizeit = (Number(state.living.kleiderFreizeit) || 0) * expenseReduction * inflationFactor;
-    const ferienReisen = (Number(state.living.ferienReisen) || 0) * expenseReduction * inflationFactor;
-    const versicherungenSonstige = (Number(state.living.versicherungenSonstige) || 0) * inflationFactor;
+    const livingHaushaltEssen = resolveNum(state, 'living.haushaltEssen', defaultState.clientBaseline.living.haushaltEssen);
+    const livingMobilitaet = resolveNum(state, 'living.mobilitaet', defaultState.clientBaseline.living.mobilitaet);
+    const livingTelefonHandyMedien = resolveNum(state, 'living.telefonHandyMedien', defaultState.clientBaseline.living.telefonHandyMedien);
+    const livingKleiderFreizeit = resolveNum(state, 'living.kleiderFreizeit', defaultState.clientBaseline.living.kleiderFreizeit);
+    const livingFerienReisen = resolveNum(state, 'living.ferienReisen', defaultState.clientBaseline.living.ferienReisen);
+    const livingVersicherungenSonstige = resolveNum(state, 'living.versicherungenSonstige', defaultState.clientBaseline.living.versicherungenSonstige);
+
+    const haushaltEssen = livingHaushaltEssen * expenseReduction * inflationFactor;
+    const mobilitaet = livingMobilitaet * inflationFactor;
+    const telefonHandyMedien = livingTelefonHandyMedien * inflationFactor;
+    const kleiderFreizeit = livingKleiderFreizeit * expenseReduction * inflationFactor;
+    const ferienReisen = livingFerienReisen * expenseReduction * inflationFactor;
+    const versicherungenSonstige = livingVersicherungenSonstige * inflationFactor;
     
-    const zahnarztOptiker = (Number(state.health.zahnarztOptiker) || 0) * expenseReduction * inflationFactor;
-    const diversesReserve = (Number(state.health.diversesReserve) || 0) * expenseReduction * inflationFactor;
+    const healthZahnarztOptiker = resolveNum(state, 'health.zahnarztOptiker', defaultState.clientBaseline.health.zahnarztOptiker);
+    const healthDiversesReserve = resolveNum(state, 'health.diversesReserve', defaultState.clientBaseline.health.diversesReserve);
+
+    const zahnarztOptiker = healthZahnarztOptiker * expenseReduction * inflationFactor;
+    const diversesReserve = healthDiversesReserve * expenseReduction * inflationFactor;
 
     const variableKosten = haushaltEssen + kleiderFreizeit + ferienReisen + zahnarztOptiker + diversesReserve;
 
-    const housingCapEx = state.capExEvents
-      .filter(event => event.year === yearKey && (event.category === 'housing' || (!event.category && (event.description.toLowerCase().includes('renovation') || event.description.toLowerCase().includes('garten')))))
-      .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
+    const capExEvents = resolveVal(state, 'capExEvents') ?? defaultState.scenarioOverrides.capExEvents;
 
-    const healthCapEx = state.capExEvents
-      .filter(event => event.year === yearKey && event.category === 'health')
-      .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
+    const housingCapEx = capExEvents
+      .filter((event: any) => event.year === yearKey && (event.category === 'housing' || (!event.category && (event.description.toLowerCase().includes('renovation') || event.description.toLowerCase().includes('garten')))))
+      .reduce((sum: number, event: any) => sum + (Number(event.amount) || 0), 0);
 
-    const livingCapEx = state.capExEvents
-      .filter(event => event.year === yearKey && (event.category === 'living' || (!event.category && !event.description.toLowerCase().includes('renovation') && !event.description.toLowerCase().includes('garten'))))
-      .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
+    const healthCapEx = capExEvents
+      .filter((event: any) => event.year === yearKey && event.category === 'health')
+      .reduce((sum: number, event: any) => sum + (Number(event.amount) || 0), 0);
+
+    const livingCapEx = capExEvents
+      .filter((event: any) => event.year === yearKey && (event.category === 'living' || (!event.category && !event.description.toLowerCase().includes('renovation') && !event.description.toLowerCase().includes('garten'))))
+      .reduce((sum: number, event: any) => sum + (Number(event.amount) || 0), 0);
 
     const capEx = housingCapEx + livingCapEx + healthCapEx;
 
@@ -342,17 +458,17 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     // Markus PK Payout
     if (!pkCapitalWithdrawnMarkus && pkCapitalMarkus > 0) {
       const isMarkusDeceased = deceasedPartner === 'Markus' && y >= deathYear;
-      const markusDiedPreRetirement = deceasedPartner === 'Markus' && deathYear < state.pensionskasseMarkus.startYear;
+      const markusDiedPreRetirement = deceasedPartner === 'Markus' && deathYear < pkStartYearMarkus;
       
       let shouldPayMarkus = false;
       if (isMarkusDeceased) {
         if (markusDiedPreRetirement) {
           shouldPayMarkus = y === deathYear;
         } else {
-          shouldPayMarkus = y >= 2031 ? (state.pensionskasseMarkus.startYear >= 2031) : (y === state.pensionskasseMarkus.startYear);
+          shouldPayMarkus = y >= 2031 ? (pkStartYearMarkus >= 2031) : (y === pkStartYearMarkus);
         }
       } else {
-        shouldPayMarkus = y >= 2031 ? (state.pensionskasseMarkus.startYear >= 2031) : (y === state.pensionskasseMarkus.startYear);
+        shouldPayMarkus = y >= 2031 ? (pkStartYearMarkus >= 2031) : (y === pkStartYearMarkus);
       }
 
       if (shouldPayMarkus) {
@@ -365,17 +481,17 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     // Monique PK Payout
     if (!pkCapitalWithdrawnMonique && pkCapitalMonique > 0) {
       const isMoniqueDeceased = deceasedPartner === 'Monique' && y >= deathYear;
-      const moniqueDiedPreRetirement = deceasedPartner === 'Monique' && deathYear < state.pensionskasseMonique.startYear;
+      const moniqueDiedPreRetirement = deceasedPartner === 'Monique' && deathYear < pkStartYearMonique;
 
       let shouldPayMonique = false;
       if (isMoniqueDeceased) {
         if (moniqueDiedPreRetirement) {
           shouldPayMonique = y === deathYear;
         } else {
-          shouldPayMonique = y >= 2031 ? (state.pensionskasseMonique.startYear >= 2031) : (y === state.pensionskasseMonique.startYear);
+          shouldPayMonique = y >= 2031 ? (pkStartYearMonique >= 2031) : (y === pkStartYearMonique);
         }
       } else {
-        shouldPayMonique = y >= 2031 ? (state.pensionskasseMonique.startYear >= 2031) : (y === state.pensionskasseMonique.startYear);
+        shouldPayMonique = y >= 2031 ? (pkStartYearMonique >= 2031) : (y === pkStartYearMonique);
       }
 
       if (shouldPayMonique) {
@@ -385,8 +501,11 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       }
     }
 
+    const saeule3aWithdrawalYear = resolveStr(state, 'assets.saeule3a.withdrawalYear', defaultState.clientBaseline.assets.saeule3a.withdrawalYear);
+    const freizuegigkeitskontoWithdrawalYear = resolveStr(state, 'assets.freizuegigkeitskonto.withdrawalYear', defaultState.clientBaseline.assets.freizuegigkeitskonto.withdrawalYear);
+
     const isSaeule3aWithdrawal = () => {
-      const wYear = state.assets.saeule3a.withdrawalYear;
+      const wYear = saeule3aWithdrawalYear;
       if (!wYear || current3a <= 0) return false;
       const parsed = parseInt(wYear);
       if (y >= 2031) {
@@ -402,7 +521,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     }
 
     const isFzkWithdrawal = () => {
-      const wYear = state.assets.freizuegigkeitskonto.withdrawalYear;
+      const wYear = freizuegigkeitskontoWithdrawalYear;
       if (!wYear || currentFzk <= 0) return false;
       const parsed = parseInt(wYear);
       if (y >= 2031) {
@@ -417,20 +536,20 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       currentFzk = 0;
     }
 
-    const deductibleCapEx = state.capExEvents
-      .filter(event => event.year === yearKey && event.isTaxDeductible)
-      .reduce((sum, event) => sum + (Number(event.amount) || 0), 0);
+    const deductibleCapEx = capExEvents
+      .filter((event: any) => event.year === yearKey && event.isTaxDeductible)
+      .reduce((sum: number, event: any) => sum + (Number(event.amount) || 0), 0);
 
     const strategy = new Aargau2025Strategy();
 
     const bettwilMultiplier = (multipliersData.response as any).find(
       (m: any) => m.Location && m.Location.City === 'Bettwil'
     );
-    const cantonMultiplier = bettwilMultiplier ? bettwilMultiplier.IncomeRateCanton / 100 : 1.11;
-    const municipalMultiplier = bettwilMultiplier ? bettwilMultiplier.IncomeRateCity / 100 : 1.02;
-    const churchMultiplier = bettwilMultiplier 
+    const cantonMultiplier = resolveNum(state, 'taxMultiplierCanton', bettwilMultiplier ? bettwilMultiplier.IncomeRateCanton / 100 : 1.11);
+    const municipalMultiplier = resolveNum(state, 'taxMultiplierCommune', bettwilMultiplier ? bettwilMultiplier.IncomeRateCity / 100 : 1.02);
+    const churchMultiplier = resolveNum(state, 'taxMultiplierChurch', bettwilMultiplier 
       ? (bettwilMultiplier.IncomeRateRoman + bettwilMultiplier.IncomeRateProtestant) / 200 
-      : 0.19;
+      : 0.19);
 
     const multipliers = {
       cantonal: cantonMultiplier,
@@ -438,7 +557,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       church: churchMultiplier
     };
 
-    const yearlyDeductions = state.taxDeductions?.[yearKey] || {
+    const taxDeductions = resolveVal(state, 'taxDeductions') ?? defaultState.scenarioOverrides.taxDeductions;
+    const yearlyDeductions = taxDeductions?.[yearKey] || {
       transport: 0,
       meal: 0,
       professional: 0,
@@ -487,8 +607,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     const taxableIncome = Math.max(0, actualGrossIncome + eigenmietwert - deductionsResult.canton);
     const taxableIncomeFederal = Math.max(0, actualGrossIncome + eigenmietwert - deductionsResult.federal);
 
-    const efhTaxValue = Number(state.housing.efhTaxValue) || 0;
-    const taxableWealth = Math.max(0, currentLiquidWealth + current3a + efhTaxValue - mortgageDebt);
+    const taxableWealth = Math.max(0, currentLiquidWealth + current3a + housingEfhTaxValue - mortgageDebt);
     const netWealth = Math.max(0, taxableWealth - 200000);
 
     const simpleTaxes = strategy.calculateSimpleTax(
@@ -584,12 +703,12 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     let capMarkus = 0;
     if (!pkCapitalWithdrawnMarkus) {
       if (deceasedPartner === 'Markus' && y >= deathYear) {
-        if (y < Math.min(state.pensionskasseMarkus.startYear, deathYear)) {
-          capMarkus = state.pensionskasseMarkus.totalCapital;
+        if (y < Math.min(pkStartYearMarkus, deathYear)) {
+          capMarkus = totalCapitalMarkus;
         }
       } else {
-        if (y < state.pensionskasseMarkus.startYear) {
-          capMarkus = state.pensionskasseMarkus.totalCapital;
+        if (y < pkStartYearMarkus) {
+          capMarkus = totalCapitalMarkus;
         }
       }
     }
@@ -597,12 +716,12 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     let capMonique = 0;
     if (!pkCapitalWithdrawnMonique) {
       if (deceasedPartner === 'Monique' && y >= deathYear) {
-        if (y < Math.min(state.pensionskasseMonique.startYear, deathYear)) {
-          capMonique = state.pensionskasseMonique.totalCapital;
+        if (y < Math.min(pkStartYearMonique, deathYear)) {
+          capMonique = totalCapitalMonique;
         }
       } else {
-        if (y < state.pensionskasseMonique.startYear) {
-          capMonique = state.pensionskasseMonique.totalCapital;
+        if (y < pkStartYearMonique) {
+          capMonique = totalCapitalMonique;
         }
       }
     }
@@ -659,8 +778,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       saeule3aEnd: current3a,
       fzkEnd: currentFzk,
       pensionskasseCapitalEnd,
-      totalWealthEnd: currentLiquidWealth + current3a + currentFzk + pensionskasseCapitalEnd + (efhTaxValue - mortgageDebt),
-      efhTaxValue,
+      totalWealthEnd: currentLiquidWealth + current3a + currentFzk + pensionskasseCapitalEnd + (housingEfhTaxValue - mortgageDebt),
+      efhTaxValue: housingEfhTaxValue,
       mortgageDebt,
       wealthTaxableBase: { liquid: currentLiquidWealth, pillar3a: current3a },
       deductionsBreakdown: deductionsResult.items,
@@ -676,8 +795,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       year: y,
       liquidWealth: currentLiquidWealth,
       pensionWealth: current3a + currentFzk + pensionskasseCapitalEnd,
-      realEstateEquity: efhTaxValue - mortgageDebt,
-      totalWealth: currentLiquidWealth + current3a + currentFzk + pensionskasseCapitalEnd + (efhTaxValue - mortgageDebt)
+      realEstateEquity: housingEfhTaxValue - mortgageDebt,
+      totalWealth: currentLiquidWealth + current3a + currentFzk + pensionskasseCapitalEnd + (housingEfhTaxValue - mortgageDebt)
     });
   }
 
@@ -712,18 +831,21 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
   let belowStartingCount = 0;
   let depletedCount = 0;
   
-  const startingWealth = state.assets.startingLiquidWealth;
+  const startingWealth = resolveNum(state, 'assets.startingLiquidWealth', defaultState.clientBaseline.assets.startingLiquidWealth);
   const detResults = runProjection(state, renteSplit, liquidYieldRateOverride);
   const { yearResults } = detResults;
   
   const renteSplitMarkus = renteSplit;
   const renteSplitMonique = renteSplit;
 
-  const pkCapitalMarkus = state.pensionskasseMarkus.totalCapital * ((100 - renteSplitMarkus) / 100);
-  const pkCapitalMonique = state.pensionskasseMonique.totalCapital * ((100 - renteSplitMonique) / 100);
+  const totalCapitalMarkus = resolveNum(state, 'pensionskasseMarkus.totalCapital', defaultState.scenarioOverrides.pensionskasseMarkus.totalCapital);
+  const totalCapitalMonique = resolveNum(state, 'pensionskasseMonique.totalCapital', defaultState.scenarioOverrides.pensionskasseMonique.totalCapital);
 
-  const deceasedPartner = state.survivor?.deceasedPartner || 'Keiner';
-  const deathYear = state.survivor?.deathYear ?? 2035;
+  const pkCapitalMarkus = totalCapitalMarkus * ((100 - renteSplitMarkus) / 100);
+  const pkCapitalMonique = totalCapitalMonique * ((100 - renteSplitMonique) / 100);
+
+  const deceasedPartner = resolveStr(state, 'survivor.deceasedPartner', defaultState.scenarioOverrides.survivor?.deceasedPartner ?? 'Keiner');
+  const deathYear = resolveNum(state, 'survivor.deathYear', defaultState.scenarioOverrides.survivor?.deathYear ?? 2035);
 
   const randomNormal = (mean: number, stdDev: number) => {
     const u1 = Math.random();
@@ -736,11 +858,11 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
   const bettwilMultiplier = (multipliersData.response as any).find(
     (m: any) => m.Location && m.Location.City === 'Bettwil'
   );
-  const cantonMultiplier = bettwilMultiplier ? bettwilMultiplier.IncomeRateCanton / 100 : 1.11;
-  const municipalMultiplier = bettwilMultiplier ? bettwilMultiplier.IncomeRateCity / 100 : 1.02;
-  const churchMultiplier = bettwilMultiplier 
+  const cantonMultiplier = resolveNum(state, 'taxMultiplierCanton', bettwilMultiplier ? bettwilMultiplier.IncomeRateCanton / 100 : 1.11);
+  const municipalMultiplier = resolveNum(state, 'taxMultiplierCommune', bettwilMultiplier ? bettwilMultiplier.IncomeRateCity / 100 : 1.02);
+  const churchMultiplier = resolveNum(state, 'taxMultiplierChurch', bettwilMultiplier 
     ? (bettwilMultiplier.IncomeRateRoman + bettwilMultiplier.IncomeRateProtestant) / 200 
-    : 0.19;
+    : 0.19);
 
   const multipliers = {
     cantonal: cantonMultiplier,
@@ -750,8 +872,8 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
   
   for (let r = 0; r < runs; r++) {
     let cash = startingWealth;
-    let active3a = state.assets.saeule3a.balance;
-    let activeFzk = state.assets.freizuegigkeitskonto.balance;
+    let active3a = resolveNum(state, 'assets.saeule3a.balance', defaultState.clientBaseline.assets.saeule3a.balance);
+    let activeFzk = resolveNum(state, 'assets.freizuegigkeitskonto.balance', defaultState.clientBaseline.assets.freizuegigkeitskonto.balance);
     
     let pkCapitalWithdrawnMarkus = false;
     let pkCapitalWithdrawnMonique = false;
@@ -759,6 +881,12 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
     let droppedBelowStarting = false;
     let depleted = false;
     
+    const pkStartYearMarkus = resolveNum(state, 'pensionskasseMarkus.startYear', defaultState.scenarioOverrides.pensionskasseMarkus.startYear);
+    const pkStartYearMonique = resolveNum(state, 'pensionskasseMonique.startYear', defaultState.scenarioOverrides.pensionskasseMonique.startYear);
+    
+    const saeule3aWithdrawalYear = resolveStr(state, 'assets.saeule3a.withdrawalYear', defaultState.clientBaseline.assets.saeule3a.withdrawalYear);
+    const freizuegigkeitskontoWithdrawalYear = resolveStr(state, 'assets.freizuegigkeitskonto.withdrawalYear', defaultState.clientBaseline.assets.freizuegigkeitskonto.withdrawalYear);
+
     for (let year = 2026; year <= 2060; year++) {
       const detYear = yearResults[year];
       if (!detYear) continue;
@@ -766,17 +894,17 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
       // Markus PK Payout
       if (!pkCapitalWithdrawnMarkus && pkCapitalMarkus > 0) {
         const isMarkusDeceased = deceasedPartner === 'Markus' && year >= deathYear;
-        const markusDiedPreRetirement = deceasedPartner === 'Markus' && deathYear < state.pensionskasseMarkus.startYear;
+        const markusDiedPreRetirement = deceasedPartner === 'Markus' && deathYear < pkStartYearMarkus;
         
         let shouldPayMarkus = false;
         if (isMarkusDeceased) {
           if (markusDiedPreRetirement) {
             shouldPayMarkus = year === deathYear;
           } else {
-            shouldPayMarkus = year === state.pensionskasseMarkus.startYear;
+            shouldPayMarkus = year === pkStartYearMarkus;
           }
         } else {
-          shouldPayMarkus = year === state.pensionskasseMarkus.startYear;
+          shouldPayMarkus = year === pkStartYearMarkus;
         }
 
         if (shouldPayMarkus) {
@@ -788,17 +916,17 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
       // Monique PK Payout
       if (!pkCapitalWithdrawnMonique && pkCapitalMonique > 0) {
         const isMoniqueDeceased = deceasedPartner === 'Monique' && year >= deathYear;
-        const moniqueDiedPreRetirement = deceasedPartner === 'Monique' && deathYear < state.pensionskasseMonique.startYear;
+        const moniqueDiedPreRetirement = deceasedPartner === 'Monique' && deathYear < pkStartYearMonique;
 
         let shouldPayMonique = false;
         if (isMoniqueDeceased) {
           if (moniqueDiedPreRetirement) {
             shouldPayMonique = year === deathYear;
           } else {
-            shouldPayMonique = year === state.pensionskasseMonique.startYear;
+            shouldPayMonique = year === pkStartYearMonique;
           }
         } else {
-          shouldPayMonique = year === state.pensionskasseMonique.startYear;
+          shouldPayMonique = year === pkStartYearMonique;
         }
 
         if (shouldPayMonique) {
@@ -807,11 +935,13 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
         }
       }
 
-      if (parseInt(state.assets.saeule3a.withdrawalYear) === year || (year >= 2031 && parseInt(state.assets.saeule3a.withdrawalYear) >= 2031 && active3a > 0)) {
+      const parsed3a = parseInt(saeule3aWithdrawalYear);
+      if (parsed3a === year || (year >= 2031 && parsed3a >= 2031 && active3a > 0)) {
         cash += active3a;
         active3a = 0;
       }
-      if (parseInt(state.assets.freizuegigkeitskonto.withdrawalYear) === year || (year >= 2031 && parseInt(state.assets.freizuegigkeitskonto.withdrawalYear) >= 2031 && activeFzk > 0)) {
+      const parsedFzk = parseInt(freizuegigkeitskontoWithdrawalYear);
+      if (parsedFzk === year || (year >= 2031 && parsedFzk >= 2031 && activeFzk > 0)) {
         cash += activeFzk;
         activeFzk = 0;
       }
@@ -820,7 +950,8 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
       const baseCashFlow = detYear.surplusDeficit - detYear.wealthYieldIncome + detYear.wealthTax;
       
       // 3. Volatile Yield (mean = baseline yield, stdDev = 5.5% volatility)
-      const meanYield = (liquidYieldRateOverride !== undefined ? liquidYieldRateOverride : state.baseline.liquidYieldRate) / 100;
+      const liquidYieldRate = resolveNum(state, 'liquidYieldRate', defaultState.globalAssumptions.liquidYieldRate);
+      const meanYield = (liquidYieldRateOverride !== undefined ? liquidYieldRateOverride : liquidYieldRate) / 100;
       const stdDev = 0.055;
       const randomYield = randomNormal(meanYield, stdDev); // no floor at -15%
       const randomYieldIncome = cash * randomYield;
@@ -828,8 +959,10 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
       // Recalculate stochastic wealth tax
       const isDeceased = deceasedPartner !== 'Keiner' && year >= deathYear;
       const civilStatus = isDeceased ? 'single' : 'married';
-      const efhTaxValue = Number(state.housing.efhTaxValue) || 0;
-      const mortgageDebt = (Number(state.housing.saronAmount) || 0) + (Number(state.housing.festAmount) || 0);
+      const efhTaxValue = resolveNum(state, 'housing.efhTaxValue', defaultState.clientBaseline.housing.efhTaxValue);
+      const housingSaronAmount = resolveNum(state, 'housing.saronAmount', defaultState.clientBaseline.housing.saronAmount);
+      const housingFestAmount = resolveNum(state, 'housing.festAmount', defaultState.clientBaseline.housing.festAmount);
+      const mortgageDebt = housingSaronAmount + housingFestAmount;
       const taxableWealth = Math.max(0, cash + active3a + efhTaxValue - mortgageDebt);
       const netWealth = Math.max(0, taxableWealth - (civilStatus === 'married' ? 200000 : 100000));
       
@@ -873,4 +1006,5 @@ export const useCalculations = () => {
 
   return results;
 };
+
 
