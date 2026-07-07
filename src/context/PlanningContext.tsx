@@ -62,6 +62,14 @@ export interface CapExEvent {
   category?: 'housing' | 'living' | 'health';
 }
 
+export interface AmortisationEvent {
+  id: string;
+  description: string;
+  amount: number;
+  year: YearKey | string;
+  mortgageType: 'saron' | 'fest';
+}
+
 export interface PensionskasseState {
   startYear: number;
   startMonth: number;
@@ -103,19 +111,52 @@ export interface ClientBaseline {
   salaryStreams: SalaryStream[];
   otherIncomeEvents: OtherIncomeEvent[];
   living: {
+    useDetailedExpenses?: boolean;
     haushaltEssen: number;
     mobilitaet: number;
     telefonHandyMedien: number;
     kleiderFreizeit: number;
     ferienReisen: number;
     versicherungenSonstige: number;
+    detailedLiving?: {
+      groceries: number;
+      diningOut: number;
+      householdSupplies: number;
+      carAmortization: number;
+      carInsurance: number;
+      fuel: number;
+      publicTransport: number;
+      internetTv: number;
+      mobilePhone: number;
+      streaming: number;
+      serafe: number;
+      clothing: number;
+      hobbies: number;
+      entertainment: number;
+      summerHolidays: number;
+      winterSports: number;
+      weekendTrips: number;
+      personalLiability: number;
+      legalProtection: number;
+      lifeInsurance: number;
+    };
   };
   health: {
+    useDetailedExpenses?: boolean;
     krankenkasseBase: number;
     applyAgeIncrease: boolean;
     ageIncreaseRate: number;
     zahnarztOptiker: number;
     diversesReserve: number;
+    detailedHealth?: {
+      basicInsurance: number;
+      supplementaryInsurance: number;
+      franchise: number;
+      deductibleExpected: number;
+      uncoveredMeds: number;
+      dentistCheckups: number;
+      glassesContacts: number;
+    };
   };
   housing: {
     efhTaxValue: number;
@@ -128,6 +169,7 @@ export interface ClientBaseline {
     unterhaltRate: number;
     stromHeizung: number;
     amortisation: number;
+    amortisationTarget?: 'saron' | 'fest';
   };
   assets: {
     saeule3a: {
@@ -146,6 +188,7 @@ export interface ScenarioOverrides {
   pensionskasseMarkus: PensionskasseState;
   pensionskasseMonique: PensionskasseState;
   capExEvents: CapExEvent[];
+  amortisationEvents: AmortisationEvent[];
   taxDeductions: Record<YearKey, YearlyDeductions>;
   survivor?: {
     deceasedPartner: 'Keiner' | 'Markus' | 'Monique';
@@ -159,6 +202,35 @@ export interface PlanningState {
   globalAssumptions: GlobalAssumptions;
   clientBaseline: ClientBaseline;
   scenarioOverrides: ScenarioOverrides;
+
+  /** @deprecated Legacy flat structure field */
+  ahv?: any;
+  /** @deprecated Legacy flat structure field */
+  salaryStreams?: any[];
+  /** @deprecated Legacy flat structure field */
+  otherIncomeEvents?: any[];
+  /** @deprecated Legacy flat structure field */
+  living?: any;
+  /** @deprecated Legacy flat structure field */
+  health?: any;
+  /** @deprecated Legacy flat structure field */
+  housing?: any;
+  /** @deprecated Legacy flat structure field */
+  assets?: any;
+  /** @deprecated Legacy flat structure field */
+  pensionskasseMarkus?: any;
+  /** @deprecated Legacy flat structure field */
+  pensionskasseMonique?: any;
+  /** @deprecated Legacy flat structure field */
+  capExEvents?: any[];
+  /** @deprecated Legacy flat structure field */
+  amortisationEvents?: any[];
+  /** @deprecated Legacy flat structure field */
+  taxDeductions?: Record<string, any>;
+  /** @deprecated Legacy flat structure field */
+  survivor?: any;
+  /** @deprecated Legacy flat structure field */
+  baseline?: any;
 }
 
 export const defaultState: PlanningState = {
@@ -230,19 +302,52 @@ export const defaultState: PlanningState = {
     ],
     otherIncomeEvents: [],
     living: {
+      useDetailedExpenses: false,
       haushaltEssen: 19680,
       mobilitaet: 7800,
       telefonHandyMedien: 1800,
       kleiderFreizeit: 6240,
       ferienReisen: 9600,
-      versicherungenSonstige: 1848
+      versicherungenSonstige: 1848,
+      detailedLiving: {
+        groceries: 12000,
+        diningOut: 6000,
+        householdSupplies: 1680,
+        carAmortization: 0,
+        carInsurance: 2000,
+        fuel: 4800,
+        publicTransport: 1000,
+        internetTv: 800,
+        mobilePhone: 400,
+        streaming: 265,
+        serafe: 335,
+        clothing: 3000,
+        hobbies: 2000,
+        entertainment: 1240,
+        summerHolidays: 5000,
+        winterSports: 3000,
+        weekendTrips: 1600,
+        personalLiability: 400,
+        legalProtection: 400,
+        lifeInsurance: 1048
+      }
     },
     health: {
+      useDetailedExpenses: false,
       krankenkasseBase: 14400,
       applyAgeIncrease: true,
       ageIncreaseRate: 3,
       zahnarztOptiker: 2640,
-      diversesReserve: 9600
+      diversesReserve: 9600,
+      detailedHealth: {
+        basicInsurance: 12000,
+        supplementaryInsurance: 2400,
+        franchise: 5000,
+        deductibleExpected: 1400,
+        uncoveredMeds: 3200,
+        dentistCheckups: 1000,
+        glassesContacts: 1640
+      }
     },
     housing: {
       efhTaxValue: 810000,
@@ -254,6 +359,7 @@ export const defaultState: PlanningState = {
       festRate: 1.68,
       unterhaltRate: 1,
       amortisation: 0,
+      amortisationTarget: 'saron',
       stromHeizung: 3600
     },
     assets: {
@@ -313,6 +419,7 @@ export const defaultState: PlanningState = {
         category: 'housing'
       }
     ],
+    amortisationEvents: [],
     taxDeductions: YEARS.reduce((acc, y) => {
       acc[y] = { transport: 0, meal: 0, professional: 0, childcare: 0, alimony: 0, donations: 0, education: 0, other: 0 };
       return acc;
@@ -327,42 +434,60 @@ export const defaultState: PlanningState = {
 };
 
 export function migrateFlatToNestedState(flatState: any): PlanningState {
-  if (flatState.clientBaseline && flatState.scenarioOverrides && flatState.globalAssumptions) {
-    return flatState as PlanningState;
+  // Ensure both structure is nested and the new amortisation fields exist.
+  // To be safe, we will migrate and also make sure default fields exist.
+  const nested = (flatState.clientBaseline && flatState.scenarioOverrides && flatState.globalAssumptions)
+    ? { ...flatState }
+    : {
+        globalAssumptions: {
+          inflationRate: flatState.baseline?.inflationRate ?? flatState.globalAssumptions?.inflationRate ?? 1.5,
+          applyInflation: flatState.baseline?.applyInflation ?? flatState.globalAssumptions?.applyInflation ?? true,
+          liquidYieldRate: flatState.baseline?.liquidYieldRate ?? flatState.globalAssumptions?.liquidYieldRate ?? 2,
+          taxMultiplierCanton: flatState.globalAssumptions?.taxMultiplierCanton ?? 1.11,
+          taxMultiplierCommune: flatState.globalAssumptions?.taxMultiplierCommune ?? 1.02,
+          taxMultiplierChurch: flatState.globalAssumptions?.taxMultiplierChurch ?? 0.19,
+          baseUmwandlungssatzMarkus: flatState.globalAssumptions?.baseUmwandlungssatzMarkus ?? flatState.pensionskasseMarkus?.umwandlungssatz ?? 5.125,
+          baseUmwandlungssatzMonique: flatState.globalAssumptions?.baseUmwandlungssatzMonique ?? flatState.pensionskasseMonique?.umwandlungssatz ?? 5.0,
+        },
+        clientBaseline: {
+          ahv: flatState.ahv ?? defaultState.clientBaseline.ahv,
+          salaryStreams: flatState.salaryStreams ?? defaultState.clientBaseline.salaryStreams,
+          otherIncomeEvents: flatState.otherIncomeEvents ?? defaultState.clientBaseline.otherIncomeEvents,
+          living: {
+            ...(flatState.living ?? defaultState.clientBaseline.living),
+            useDetailedExpenses: flatState.living?.useDetailedExpenses ?? defaultState.clientBaseline.living.useDetailedExpenses,
+            detailedLiving: flatState.living?.detailedLiving ?? defaultState.clientBaseline.living.detailedLiving,
+          },
+          health: {
+            ...(flatState.health ?? defaultState.clientBaseline.health),
+            useDetailedExpenses: flatState.health?.useDetailedExpenses ?? defaultState.clientBaseline.health.useDetailedExpenses,
+            detailedHealth: flatState.health?.detailedHealth ?? defaultState.clientBaseline.health.detailedHealth,
+          },
+          housing: {
+            ...(flatState.housing ?? defaultState.clientBaseline.housing),
+            amortisation: flatState.housing?.amortisation ?? defaultState.clientBaseline.housing.amortisation ?? 0,
+          },
+          assets: flatState.assets ?? defaultState.clientBaseline.assets,
+        },
+        scenarioOverrides: {
+          pensionskasseMarkus: flatState.pensionskasseMarkus ?? defaultState.scenarioOverrides.pensionskasseMarkus,
+          pensionskasseMonique: flatState.pensionskasseMonique ?? defaultState.scenarioOverrides.pensionskasseMonique,
+          capExEvents: flatState.capExEvents ?? defaultState.scenarioOverrides.capExEvents,
+          amortisationEvents: flatState.amortisationEvents ?? defaultState.scenarioOverrides.amortisationEvents ?? [],
+          taxDeductions: flatState.taxDeductions ?? defaultState.scenarioOverrides.taxDeductions,
+          survivor: flatState.survivor ?? defaultState.scenarioOverrides.survivor,
+        }
+      };
+
+  // Ensure new fields exist even if nested structure was already present
+  if (!nested.clientBaseline.housing.amortisationTarget) {
+    nested.clientBaseline.housing.amortisationTarget = 'saron';
+  }
+  if (!nested.scenarioOverrides.amortisationEvents) {
+    nested.scenarioOverrides.amortisationEvents = [];
   }
 
-  // It's a flat state, construct the new structure.
-  return {
-    globalAssumptions: {
-      inflationRate: flatState.baseline?.inflationRate ?? flatState.globalAssumptions?.inflationRate ?? 1.5,
-      applyInflation: flatState.baseline?.applyInflation ?? flatState.globalAssumptions?.applyInflation ?? true,
-      liquidYieldRate: flatState.baseline?.liquidYieldRate ?? flatState.globalAssumptions?.liquidYieldRate ?? 2,
-      taxMultiplierCanton: flatState.globalAssumptions?.taxMultiplierCanton ?? 1.11,
-      taxMultiplierCommune: flatState.globalAssumptions?.taxMultiplierCommune ?? 1.02,
-      taxMultiplierChurch: flatState.globalAssumptions?.taxMultiplierChurch ?? 0.19,
-      baseUmwandlungssatzMarkus: flatState.globalAssumptions?.baseUmwandlungssatzMarkus ?? flatState.pensionskasseMarkus?.umwandlungssatz ?? 5.125,
-      baseUmwandlungssatzMonique: flatState.globalAssumptions?.baseUmwandlungssatzMonique ?? flatState.pensionskasseMonique?.umwandlungssatz ?? 5.0,
-    },
-    clientBaseline: {
-      ahv: flatState.ahv ?? defaultState.clientBaseline.ahv,
-      salaryStreams: flatState.salaryStreams ?? defaultState.clientBaseline.salaryStreams,
-      otherIncomeEvents: flatState.otherIncomeEvents ?? defaultState.clientBaseline.otherIncomeEvents,
-      living: flatState.living ?? defaultState.clientBaseline.living,
-      health: flatState.health ?? defaultState.clientBaseline.health,
-      housing: {
-        ...(flatState.housing ?? defaultState.clientBaseline.housing),
-        amortisation: flatState.housing?.amortisation ?? defaultState.clientBaseline.housing.amortisation ?? 0,
-      },
-      assets: flatState.assets ?? defaultState.clientBaseline.assets,
-    },
-    scenarioOverrides: {
-      pensionskasseMarkus: flatState.pensionskasseMarkus ?? defaultState.scenarioOverrides.pensionskasseMarkus,
-      pensionskasseMonique: flatState.pensionskasseMonique ?? defaultState.scenarioOverrides.pensionskasseMonique,
-      capExEvents: flatState.capExEvents ?? defaultState.scenarioOverrides.capExEvents,
-      taxDeductions: flatState.taxDeductions ?? defaultState.scenarioOverrides.taxDeductions,
-      survivor: flatState.survivor ?? defaultState.scenarioOverrides.survivor,
-    }
-  };
+  return nested as PlanningState;
 }
 
 interface PlanningContextType {
@@ -392,7 +517,7 @@ export const PlanningProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
       
       // 2. Scenario Overrides
-      if (['pensionskasseMarkus', 'pensionskasseMonique', 'capExEvents', 'taxDeductions', 'survivor'].includes(section)) {
+      if (['pensionskasseMarkus', 'pensionskasseMonique', 'capExEvents', 'amortisationEvents', 'taxDeductions', 'survivor'].includes(section)) {
         const prevSection = prev.scenarioOverrides[section as keyof ScenarioOverrides];
         const isObject = typeof prevSection === 'object' && prevSection !== null && !Array.isArray(prevSection);
         return {

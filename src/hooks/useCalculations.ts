@@ -20,6 +20,7 @@ export interface YearData {
   // Expenses (Ausgaben)
   mortgageInterest: number;
   amortisation: number;
+  oneOffAmortisation: number;
   propertyMaintenance: number;
   stromHeizung: number;
   housingCapEx: number;
@@ -82,6 +83,7 @@ export interface YearData {
   fzkEnd: number;
   totalWealthEnd: number;
   efhTaxValue: number;
+  bankLendingValue: number;
   mortgageDebt: number;
   wealthTaxableBase: { liquid: number, pillar3a: number };
   deductionsBreakdown?: any;
@@ -203,6 +205,9 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       return 12; // full year
     }
   };
+
+  let runningSaronAmount = resolveNum(state, 'housing.saronAmount', defaultState.clientBaseline.housing.saronAmount);
+  let runningFestAmount = resolveNum(state, 'housing.festAmount', defaultState.clientBaseline.housing.festAmount);
 
   // Loop year-by-year from 2026 to 2060
   for (let y = 2026; y <= 2060; y++) {
@@ -365,18 +370,47 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     const eigenmietwert = isUpTo2028 ? eigenmietwertVal : 0;
 
     // --- EXPENSES ---
-    const housingSaronAmount = resolveNum(state, 'housing.saronAmount', defaultState.clientBaseline.housing.saronAmount);
     const housingSaronRate = resolveNum(state, 'housing.saronRate', defaultState.clientBaseline.housing.saronRate);
-    const housingFestAmount = resolveNum(state, 'housing.festAmount', defaultState.clientBaseline.housing.festAmount);
     const housingFestRate = resolveNum(state, 'housing.festRate', defaultState.clientBaseline.housing.festRate);
 
+    // Timing of amortisation: interest is calculated on beginning-of-year balance
     const mortgageInterest =
-      (housingSaronAmount * (housingSaronRate / 100)) +
-      (housingFestAmount * (housingFestRate / 100));
+      (runningSaronAmount * (housingSaronRate / 100)) +
+      (runningFestAmount * (housingFestRate / 100));
 
-    const amortisation = resolveNum(state, 'housing.amortisation', defaultState.clientBaseline.housing.amortisation);
-    
-    // Apply inflation universally to individual expense lines (except mortgage interest and amortisation)
+    // Calculate Amortisation (Recurring & One-Off)
+    const baseAmortisation = resolveNum(state, 'housing.amortisation', defaultState.clientBaseline.housing.amortisation);
+    const amortisationTarget = resolveVal(state, 'housing.amortisationTarget') ?? defaultState.clientBaseline.housing.amortisationTarget ?? 'saron';
+
+    // One-Off Amortisation Events
+    const amortisationEvents = resolveVal(state, 'amortisationEvents') ?? defaultState.scenarioOverrides.amortisationEvents ?? [];
+    const yearAmortisations = (amortisationEvents || []).filter((event: any) => event.year === yearKey);
+    const oneOffAmortisationSaron = yearAmortisations
+      .filter((e: any) => e.mortgageType === 'saron')
+      .reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
+    const oneOffAmortisationFest = yearAmortisations
+      .filter((e: any) => e.mortgageType === 'fest')
+      .reduce((sum: number, e: any) => sum + (Number(e.amount) || 0), 0);
+    const oneOffAmortisation = oneOffAmortisationSaron + oneOffAmortisationFest;
+
+    // Apply recurring amortisation
+    let recurringSaron = 0;
+    let recurringFest = 0;
+    if (amortisationTarget === 'fest') {
+      recurringFest = Math.min(runningFestAmount, baseAmortisation);
+    } else {
+      recurringSaron = Math.min(runningSaronAmount, baseAmortisation);
+    }
+    const amortisation = recurringSaron + recurringFest;
+
+    // Subtract amortisations from outstanding running balances
+    const saronAmortised = Math.min(runningSaronAmount, recurringSaron + oneOffAmortisationSaron);
+    const festAmortised = Math.min(runningFestAmount, recurringFest + oneOffAmortisationFest);
+
+    runningSaronAmount = Math.max(0, runningSaronAmount - saronAmortised);
+    runningFestAmount = Math.max(0, runningFestAmount - festAmortised);
+
+    // Apply inflation universally to individual expense lines (except mortgage interest and amortisations)
     const housingEfhTaxValue = resolveNum(state, 'housing.efhTaxValue', defaultState.clientBaseline.housing.efhTaxValue);
     const housingUnterhaltRate = resolveNum(state, 'housing.unterhaltRate', defaultState.clientBaseline.housing.unterhaltRate);
     const propertyMaintenance = housingEfhTaxValue * (housingUnterhaltRate / 100) * inflationFactor;
@@ -385,7 +419,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     const stromHeizung = housingStromHeizung * inflationFactor;
 
     const bankLendingValue = resolveNum(state, 'housing.bankLendingValue', defaultState.clientBaseline.housing.bankLendingValue);
-    const mortgageDebt = housingSaronAmount + housingFestAmount;
+    const mortgageDebt = runningSaronAmount + runningFestAmount;
     const imputedCosts = (mortgageDebt * 0.05) + (bankLendingValue * 0.01) + amortisation;
     const affordabilityRatio = stressGrossIncome > 0 ? (imputedCosts / stressGrossIncome) * 100 : 0;
 
@@ -445,7 +479,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
 
     const capEx = housingCapEx + livingCapEx + healthCapEx;
 
-    const housingTotal = mortgageInterest + amortisation + propertyMaintenance + stromHeizung + housingCapEx;
+    const housingTotal = mortgageInterest + amortisation + oneOffAmortisation + propertyMaintenance + stromHeizung + housingCapEx;
     const livingTotal = haushaltEssen + mobilitaet + telefonHandyMedien + kleiderFreizeit + ferienReisen + versicherungenSonstige + livingCapEx;
     const healthTotal = krankenkasse + zahnarztOptiker + diversesReserve + healthCapEx;
 
@@ -742,6 +776,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       capitalWithdrawalAmount,
       mortgageInterest,
       amortisation,
+      oneOffAmortisation,
       propertyMaintenance,
       stromHeizung,
       housingCapEx,
@@ -778,8 +813,9 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       saeule3aEnd: current3a,
       fzkEnd: currentFzk,
       pensionskasseCapitalEnd,
-      totalWealthEnd: currentLiquidWealth + current3a + currentFzk + pensionskasseCapitalEnd + (housingEfhTaxValue - mortgageDebt),
+      totalWealthEnd: currentLiquidWealth + current3a + currentFzk + pensionskasseCapitalEnd + (bankLendingValue - mortgageDebt),
       efhTaxValue: housingEfhTaxValue,
+      bankLendingValue,
       mortgageDebt,
       wealthTaxableBase: { liquid: currentLiquidWealth, pillar3a: current3a },
       deductionsBreakdown: deductionsResult.items,
@@ -795,8 +831,8 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       year: y,
       liquidWealth: currentLiquidWealth,
       pensionWealth: current3a + currentFzk + pensionskasseCapitalEnd,
-      realEstateEquity: housingEfhTaxValue - mortgageDebt,
-      totalWealth: currentLiquidWealth + current3a + currentFzk + pensionskasseCapitalEnd + (housingEfhTaxValue - mortgageDebt)
+      realEstateEquity: bankLendingValue - mortgageDebt,
+      totalWealth: currentLiquidWealth + current3a + currentFzk + pensionskasseCapitalEnd + (bankLendingValue - mortgageDebt)
     });
   }
 
@@ -935,13 +971,32 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
         }
       }
 
-      const parsed3a = parseInt(saeule3aWithdrawalYear);
-      if (parsed3a === year || (year >= 2031 && parsed3a >= 2031 && active3a > 0)) {
+      const isSaeule3aWithdrawalMC = () => {
+        const wYear = saeule3aWithdrawalYear;
+        if (!wYear || active3a <= 0) return false;
+        const parsed = parseInt(wYear);
+        if (year >= 2031) {
+          return !isNaN(parsed) && parsed >= 2031 && active3a > 0;
+        }
+        return String(year) === wYear;
+      };
+
+      if (isSaeule3aWithdrawalMC()) {
         cash += active3a;
         active3a = 0;
       }
-      const parsedFzk = parseInt(freizuegigkeitskontoWithdrawalYear);
-      if (parsedFzk === year || (year >= 2031 && parsedFzk >= 2031 && activeFzk > 0)) {
+
+      const isFzkWithdrawalMC = () => {
+        const wYear = freizuegigkeitskontoWithdrawalYear;
+        if (!wYear || activeFzk <= 0) return false;
+        const parsed = parseInt(wYear);
+        if (year >= 2031) {
+          return !isNaN(parsed) && parsed >= 2031 && activeFzk > 0;
+        }
+        return String(year) === wYear;
+      };
+
+      if (isFzkWithdrawalMC()) {
         cash += activeFzk;
         activeFzk = 0;
       }
@@ -960,9 +1015,7 @@ export function runMonteCarlo(state: PlanningState, renteSplit: number, liquidYi
       const isDeceased = deceasedPartner !== 'Keiner' && year >= deathYear;
       const civilStatus = isDeceased ? 'single' : 'married';
       const efhTaxValue = resolveNum(state, 'housing.efhTaxValue', defaultState.clientBaseline.housing.efhTaxValue);
-      const housingSaronAmount = resolveNum(state, 'housing.saronAmount', defaultState.clientBaseline.housing.saronAmount);
-      const housingFestAmount = resolveNum(state, 'housing.festAmount', defaultState.clientBaseline.housing.festAmount);
-      const mortgageDebt = housingSaronAmount + housingFestAmount;
+      const mortgageDebt = detYear.mortgageDebt;
       const taxableWealth = Math.max(0, cash + active3a + efhTaxValue - mortgageDebt);
       const netWealth = Math.max(0, taxableWealth - (civilStatus === 'married' ? 200000 : 100000));
       

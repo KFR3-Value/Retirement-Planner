@@ -15,6 +15,79 @@ const MonthSelect: React.FC<{ value: number; onChange: (val: number) => void }> 
   );
 };
 
+interface BudgetInputPairProps {
+  label: string;
+  desc?: string;
+  annualValue: number;
+  onChange: (val: number) => void;
+}
+
+const BudgetInputPair: React.FC<BudgetInputPairProps> = ({ label, desc, annualValue, onChange }) => {
+  const [localMonthly, setLocalMonthly] = useState<string>('');
+  const [localAnnual, setLocalAnnual] = useState<string>('');
+
+  // Sync from props when they change externally
+  useEffect(() => {
+    setLocalMonthly(annualValue ? String(Math.round((annualValue / 12) * 100) / 100) : '');
+    setLocalAnnual(annualValue ? String(annualValue) : '');
+  }, [annualValue]);
+
+  const handleMonthlyChange = (valStr: string) => {
+    setLocalMonthly(valStr);
+    const parsed = parseFloat(valStr);
+    if (!isNaN(parsed)) {
+      const computedAnnual = Math.round(parsed * 12);
+      setLocalAnnual(String(computedAnnual));
+      onChange(computedAnnual);
+    } else {
+      setLocalAnnual('');
+      onChange(0);
+    }
+  };
+
+  const handleAnnualChange = (valStr: string) => {
+    setLocalAnnual(valStr);
+    const parsed = parseFloat(valStr);
+    if (!isNaN(parsed)) {
+      const computedMonthly = Math.round((parsed / 12) * 100) / 100;
+      setLocalMonthly(String(computedMonthly));
+      onChange(parsed);
+    } else {
+      setLocalMonthly('');
+      onChange(0);
+    }
+  };
+
+  return (
+    <div className="space-y-1.5 p-3 bg-slate-950/40 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors">
+      <div className="flex justify-between items-center">
+        <label className="text-xs font-semibold text-slate-350">{label}</label>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <span className="text-[10px] text-slate-500 font-mono block mb-0.5">Monatlich</span>
+          <input
+            type="number"
+            value={localMonthly}
+            onChange={(e) => handleMonthlyChange(e.target.value)}
+            className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+          />
+        </div>
+        <div>
+          <span className="text-[10px] text-slate-500 font-mono block mb-0.5">Jährlich</span>
+          <input
+            type="number"
+            value={localAnnual}
+            onChange={(e) => handleAnnualChange(e.target.value)}
+            className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+          />
+        </div>
+      </div>
+      {desc && <p className="text-[9px] text-slate-500 leading-normal">{desc}</p>}
+    </div>
+  );
+};
+
 export const BaselineEntry: React.FC = () => {
   const { state, updateState } = usePlanning();
   const { activeModalTab } = useUI();
@@ -705,30 +778,24 @@ export const BaselineEntry: React.FC = () => {
             {/* Living Expenses tab */}
             {expenseTab === 'living' && (
               <div className="bg-slate-950/40 border border-slate-800 rounded-lg p-4 space-y-4">
-                <h4 className="text-xs font-mono font-bold text-rose-400 border-b border-slate-800 pb-1">JÄHRLICHE AUSGABEN FÜR LEBENSHALTUNG</h4>
+                <h4 className="text-xs font-mono font-bold text-rose-400 border-b border-slate-800 pb-1">AUSGABEN FÜR LEBENSHALTUNG</h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { key: 'haushaltEssen', label: 'Haushalt & Essen (CHF/Jahr)', desc: 'Lebensmittel, Reinigung, Haushaltswaren' },
-                    { key: 'mobilitaet', label: 'Mobilität (CHF/Jahr)', desc: 'Autounterhalt, Versicherung, ÖV, Benzin' },
-                    { key: 'telefonHandyMedien', label: 'Medien & Kommunikation (CHF/Jahr)', desc: 'Telefon, Handy, Internet, Abos' },
-                    { key: 'kleiderFreizeit', label: 'Kleider & Freizeit (CHF/Jahr)', desc: 'Shopping, Hobbys, Sport, Kultur' },
-                    { key: 'ferienReisen', label: 'Ferien & Reisen (CHF/Jahr)', desc: 'Urlaubsaufenthalte, Ausflüge' },
-                    { key: 'versicherungenSonstige', label: 'Übrige Versicherungen (CHF/Jahr)', desc: 'Haftpflicht, Hausrat, Rechtsschutz' },
+                    { key: 'haushaltEssen', label: 'Haushalt & Essen', desc: 'Lebensmittel, Reinigung, Haushaltswaren' },
+                    { key: 'mobilitaet', label: 'Mobilität', desc: 'Autounterhalt, Versicherung, ÖV, Benzin' },
+                    { key: 'telefonHandyMedien', label: 'Medien & Kommunikation', desc: 'Telefon, Handy, Internet, Abos' },
+                    { key: 'kleiderFreizeit', label: 'Kleider & Freizeit', desc: 'Shopping, Hobbys, Sport, Kultur' },
+                    { key: 'ferienReisen', label: 'Ferien & Reisen', desc: 'Urlaubsaufenthalte, Ausflüge' },
+                    { key: 'versicherungenSonstige', label: 'Übrige Versicherungen', desc: 'Haftpflicht, Hausrat, Rechtsschutz' },
                   ].map(field => (
-                    <div key={field.key} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <label className="text-xs font-medium text-slate-300">{field.label}</label>
-                        <span className="text-[10px] text-slate-500 font-mono">Mt: {Math.round((baseline.living[field.key as keyof typeof baseline.living] || 0) / 12).toLocaleString('de-CH')} CHF</span>
-                      </div>
-                      <input 
-                        type="number" 
-                        value={baseline.living[field.key as keyof typeof baseline.living]}
-                        onChange={(e) => handleUpdate('living', { [field.key]: parseFloat(e.target.value) || 0 })}
-                        className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right"
-                      />
-                      <p className="text-[9px] text-slate-500">{field.desc}</p>
-                    </div>
+                    <BudgetInputPair
+                      key={field.key}
+                      label={field.label}
+                      desc={field.desc}
+                      annualValue={baseline.living[field.key as keyof typeof baseline.living] as number || 0}
+                      onChange={(val) => handleUpdate('living', { [field.key]: val })}
+                    />
                   ))}
                 </div>
               </div>
@@ -737,48 +804,33 @@ export const BaselineEntry: React.FC = () => {
             {/* Health Expenses tab */}
             {expenseTab === 'health' && (
               <div className="bg-slate-950/40 border border-slate-800 rounded-lg p-4 space-y-4">
-                <h4 className="text-xs font-mono font-bold text-rose-400 border-b border-slate-800 pb-1">JÄHRLICHE AUSGABEN FÜR GESUNDHEIT</h4>
+                <h4 className="text-xs font-mono font-bold text-rose-400 border-b border-slate-800 pb-1">AUSGABEN FÜR GESUNDHEIT</h4>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs font-medium text-slate-300">Krankenkassenprämie (CHF/Jahr)</label>
-                      <span className="text-[10px] text-slate-500 font-mono">Mt: {Math.round(baseline.health.krankenkasseBase / 12).toLocaleString('de-CH')} CHF</span>
-                    </div>
-                    <input 
-                      type="number" 
-                      value={baseline.health.krankenkasseBase}
-                      onChange={(e) => handleUpdate('health', { krankenkasseBase: parseFloat(e.target.value) || 0 })}
-                      className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right"
-                    />
-                    <p className="text-[9px] text-slate-500">Grundprämie & Zusatzversicherungen für beide Personen.</p>
-                  </div>
+                  <BudgetInputPair
+                    label="Krankenkassenprämie"
+                    desc="Grundprämie & Zusatzversicherungen für beide Personen."
+                    annualValue={baseline.health.krankenkasseBase}
+                    onChange={(val) => handleUpdate('health', { krankenkasseBase: val })}
+                  />
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-300">Zahnarzt & Optiker (CHF/Jahr)</label>
-                    <input 
-                      type="number" 
-                      value={baseline.health.zahnarztOptiker}
-                      onChange={(e) => handleUpdate('health', { zahnarztOptiker: parseFloat(e.target.value) || 0 })}
-                      className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right"
-                    />
-                    <p className="text-[9px] text-slate-500">Regelmässige Kosten für Zähne, Brillen, Linsen.</p>
-                  </div>
+                  <BudgetInputPair
+                    label="Zahnarzt & Optiker"
+                    desc="Regelmässige Kosten für Zähne, Brillen, Linsen."
+                    annualValue={baseline.health.zahnarztOptiker}
+                    onChange={(val) => handleUpdate('health', { zahnarztOptiker: val })}
+                  />
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-300">Diverses & Reserve (CHF/Jahr)</label>
-                    <input 
-                      type="number" 
-                      value={baseline.health.diversesReserve}
-                      onChange={(e) => handleUpdate('health', { diversesReserve: parseFloat(e.target.value) || 0 })}
-                      className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right"
-                    />
-                    <p className="text-[9px] text-slate-500">Franchisen, Selbstbehalte, sonstige ungedeckte Medizinkosten.</p>
-                  </div>
+                  <BudgetInputPair
+                    label="Diverses & Reserve"
+                    desc="Franchisen, Selbstbehalte, sonstige ungedeckte Medizinkosten."
+                    annualValue={baseline.health.diversesReserve}
+                    onChange={(val) => handleUpdate('health', { diversesReserve: val })}
+                  />
 
-                  <div className="bg-slate-900 border border-slate-800 rounded p-3 space-y-2">
+                  <div className="bg-slate-950/40 border border-slate-800 rounded-lg p-3.5 space-y-2 flex flex-col justify-center">
                     <div className="flex items-center justify-between">
-                      <label htmlFor="health-age-increase" className="text-xs font-medium text-slate-300 cursor-pointer select-none">
+                      <label htmlFor="health-age-increase" className="text-xs font-semibold text-slate-350 cursor-pointer select-none">
                         Altersbedingte KK-Prämiensteigerung
                       </label>
                       <input 
@@ -790,7 +842,7 @@ export const BaselineEntry: React.FC = () => {
                       />
                     </div>
                     {baseline.health.applyAgeIncrease && (
-                      <div className="space-y-1">
+                      <div className="space-y-1 mt-2">
                         <div className="flex justify-between text-[10px] text-slate-400">
                           <label>Jährliche Erhöhungsrate (%)</label>
                           <span className="font-mono">{baseline.health.ageIncreaseRate}%</span>
@@ -800,7 +852,7 @@ export const BaselineEntry: React.FC = () => {
                           step="0.1"
                           value={baseline.health.ageIncreaseRate}
                           onChange={(e) => handleUpdate('health', { ageIncreaseRate: parseFloat(e.target.value) || 0 })}
-                          className="w-full text-xs border border-slate-800 rounded px-2 py-1 bg-slate-950 text-slate-100 font-mono"
+                          className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
                         />
                       </div>
                     )}
@@ -837,48 +889,38 @@ export const BaselineEntry: React.FC = () => {
                     <p className="text-[9px] text-slate-500">Für Tragbarkeits-Audit (Kalkulatorische Zinsen).</p>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-medium text-slate-350">Eigenmietwert (CHF/Jahr)</label>
-                    <input 
-                      type="number" 
-                      value={baseline.housing.eigenmietwert}
-                      onChange={(e) => handleUpdate('housing', { eigenmietwert: parseFloat(e.target.value) || 0 })}
-                      className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right"
-                    />
-                    <p className="text-[9px] text-slate-500">Steueraufrechnung (Ziffer 11.0, fällt ab 2029 weg).</p>
-                  </div>
+                  <BudgetInputPair
+                    label="Eigenmietwert"
+                    desc="Steueraufrechnung (Ziffer 11.0, fällt ab 2029 weg)."
+                    annualValue={baseline.housing.eigenmietwert}
+                    onChange={(val) => handleUpdate('housing', { eigenmietwert: val })}
+                  />
 
-                  <div>
-                    <label className="text-xs font-medium text-slate-300">Strom, Wasser, Heizung (Nebenkosten/Jahr)</label>
-                    <input 
-                      type="number" 
-                      value={baseline.housing.stromHeizung}
-                      onChange={(e) => handleUpdate('housing', { stromHeizung: parseFloat(e.target.value) || 0 })}
-                      className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right"
-                    />
-                  </div>
+                  <BudgetInputPair
+                    label="Strom, Wasser, Heizung"
+                    desc="Nebenkosten der Liegenschaft."
+                    annualValue={baseline.housing.stromHeizung}
+                    onChange={(val) => handleUpdate('housing', { stromHeizung: val })}
+                  />
 
-                  <div>
-                    <label className="text-xs font-medium text-slate-300">Unterhalts-Rückstellung (% EFH-Wert/Jahr)</label>
+                  <div className="space-y-1.5 p-3.5 bg-slate-950/40 border border-slate-800 rounded-lg hover:border-slate-700 transition-colors">
+                    <label className="text-xs font-semibold text-slate-350">Unterhalts-Rückstellung (% EFH-Wert/Jahr)</label>
                     <input 
                       type="number" 
                       step="0.01"
                       value={baseline.housing.unterhaltRate}
                       onChange={(e) => handleUpdate('housing', { unterhaltRate: parseFloat(e.target.value) || 0 })}
-                      className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right"
+                      className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
                     />
                     <p className="text-[9px] text-slate-500">Normalerweise 1.0% bis 1.5% des Liegenschaftswerts.</p>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-medium text-slate-300">Geplante jährliche Amortisation (CHF)</label>
-                    <input 
-                      type="number" 
-                      value={baseline.housing.amortisation || 0}
-                      onChange={(e) => handleUpdate('housing', { amortisation: parseFloat(e.target.value) || 0 })}
-                      className="w-full text-xs border border-slate-800 rounded px-2.5 py-1.5 bg-slate-950 text-slate-100 font-mono text-right"
-                    />
-                  </div>
+                  <BudgetInputPair
+                    label="Geplante Amortisation"
+                    desc="Geplante jährliche amortisierende Abzahlung."
+                    annualValue={baseline.housing.amortisation || 0}
+                    onChange={(val) => handleUpdate('housing', { amortisation: val })}
+                  />
                 </div>
 
                 <div className="border-t border-slate-800 pt-4 space-y-4">

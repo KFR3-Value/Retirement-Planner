@@ -4,6 +4,7 @@ import { useCalculations, type YearData } from '../hooks/useCalculations';
 import { useUI } from '../context/UIContext';
 import { formatCHF } from '../utils/format';
 import { ScenarioTimeline } from './ScenarioTimeline';
+import { CapitalTimeline } from './CapitalTimeline';
 
 export const Engine = () => {
   const { state } = usePlanning();
@@ -35,8 +36,8 @@ export const Engine = () => {
     onClickLabel?: () => void
   }) => {
     return (
-      <tr className={`border-b border-slate-800/50 ${isTotal ? 'bg-slate-950/50 font-bold' : 'hover:bg-slate-800/30 transition-colors duration-100'}`}>
-        <td className={`py-3 px-4 text-sm text-slate-200 whitespace-nowrap ${isTotal ? 'font-bold text-slate-100' : ''}`}>
+      <tr className={`border-b border-slate-800/50 group ${isTotal ? 'bg-slate-950/50 font-bold' : 'hover:bg-slate-800/30 transition-colors duration-100'}`}>
+        <td className={`sticky left-0 z-10 py-3 px-4 text-sm text-slate-200 whitespace-nowrap border-r border-slate-800/60 ${isTotal ? 'font-bold text-slate-100 bg-slate-950/90' : 'bg-slate-900 group-hover:bg-slate-800/80 transition-colors duration-100'}`}>
           {onClickLabel ? (
             <button onClick={onClickLabel} className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center space-x-1 focus:outline-none transition-colors">
               <span>{label}</span> 
@@ -58,8 +59,8 @@ export const Engine = () => {
   };
 
   const CustomRow = ({ label, valueFn, isSub = false, onClickLabel }: { label: string, valueFn: (year: YearKey) => number, isSub?: boolean, onClickLabel?: () => void }) => (
-    <tr className="border-b border-slate-800/40 hover:bg-slate-800/20 transition-colors duration-100">
-      <td className={`py-2 px-4 text-sm text-slate-300 whitespace-nowrap ${isSub ? 'pl-8 text-slate-400' : ''}`}>
+    <tr className="border-b border-slate-800/40 group hover:bg-slate-800/20 transition-colors duration-100">
+      <td className={`sticky left-0 z-10 py-2 px-4 text-sm text-slate-300 whitespace-nowrap border-r border-slate-800/60 bg-slate-900 group-hover:bg-slate-800 transition-colors duration-100 ${isSub ? 'pl-8 text-slate-400' : ''}`}>
         {onClickLabel ? (
           <button onClick={onClickLabel} className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center space-x-1 focus:outline-none transition-colors">
             <span>{label}</span> 
@@ -75,9 +76,25 @@ export const Engine = () => {
     </tr>
   );
 
-  const ExpandableHeaderRow = ({ label, dataKey, valueFn, expanded, setExpanded, className = "bg-slate-900/60 hover:bg-slate-800/40" }: { label: string, dataKey?: keyof YearData, valueFn?: (year: YearKey) => number, expanded: boolean, setExpanded: (v: boolean) => void, className?: string }) => (
-    <tr className={`border-b border-slate-800 cursor-pointer transition-colors duration-100 ${className}`} onClick={() => setExpanded(!expanded)}>
-      <td className="py-3 px-4 text-sm text-slate-200 font-bold flex items-center select-none whitespace-nowrap">
+  const ExpandableHeaderRow = ({ 
+    label, 
+    dataKey, 
+    valueFn, 
+    expanded, 
+    setExpanded, 
+    rowClass = "bg-slate-900 hover:bg-slate-800",
+    stickyClass = "bg-slate-900 group-hover:bg-slate-800"
+  }: { 
+    label: string, 
+    dataKey?: keyof YearData, 
+    rowClass?: string,
+    stickyClass?: string,
+    valueFn?: (year: YearKey) => number, 
+    expanded: boolean, 
+    setExpanded: (v: boolean) => void 
+  }) => (
+    <tr className={`border-b border-slate-800 group cursor-pointer transition-colors duration-100 ${rowClass}`} onClick={() => setExpanded(!expanded)}>
+      <td className={`sticky left-0 z-10 py-3 px-4 text-sm text-slate-200 font-bold flex items-center select-none whitespace-nowrap border-r border-slate-800/60 transition-colors duration-100 ${stickyClass}`}>
         <svg className={`w-4 h-4 mr-2 text-slate-400 transition-transform ${expanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
         {label}
       </td>
@@ -95,12 +112,13 @@ export const Engine = () => {
   return (
     <div className="space-y-6">
       <ScenarioTimeline />
+      <CapitalTimeline />
 
       <div className="w-full overflow-x-auto bg-slate-900 border border-slate-800 rounded-lg shadow-2xl">
       <table className="min-w-full divide-y divide-slate-800">
         <thead className="bg-slate-950 text-slate-100">
           <tr>
-            <th className="py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap border-b border-slate-800">
+            <th className="sticky left-0 z-20 bg-slate-950 py-3 px-4 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap border-b border-slate-800 border-r border-slate-800/60">
               Kategorie / Parameter
             </th>
             {YEARS.map(year => (
@@ -114,9 +132,10 @@ export const Engine = () => {
 
           {/* SECTION 1: EINKÜNFTE */}
           <tr>
-            <td colSpan={YEARS.length + 1} className="py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800">
+            <td className="sticky left-0 z-10 py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-r border-slate-800/60">
               1. Einkünfte (Income)
             </td>
+            <td colSpan={YEARS.length} className="bg-slate-950 border-b border-slate-800"></td>
           </tr>
 
           {/* Time Series Income */}
@@ -130,33 +149,44 @@ export const Engine = () => {
           <DataRow label="Total Ordentliche Bruttoeinkünfte" dataKey="totalGrossIncome" isTotal={true} />
 
           {/* Capital Bezug */}
-          <tr className="bg-amber-950/20">
-             <td colSpan={YEARS.length + 1} className="py-2 px-4 font-semibold text-amber-400 text-sm border-b border-slate-800">Ausserordentliche Zuflüsse (separat besteuert)</td>
+          <tr>
+             <td className="sticky left-0 z-10 py-2 px-4 font-semibold text-amber-400 text-sm border-b border-slate-800 border-r border-slate-800/60 bg-[#1c1610]">
+               Ausserordentliche Zuflüsse (separat besteuert)
+             </td>
+             <td colSpan={YEARS.length} className="bg-[#1c1610] border-b border-slate-800"></td>
           </tr>
           <DataRow label="Kapitalbezüge (PK / Säule 3a)" dataKey="capitalWithdrawalAmount" />
 
 
           {/* SECTION 2: AUSGABEN */}
           <tr>
-            <td colSpan={YEARS.length + 1} className="py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800">
+            <td className="sticky left-0 z-10 py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800 border-r border-slate-800/60">
               2. Ausgaben (Budget)
             </td>
+            <td colSpan={YEARS.length} className="bg-slate-950 border-b border-slate-800 border-t-2 border-slate-800"></td>
           </tr>
 
           {/* Wohnen & Liegenschaft */}
-          <tr className="bg-slate-950/30">
-            <td colSpan={YEARS.length + 1} className="py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800">Wohnen & Liegenschaft</td>
+          <tr>
+            <td className="sticky left-0 z-10 py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800 border-r border-slate-800/60 bg-[#0c1a14]">
+              Wohnen & Liegenschaft
+            </td>
+            <td colSpan={YEARS.length} className="bg-[#0c1a14] border-b border-slate-800"></td>
           </tr>
           <DataRow label="Hypothekarzinsen" dataKey="mortgageInterest" onClickLabel={() => openSettingsModal(4)} />
           <DataRow label="Liegenschaftsunterhalt (als % EFH)" dataKey="propertyMaintenance" onClickLabel={() => openSettingsModal(4)} />
           <DataRow label="Strom & Heizung (Nebenkosten)" dataKey="stromHeizung" onClickLabel={() => openSettingsModal(4)} />
-          <DataRow label="Amortisation" dataKey="amortisation" onClickLabel={() => openSettingsModal(4)} />
+  <DataRow label="Amortisation (Regulär)" dataKey="amortisation" onClickLabel={() => openSettingsModal(4)} />
+  <DataRow label="Amortisation (Einmalig)" dataKey="oneOffAmortisation" onClickLabel={() => openSettingsModal(4)} />
           <DataRow label="Liegenschafts-Investitionen (CapEx)" dataKey="housingCapEx" onClickLabel={() => openSettingsModal(4)} />
           <DataRow label="Total Wohnen & Liegenschaft" dataKey="housingTotal" isTotal={true} />
 
           {/* Lebenshaltung & Konsum */}
-          <tr className="bg-slate-950/30">
-            <td colSpan={YEARS.length + 1} className="py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800">Lebenshaltung & Konsum</td>
+          <tr>
+            <td className="sticky left-0 z-10 py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800 border-r border-slate-800/60 bg-[#0c1a14]">
+              Lebenshaltung & Konsum
+            </td>
+            <td colSpan={YEARS.length} className="bg-[#0c1a14] border-b border-slate-800"></td>
           </tr>
           <DataRow label="Haushalt & Nahrung" dataKey="haushaltEssen" onClickLabel={() => openSettingsModal(2)} />
           <DataRow label="Mobilität" dataKey="mobilitaet" onClickLabel={() => openSettingsModal(2)} />
@@ -168,8 +198,11 @@ export const Engine = () => {
           <DataRow label="Total Lebenshaltung" dataKey="livingTotal" isTotal={true} />
 
           {/* Gesundheit & Diverses */}
-          <tr className="bg-slate-950/30">
-            <td colSpan={YEARS.length + 1} className="py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800">Gesundheit & Diverses</td>
+          <tr>
+            <td className="sticky left-0 z-10 py-2 px-4 font-semibold text-emerald-400 text-sm border-b border-slate-800 border-r border-slate-800/60 bg-[#0c1a14]">
+              Gesundheit & Diverses
+            </td>
+            <td colSpan={YEARS.length} className="bg-[#0c1a14] border-b border-slate-800"></td>
           </tr>
           <DataRow label="Krankenkasse" dataKey="krankenkasse" onClickLabel={() => openSettingsModal(3)} />
           <DataRow label="Zahnarzt & Optiker" dataKey="zahnarztOptiker" onClickLabel={() => openSettingsModal(3)} />
@@ -179,16 +212,18 @@ export const Engine = () => {
 
           {/* Total Ausgaben */}
           <tr className="border-t-2 border-slate-800">
-            <td colSpan={YEARS.length + 1} className="py-1 bg-slate-950"></td>
+            <td className="sticky left-0 z-10 py-1 bg-slate-950 border-r border-slate-800/60"></td>
+            <td colSpan={YEARS.length} className="bg-slate-950 border-t-2 border-slate-800"></td>
           </tr>
           <DataRow label="Total Ausgaben (exkl. Steuern)" dataKey="totalOutflowExclTaxes" isTotal={true} />
 
 
           {/* SECTION 4: STEUERN */}
           <tr>
-            <td colSpan={YEARS.length + 1} className="py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800">
+            <td className="sticky left-0 z-10 py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800 border-r border-slate-800/60">
               3. Steuern (Tarif B - Verheiratete)
             </td>
+            <td colSpan={YEARS.length} className="bg-slate-950 border-b border-slate-800 border-t-2 border-slate-800"></td>
           </tr>
           <ExpandableHeaderRow label="Steuerbares Einkommen (nach Abzügen)" dataKey="taxableIncome" expanded={expandedIncome} setExpanded={setExpandedIncome} />
           {expandedIncome && (
@@ -235,7 +270,14 @@ export const Engine = () => {
             </>
           )}
           
-          <ExpandableHeaderRow label="B. Sondersteuern auf Kapitalbezüge" className="bg-amber-950/20 hover:bg-amber-900/30 text-amber-400 border-t border-slate-800" valueFn={(y) => data[y].capitalWithdrawalTax} expanded={expandedSondTax} setExpanded={setExpandedSondTax} />
+          <ExpandableHeaderRow 
+            label="B. Sondersteuern auf Kapitalbezüge" 
+            rowClass="bg-[#1c1610] hover:bg-[#2c2015] text-amber-450 border-t border-slate-800" 
+            stickyClass="bg-[#1c1610] group-hover:bg-[#2c2015] text-amber-450" 
+            valueFn={(y) => data[y].capitalWithdrawalTax} 
+            expanded={expandedSondTax} 
+            setExpanded={setExpandedSondTax} 
+          />
           {expandedSondTax && (
             <>
               <DataRow label="Bemessungsgrundlage (Kapitalbezüge)" dataKey="capitalWithdrawalAmount" />
@@ -251,22 +293,23 @@ export const Engine = () => {
 
           {/* SECTION 5: CASH FLOW & WEALTH */}
           <tr>
-            <td colSpan={YEARS.length + 1} className="py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800">
+            <td className="sticky left-0 z-10 py-4 px-4 bg-slate-950 font-bold text-slate-200 text-md uppercase tracking-wider border-b border-slate-800 border-t-2 border-slate-800 border-r border-slate-800/60">
               4. Cash Flow & Vermögensentwicklung
             </td>
+            <td colSpan={YEARS.length} className="bg-slate-950 border-b border-slate-800 border-t-2 border-slate-800"></td>
           </tr>
           <DataRow label="Cash Flow (Überschuss / Defizit)" dataKey="surplusDeficit" isTotal={true} />
 
-          <tr className="border-b border-slate-800 hover:bg-slate-800/20">
-            <td className="py-3 px-4 text-sm text-slate-200 font-semibold whitespace-nowrap">
+          <tr className="border-b border-slate-800 group hover:bg-slate-800/20">
+            <td className="sticky left-0 z-10 py-3 px-4 text-sm text-slate-200 font-semibold whitespace-nowrap border-r border-slate-800/60 bg-slate-900 group-hover:bg-slate-800 transition-colors duration-100">
               Hypothekarische Tragbarkeit (Stress Test)
             </td>
             {YEARS.map(year => {
               const val = data[year].affordabilityRatio;
               const cellColor = val <= 33 ? 'text-emerald-450 font-bold' : 'text-rose-400 font-bold';
               return (
-                <td key={year} className={`py-3 px-4 text-right text-sm font-mono whitespace-nowrap ${cellColor}`}>
-                  {val.toFixed(1)}%
+                <td key={year} className="py-3 px-4 text-right text-sm font-mono whitespace-nowrap">
+                  <span className={cellColor}>{val.toFixed(1)}%</span>
                 </td>
               );
             })}
@@ -276,7 +319,7 @@ export const Engine = () => {
           <DataRow label="Säule 3a Ende Jahr" dataKey="saeule3aEnd" onClickLabel={() => openSettingsModal(5)} />
           <DataRow label="Freizügigkeitskonto Ende Jahr" dataKey="fzkEnd" onClickLabel={() => openSettingsModal(5)} />
           <DataRow label="Pensionskasse Guthaben Ende Jahr" dataKey="pensionskasseCapitalEnd" onClickLabel={() => openSettingsModal(1)} />
-          <CustomRow label="Immobilien Eigenkapital (Steuerwert - Hypothek)" valueFn={(y) => data[y].efhTaxValue - data[y].mortgageDebt} onClickLabel={() => openSettingsModal(4)} />
+          <CustomRow label="Immobilien Eigenkapital (Verkehrswert - Hypothek)" valueFn={(y) => data[y].bankLendingValue - data[y].mortgageDebt} onClickLabel={() => openSettingsModal(4)} />
           <DataRow label="Total Reinvermögen (inkl. PK & Immobilien)" dataKey="totalWealthEnd" isTotal={true} />
 
         </tbody>

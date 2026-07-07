@@ -631,7 +631,6 @@ export interface ScenarioOverrides {
     deceasedPartner: 'Keiner' | 'Markus' | 'Monique';
     deathYear: number;
     expenseReductionFactor: number;
-    pkSurvivorRate: number;
   };
 }
 
@@ -639,6 +638,33 @@ export interface PlanningState {
   globalAssumptions: GlobalAssumptions;
   clientBaseline: ClientBaseline;
   scenarioOverrides: ScenarioOverrides;
+
+  /** @deprecated Legacy flat structure field */
+  ahv?: any;
+  /** @deprecated Legacy flat structure field */
+  salaryStreams?: any[];
+  /** @deprecated Legacy flat structure field */
+  otherIncomeEvents?: any[];
+  /** @deprecated Legacy flat structure field */
+  living?: any;
+  /** @deprecated Legacy flat structure field */
+  health?: any;
+  /** @deprecated Legacy flat structure field */
+  housing?: any;
+  /** @deprecated Legacy flat structure field */
+  assets?: any;
+  /** @deprecated Legacy flat structure field */
+  pensionskasseMarkus?: any;
+  /** @deprecated Legacy flat structure field */
+  pensionskasseMonique?: any;
+  /** @deprecated Legacy flat structure field */
+  capExEvents?: any[];
+  /** @deprecated Legacy flat structure field */
+  taxDeductions?: Record<string, any>;
+  /** @deprecated Legacy flat structure field */
+  survivor?: any;
+  /** @deprecated Legacy flat structure field */
+  baseline?: any;
 }
 
 
