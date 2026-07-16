@@ -1,0 +1,613 @@
+{
+  "globalAssumptions": {
+    "inflationRate": 1,
+    "applyInflation": true,
+    "liquidYieldRate": 2.5,
+    "taxMultiplierCanton": 1.11,
+    "taxMultiplierCommune": 1.02,
+    "taxMultiplierChurch": 0.19,
+    "baseUmwandlungssatzMarkus": 5.5125,
+    "baseUmwandlungssatzMonique": 5,
+    "wageGrowthRate": 1,
+    "applyMischindex": true
+  },
+  "clientBaseline": {
+    "ahv": {
+      "selectedScenarioId": "scen1",
+      "scenarios": [
+        {
+          "id": "scen1",
+          "name": "Szenario 1 (Monique ab 10.2027)",
+          "streams": [
+            {
+              "id": "s1-1",
+              "startYear": 2026,
+              "startMonth": 0,
+              "endYear": 2027,
+              "endMonth": 8,
+              "markusAmount": 2520,
+              "moniqueAmount": 0
+            },
+            {
+              "id": "s1-2",
+              "startYear": 2027,
+              "startMonth": 9,
+              "endYear": 2030,
+              "endMonth": 8,
+              "markusAmount": 2495,
+              "moniqueAmount": 1159
+            },
+            {
+              "id": "s1-3",
+              "startYear": 2030,
+              "startMonth": 9,
+              "endYear": 2099,
+              "endMonth": 11,
+              "markusAmount": 1925,
+              "moniqueAmount": 1819
+            }
+          ]
+        },
+        {
+          "id": "scen2",
+          "name": "Szenario 2 (Monique ab 10.2029)",
+          "streams": [
+            {
+              "id": "s2-1",
+              "startYear": 2026,
+              "startMonth": 0,
+              "endYear": 2029,
+              "endMonth": 8,
+              "markusAmount": 2520,
+              "moniqueAmount": 0
+            },
+            {
+              "id": "s2-2",
+              "startYear": 2029,
+              "startMonth": 9,
+              "endYear": 2030,
+              "endMonth": 8,
+              "markusAmount": 2518,
+              "moniqueAmount": 1262
+            },
+            {
+              "id": "s2-3",
+              "startYear": 2030,
+              "startMonth": 9,
+              "endYear": 2099,
+              "endMonth": 11,
+              "markusAmount": 1925,
+              "moniqueAmount": 1855
+            }
+          ]
+        },
+        {
+          "id": "scen3",
+          "name": "Szenario 3 (Monique regulär ab 10.2030)",
+          "streams": [
+            {
+              "id": "s3-1",
+              "startYear": 2026,
+              "startMonth": 0,
+              "endYear": 2030,
+              "endMonth": 8,
+              "markusAmount": 2520,
+              "moniqueAmount": 0
+            },
+            {
+              "id": "s3-2",
+              "startYear": 2030,
+              "startMonth": 9,
+              "endYear": 2099,
+              "endMonth": 11,
+              "markusAmount": 1925,
+              "moniqueAmount": 1955
+            }
+          ]
+        }
+      ]
+    },
+    "salaryStreams": [
+      {
+        "id": "salary-1",
+        "description": "Lohn Markus (Base 2026)",
+        "inputType": "netto",
+        "amount": 9500,
+        "deductions": {
+          "ahv": 4.66,
+          "ahvBasis": 10236.4,
+          "alv": 0,
+          "nbuv": 0.77,
+          "nubvBasis": 11636.4,
+          "ktg": 0.52,
+          "ktgBasis": 11636.4,
+          "bvg": 12.88,
+          "other": -3.17
+        },
+        "startYear": 2026,
+        "startMonth": 0,
+        "endYear": 2027,
+        "endMonth": 0,
+        "owner": "Markus"
+      }
+    ],
+    "otherIncomeEvents": [],
+    "living": {
+      "useDetailedExpenses": true,
+      "haushaltEssen": 21600,
+      "mobilitaet": 5400,
+      "telefonHandyMedien": 2627,
+      "kleiderFreizeit": 9000,
+      "ferienReisen": 9600,
+      "versicherungenSonstige": 1848,
+      "detailedLiving": {
+        "groceries": 12000,
+        "diningOut": 6000,
+        "householdSupplies": 3600,
+        "carAmortization": 0,
+        "carInsurance": 3000,
+        "fuel": 2400,
+        "publicTransport": 0,
+        "internetTv": 0,
+        "mobilePhone": 1800,
+        "streaming": 492,
+        "serafe": 335,
+        "clothing": 3600,
+        "hobbies": 3000,
+        "entertainment": 2400,
+        "summerHolidays": 5000,
+        "winterSports": 3000,
+        "weekendTrips": 1600,
+        "personalLiability": 400,
+        "legalProtection": 400,
+        "lifeInsurance": 1048
+      }
+    },
+    "health": {
+      "useDetailedExpenses": true,
+      "krankenkasseBase": 14400,
+      "applyAgeIncrease": false,
+      "ageIncreaseRate": 3,
+      "zahnarztOptiker": 1000,
+      "diversesReserve": 9600,
+      "detailedHealth": {
+        "basicInsurance": 12000,
+        "supplementaryInsurance": 2400,
+        "franchise": 5000,
+        "deductibleExpected": 1400,
+        "uncoveredMeds": 3200,
+        "dentistCheckups": 1000,
+        "glassesContacts": 0
+      }
+    },
+    "housing": {
+      "efhTaxValue": 810000,
+      "bankLendingValue": 1400000,
+      "eigenmietwert": 16800,
+      "saronAmount": 175000,
+      "saronRate": 0.86,
+      "festAmount": 600000,
+      "festRate": 1.68,
+      "unterhaltRate": 0.6,
+      "amortisation": 0,
+      "amortisationTarget": "saron",
+      "stromHeizung": 3600
+    },
+    "assets": {
+      "saeule3a": {
+        "balance": 20000,
+        "withdrawalYear": "2027"
+      },
+      "freizuegigkeitskonto": {
+        "balance": 40000,
+        "withdrawalYear": "2027"
+      },
+      "startingLiquidWealth": 280000
+    }
+  },
+  "scenarioOverrides": {
+    "pensionskasseMarkus": {
+      "startYear": 2027,
+      "startMonth": 1,
+      "endYear": 2099,
+      "endMonth": 11,
+      "totalCapital": 1250000,
+      "renteSplit": 100,
+      "umwandlungssatz": 5.5125
+    },
+    "pensionskasseMonique": {
+      "startYear": 2030,
+      "startMonth": 9,
+      "endYear": 2099,
+      "endMonth": 11,
+      "totalCapital": 0,
+      "renteSplit": 100,
+      "umwandlungssatz": 5
+    },
+    "capExEvents": [
+      {
+        "id": "1",
+        "description": "Kauf Firmenfahrzeug Skoda (AG 341628)",
+        "amount": 20000,
+        "year": "2026",
+        "isTaxDeductible": false,
+        "category": "living"
+      },
+      {
+        "id": "2",
+        "description": "Renovation: OG Böden & Elternschlafzimmer",
+        "amount": 30000,
+        "year": "2026",
+        "isTaxDeductible": true,
+        "category": "housing"
+      },
+      {
+        "id": "3",
+        "description": "Umgebung & Garten",
+        "amount": 40000,
+        "year": "2027",
+        "isTaxDeductible": true,
+        "category": "housing"
+      }
+    ],
+    "amortisationEvents": [],
+    "taxDeductions": {
+      "2026": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2027": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2028": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2029": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2030": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2031": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2032": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2033": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2034": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2035": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2036": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2037": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2038": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2039": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2040": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2041": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2042": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2043": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2044": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2045": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2046": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2047": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2048": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2049": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2050": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2051": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2052": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2053": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2054": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2055": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2056": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2057": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2058": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2059": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      },
+      "2060": {
+        "transport": 0,
+        "meal": 0,
+        "professional": 0,
+        "childcare": 0,
+        "alimony": 0,
+        "donations": 0,
+        "education": 0,
+        "other": 0
+      }
+    },
+    "survivor": {
+      "deceasedPartner": "Keiner",
+      "deathYear": 2035,
+      "expenseReductionFactor": 70,
+      "pkSurvivorRate": 60
+    }
+  }
+}

@@ -654,7 +654,7 @@ export const SensitivityAnalysis = () => {
         </div>
 
         <div className="mt-4 text-[11px] text-slate-500 leading-normal">
-          <p><span className="font-semibold">Annahmen:</span> Witwenrente AHV = Max(Eigene×1.2, Verstorbene×0.8), gedeckelt bei 2'450 CHF/Mt. PK-Witwenrente = {state.scenarioOverrides.survivor?.pkSurvivorRate ?? 60}% des Verstorbenen-Anteils. Variable Lebenshaltung auf {state.scenarioOverrides.survivor?.expenseReductionFactor ?? 70}% reduziert. Steuertarif wechselt auf Alleinstehend.</p>
+          <p><span className="font-semibold">Annahmen:</span> Witwenrente AHV = Max(Eigene×1.2, Verstorbene×0.8), gedeckelt bei 2'450 CHF/Mt. PK-Witwenrente = {state.scenarioOverrides.survivor?.pkSurvivorRate ?? 50}% des Verstorbenen-Anteils. Variable Lebenshaltung auf {state.scenarioOverrides.survivor?.expenseReductionFactor ?? 70}% reduziert. Steuertarif wechselt auf Alleinstehend.</p>
         </div>
       </div>
 

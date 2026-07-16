@@ -209,6 +209,10 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
   let runningSaronAmount = resolveNum(state, 'housing.saronAmount', defaultState.clientBaseline.housing.saronAmount);
   let runningFestAmount = resolveNum(state, 'housing.festAmount', defaultState.clientBaseline.housing.festAmount);
 
+  // AHV Mischindex accumulator variables
+  let ahvMultiplier = 1.0;
+  let accumulatedAhvGrowth = 1.0;
+
   // Loop year-by-year from 2026 to 2060
   for (let y = 2026; y <= 2060; y++) {
     const index = y - 2026;
@@ -220,6 +224,29 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     let inflationFactor = 1.0;
     if (applyInflation) {
        inflationFactor = Math.pow(1 + (inflationRate / 100), y - 2026);
+    }
+
+    // Calculate AHV Mischindex adjustments
+    const applyMischindex = resolveBool(state, 'applyMischindex', defaultState.globalAssumptions.applyMischindex);
+    const wageGrowthRate = resolveNum(state, 'wageGrowthRate', defaultState.globalAssumptions.wageGrowthRate);
+    
+    let ahvAdjustmentRate = 0;
+    if (applyMischindex) {
+      ahvAdjustmentRate = (inflationRate + wageGrowthRate) / 2;
+    } else if (applyInflation) {
+      ahvAdjustmentRate = inflationRate;
+    }
+
+    // Accumulate growth
+    accumulatedAhvGrowth *= (1 + ahvAdjustmentRate / 100);
+
+    // Apply every odd year (2027, 2029, etc.) or immediately if inflation >= 4.0%
+    const isAdjustmentYear = (y % 2 !== 0);
+    const isHighInflation = inflationRate >= 4.0;
+
+    if (isAdjustmentYear || isHighInflation) {
+      ahvMultiplier *= accumulatedAhvGrowth;
+      accumulatedAhvGrowth = 1.0; // reset
     }
 
     const isDeceased = deceasedPartner !== 'Keiner' && y >= deathYear;
@@ -244,21 +271,26 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
         }
       }
 
+      // Apply indexation to active rents
+      const adjustedMarkusRent = markusRent * ahvMultiplier;
+      const adjustedMoniqueRent = moniqueRent * ahvMultiplier;
+
       if (isDeceased) {
         let survivorOwn = 0;
         let deceasedOwn = 0;
         if (deceasedPartner === 'Markus') {
-          survivorOwn = moniqueRent;
-          deceasedOwn = markusRent;
+          survivorOwn = adjustedMoniqueRent;
+          deceasedOwn = adjustedMarkusRent;
         } else {
-          survivorOwn = markusRent;
-          deceasedOwn = moniqueRent;
+          survivorOwn = adjustedMarkusRent;
+          deceasedOwn = adjustedMoniqueRent;
         }
-        // Widow's pension: Max(survivorOwn * 1.2, deceasedOwn * 0.8), capped at 2450 CHF/month (29400 CHF/year)
-        const widowPension = Math.min(2450, Math.max(survivorOwn * 1.2, deceasedOwn * 0.8));
+        // Widow's pension: Max(survivorOwn * 1.2, deceasedOwn * 0.8), capped at 2450 CHF/month (29400 CHF/year), capped amount also indexed
+        const indexedCap = 2450 * ahvMultiplier;
+        const widowPension = Math.min(indexedCap, Math.max(survivorOwn * 1.2, deceasedOwn * 0.8));
         ahvIncome += widowPension;
       } else {
-        ahvIncome += markusRent + moniqueRent;
+        ahvIncome += adjustedMarkusRent + adjustedMoniqueRent;
       }
     }
 
@@ -289,7 +321,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       const isActiveMarkus = isRetiredMarkus && (y < pkEndYearMarkus || (y === pkEndYearMarkus && m <= pkEndMonthMarkus));
       if (isActiveMarkus) {
         if (deceasedPartner === 'Markus' && y >= deathYear) {
-          const pkSurvivorRate = resolveNum(state, 'survivor.pkSurvivorRate', defaultState.scenarioOverrides.survivor?.pkSurvivorRate ?? 60);
+          const pkSurvivorRate = resolveNum(state, 'survivor.pkSurvivorRate', defaultState.scenarioOverrides.survivor?.pkSurvivorRate ?? 50);
           rentMarkus = (pkRenteFullYearMarkus / 12) * (pkSurvivorRate / 100);
         } else {
           rentMarkus = pkRenteFullYearMarkus / 12;
@@ -302,7 +334,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
       const isActiveMonique = isRetiredMonique && (y < pkEndYearMonique || (y === pkEndYearMonique && m <= pkEndMonthMonique));
       if (isActiveMonique) {
         if (deceasedPartner === 'Monique' && y >= deathYear) {
-          const pkSurvivorRate = resolveNum(state, 'survivor.pkSurvivorRate', defaultState.scenarioOverrides.survivor?.pkSurvivorRate ?? 60);
+          const pkSurvivorRate = resolveNum(state, 'survivor.pkSurvivorRate', defaultState.scenarioOverrides.survivor?.pkSurvivorRate ?? 50);
           rentMonique = (pkRenteFullYearMonique / 12) * (pkSurvivorRate / 100);
         } else {
           rentMonique = pkRenteFullYearMonique / 12;
@@ -571,7 +603,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     }
 
     const deductibleCapEx = capExEvents
-      .filter((event: any) => event.year === yearKey && event.isTaxDeductible)
+      .filter((event: any) => event.year === yearKey && event.isTaxDeductible && (y <= 2028 || event.category !== 'housing'))
       .reduce((sum: number, event: any) => sum + (Number(event.amount) || 0), 0);
 
     const strategy = new Aargau2025Strategy();
@@ -611,7 +643,7 @@ export function runProjection(state: PlanningState, pkRenteSplitOverride?: numbe
     let deductionPropertyMaintenance = propertyMaintenance;
     if (y > 2028) {
       deductionPropertyMaintenance = 0;
-      deductionMortgageInterest = Math.min(mortgageInterest, wealthYieldIncome);
+      deductionMortgageInterest = 0; // Systemwechsel: Mortgage interest deduction on self-occupied properties is abolished
     }
 
     const memberExpenses: ExpenseProfile[] = [{

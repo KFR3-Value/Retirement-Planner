@@ -111,6 +111,40 @@ export const GlobalSettingsDrawer: React.FC = () => {
                   />
                   <p className="text-[10px] text-slate-500">Angenommener jährlicher Ertrag auf dem freien Spar-/Depotvermögen.</p>
                 </div>
+
+                <div className="pt-2 border-t border-slate-800/60 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label htmlFor="apply-mischindex" className="text-xs font-medium text-slate-300">AHV Mischindex aktivieren</label>
+                      <p className="text-[10px] text-slate-500">Rentenanpassung alle 2 Jahre nach Mischindex.</p>
+                    </div>
+                    <input
+                      id="apply-mischindex"
+                      type="checkbox"
+                      checked={assumptions.applyMischindex}
+                      onChange={(e) => handleUpdate('applyMischindex', e.target.checked)}
+                      className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-700 bg-slate-950 rounded"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <label htmlFor="wage-growth-rate">Lohnentwicklung (%)</label>
+                      <span className="font-mono text-slate-200">{assumptions.wageGrowthRate}%</span>
+                    </div>
+                    <input
+                      id="wage-growth-rate"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="10"
+                      value={assumptions.wageGrowthRate}
+                      onChange={(e) => handleUpdate('wageGrowthRate', parseFloat(e.target.value) || 0)}
+                      disabled={!assumptions.applyMischindex}
+                      className="w-full border border-slate-800 rounded bg-slate-950 text-slate-100 px-3 py-2 font-mono text-sm focus:ring-emerald-500 focus:border-emerald-500 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Section 2: Cantonal/Communal Tax Multipliers */}

@@ -107,7 +107,7 @@ export const SettingsModal: React.FC = () => {
           {activeModalTab === 7 && (
             <section className="space-y-6">
               <p className="text-xs text-slate-400">
-                Simulieren Sie das Ableben eines Ehepartners in einem bestimmten Planungsjahr. Der Rechner passt ab diesem Jahr automatisch das steuerbare Einkommen (AHV Verwitwetenrente, Pensionskassen-Hinterlassenenrente 60%), den Zivilstandsstatus (Steuertarif Alleinstehend) und die Lebenshaltungskosten an.
+                Simulieren Sie das Ableben eines Ehepartners in einem bestimmten Planungsjahr. Der Rechner passt ab diesem Jahr automatisch das steuerbare Einkommen (AHV Verwitwetenrente, Pensionskassen-Hinterlassenenrente 50%), den Zivilstandsstatus (Steuertarif Alleinstehend) und die Lebenshaltungskosten an.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Left Column */}

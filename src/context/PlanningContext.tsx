@@ -101,6 +101,8 @@ export interface GlobalAssumptions {
   taxMultiplierChurch: number;
   baseUmwandlungssatzMarkus: number;
   baseUmwandlungssatzMonique: number;
+  wageGrowthRate: number;
+  applyMischindex: boolean;
 }
 
 export interface ClientBaseline {
@@ -235,52 +237,54 @@ export interface PlanningState {
 
 export const defaultState: PlanningState = {
   globalAssumptions: {
-    inflationRate: 1.5,
+    inflationRate: 1,
     applyInflation: true,
-    liquidYieldRate: 2,
+    liquidYieldRate: 2.5,
     taxMultiplierCanton: 1.11,
     taxMultiplierCommune: 1.02,
     taxMultiplierChurch: 0.19,
-    baseUmwandlungssatzMarkus: 5.125,
-    baseUmwandlungssatzMonique: 5.0,
+    baseUmwandlungssatzMarkus: 5.5125,
+    baseUmwandlungssatzMonique: 5,
+    wageGrowthRate: 1.0,
+    applyMischindex: true
   },
   clientBaseline: {
     ahv: {
-      selectedScenarioId: 'scen1',
+      selectedScenarioId: "scen1",
       scenarios: [
         {
-          id: 'scen1',
-          name: 'Szenario 1 (Monique ab 10.2027)',
+          id: "scen1",
+          name: "Szenario 1 (Monique ab 10.2027)",
           streams: [
-            { id: 's1-1', startYear: 2026, startMonth: 0, endYear: 2027, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
-            { id: 's1-2', startYear: 2027, startMonth: 9, endYear: 2030, endMonth: 8, markusAmount: 2495, moniqueAmount: 1159 },
-            { id: 's1-3', startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1819 }
+            { id: "s1-1", startYear: 2026, startMonth: 0, endYear: 2027, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
+            { id: "s1-2", startYear: 2027, startMonth: 9, endYear: 2030, endMonth: 8, markusAmount: 2495, moniqueAmount: 1159 },
+            { id: "s1-3", startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1819 }
           ]
         },
         {
-          id: 'scen2',
-          name: 'Szenario 2 (Monique ab 10.2029)',
+          id: "scen2",
+          name: "Szenario 2 (Monique ab 10.2029)",
           streams: [
-            { id: 's2-1', startYear: 2026, startMonth: 0, endYear: 2029, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
-            { id: 's2-2', startYear: 2029, startMonth: 9, endYear: 2030, endMonth: 8, markusAmount: 2518, moniqueAmount: 1262 },
-            { id: 's2-3', startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1855 }
+            { id: "s2-1", startYear: 2026, startMonth: 0, endYear: 2029, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
+            { id: "s2-2", startYear: 2029, startMonth: 9, endYear: 2030, endMonth: 8, markusAmount: 2518, moniqueAmount: 1262 },
+            { id: "s2-3", startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1855 }
           ]
         },
         {
-          id: 'scen3',
-          name: 'Szenario 3 (Monique regulär ab 10.2030)',
+          id: "scen3",
+          name: "Szenario 3 (Monique regulär ab 10.2030)",
           streams: [
-            { id: 's3-1', startYear: 2026, startMonth: 0, endYear: 2030, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
-            { id: 's3-2', startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1955 }
+            { id: "s3-1", startYear: 2026, startMonth: 0, endYear: 2030, endMonth: 8, markusAmount: 2520, moniqueAmount: 0 },
+            { id: "s3-2", startYear: 2030, startMonth: 9, endYear: 2099, endMonth: 11, markusAmount: 1925, moniqueAmount: 1955 }
           ]
         }
       ]
     },
     salaryStreams: [
       {
-        id: 'salary-1',
-        description: 'Lohn Markus (Base 2026)',
-        inputType: 'netto',
+        id: "salary-1",
+        description: "Lohn Markus (Base 2026)",
+        inputType: "netto",
         amount: 9500,
         deductions: {
           ahv: 4.66,
@@ -295,35 +299,35 @@ export const defaultState: PlanningState = {
         },
         startYear: 2026,
         startMonth: 0,
-        endYear: 2026,
-        endMonth: 11,
-        owner: 'Markus'
+        endYear: 2027,
+        endMonth: 0,
+        owner: "Markus"
       }
     ],
     otherIncomeEvents: [],
     living: {
-      useDetailedExpenses: false,
-      haushaltEssen: 19680,
-      mobilitaet: 7800,
-      telefonHandyMedien: 1800,
-      kleiderFreizeit: 6240,
+      useDetailedExpenses: true,
+      haushaltEssen: 21600,
+      mobilitaet: 5400,
+      telefonHandyMedien: 2627,
+      kleiderFreizeit: 9000,
       ferienReisen: 9600,
       versicherungenSonstige: 1848,
       detailedLiving: {
         groceries: 12000,
         diningOut: 6000,
-        householdSupplies: 1680,
+        householdSupplies: 3600,
         carAmortization: 0,
-        carInsurance: 2000,
-        fuel: 4800,
-        publicTransport: 1000,
-        internetTv: 800,
-        mobilePhone: 400,
-        streaming: 265,
+        carInsurance: 3000,
+        fuel: 2400,
+        publicTransport: 0,
+        internetTv: 0,
+        mobilePhone: 1800,
+        streaming: 492,
         serafe: 335,
-        clothing: 3000,
-        hobbies: 2000,
-        entertainment: 1240,
+        clothing: 3600,
+        hobbies: 3000,
+        entertainment: 2400,
         summerHolidays: 5000,
         winterSports: 3000,
         weekendTrips: 1600,
@@ -333,11 +337,11 @@ export const defaultState: PlanningState = {
       }
     },
     health: {
-      useDetailedExpenses: false,
+      useDetailedExpenses: true,
       krankenkasseBase: 14400,
-      applyAgeIncrease: true,
+      applyAgeIncrease: false,
       ageIncreaseRate: 3,
-      zahnarztOptiker: 2640,
+      zahnarztOptiker: 1000,
       diversesReserve: 9600,
       detailedHealth: {
         basicInsurance: 12000,
@@ -346,7 +350,7 @@ export const defaultState: PlanningState = {
         deductibleExpected: 1400,
         uncoveredMeds: 3200,
         dentistCheckups: 1000,
-        glassesContacts: 1640
+        glassesContacts: 0
       }
     },
     housing: {
@@ -357,19 +361,19 @@ export const defaultState: PlanningState = {
       saronRate: 0.86,
       festAmount: 600000,
       festRate: 1.68,
-      unterhaltRate: 1,
+      unterhaltRate: 0.6,
       amortisation: 0,
-      amortisationTarget: 'saron',
+      amortisationTarget: "saron",
       stromHeizung: 3600
     },
     assets: {
       saeule3a: {
         balance: 20000,
-        withdrawalYear: '2027'
+        withdrawalYear: "2027"
       },
       freizuegigkeitskonto: {
         balance: 40000,
-        withdrawalYear: '2027'
+        withdrawalYear: "2027"
       },
       startingLiquidWealth: 280000
     }
@@ -381,8 +385,8 @@ export const defaultState: PlanningState = {
       endYear: 2099,
       endMonth: 11,
       totalCapital: 1250000,
-      renteSplit: 50,
-      umwandlungssatz: 5.125
+      renteSplit: 100,
+      umwandlungssatz: 5.5125
     },
     pensionskasseMonique: {
       startYear: 2030,
@@ -391,32 +395,32 @@ export const defaultState: PlanningState = {
       endMonth: 11,
       totalCapital: 0,
       renteSplit: 100,
-      umwandlungssatz: 5.0
+      umwandlungssatz: 5
     },
     capExEvents: [
       {
-        id: '1',
-        description: 'Kauf Firmenfahrzeug Skoda (AG 341628)',
+        id: "1",
+        description: "Kauf Firmenfahrzeug Skoda (AG 341628)",
         amount: 20000,
-        year: '2026',
+        year: "2026",
         isTaxDeductible: false,
-        category: 'living'
+        category: "living"
       },
       {
-        id: '2',
-        description: 'Renovation: OG Böden & Elternschlafzimmer',
+        id: "2",
+        description: "Renovation: OG Böden & Elternschlafzimmer",
         amount: 30000,
-        year: '2026',
+        year: "2026",
         isTaxDeductible: true,
-        category: 'housing'
+        category: "housing"
       },
       {
-        id: '3',
-        description: 'Umgebung & Garten',
+        id: "3",
+        description: "Umgebung & Garten",
         amount: 40000,
-        year: '2027',
+        year: "2027",
         isTaxDeductible: true,
-        category: 'housing'
+        category: "housing"
       }
     ],
     amortisationEvents: [],
@@ -425,10 +429,10 @@ export const defaultState: PlanningState = {
       return acc;
     }, {} as Record<string, YearlyDeductions>),
     survivor: {
-      deceasedPartner: 'Keiner',
+      deceasedPartner: "Keiner",
       deathYear: 2035,
       expenseReductionFactor: 70,
-      pkSurvivorRate: 60
+      pkSurvivorRate: 50
     }
   }
 };
@@ -446,8 +450,10 @@ export function migrateFlatToNestedState(flatState: any): PlanningState {
           taxMultiplierCanton: flatState.globalAssumptions?.taxMultiplierCanton ?? 1.11,
           taxMultiplierCommune: flatState.globalAssumptions?.taxMultiplierCommune ?? 1.02,
           taxMultiplierChurch: flatState.globalAssumptions?.taxMultiplierChurch ?? 0.19,
-          baseUmwandlungssatzMarkus: flatState.globalAssumptions?.baseUmwandlungssatzMarkus ?? flatState.pensionskasseMarkus?.umwandlungssatz ?? 5.125,
+          baseUmwandlungssatzMarkus: flatState.globalAssumptions?.baseUmwandlungssatzMarkus ?? flatState.pensionskasseMarkus?.umwandlungssatz ?? 5.5125,
           baseUmwandlungssatzMonique: flatState.globalAssumptions?.baseUmwandlungssatzMonique ?? flatState.pensionskasseMonique?.umwandlungssatz ?? 5.0,
+          wageGrowthRate: flatState.globalAssumptions?.wageGrowthRate ?? 1.0,
+          applyMischindex: flatState.globalAssumptions?.applyMischindex ?? true,
         },
         clientBaseline: {
           ahv: flatState.ahv ?? defaultState.clientBaseline.ahv,

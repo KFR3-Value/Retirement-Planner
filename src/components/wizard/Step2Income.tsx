@@ -206,6 +206,59 @@ export const Step2Income: React.FC<StepProps> = ({ state, updateState }) => {
           <Plus className="w-5 h-5 mr-2" />
           Lohnstrom hinzufügen
         </button>
+
+        {/* AHV Indexation Settings */}
+        <div className="mt-8 pt-8 border-t border-slate-800/80">
+          <h4 className="text-lg font-semibold text-slate-200 mb-4 font-mono">AHV Renten-Indexierung</h4>
+          <div className="bg-slate-900/40 p-5 rounded-xl border border-slate-800/80 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <label htmlFor="apply-mischindex" className="block text-sm font-medium text-slate-200">AHV Mischindex aktivieren</label>
+                <p className="text-xs text-slate-500">Passt AHV-Renten alle 2 Jahre basierend auf dem Mittelwert von Teuerung und Lohnentwicklung an.</p>
+              </div>
+              <input
+                id="apply-mischindex"
+                type="checkbox"
+                checked={state.globalAssumptions.applyMischindex}
+                onChange={e => updateState(prev => ({
+                  ...prev,
+                  globalAssumptions: {
+                    ...prev.globalAssumptions,
+                    applyMischindex: e.target.checked
+                  }
+                }))}
+                className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-700 bg-slate-950 rounded"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs text-slate-400">
+                <label htmlFor="wage-growth-rate">Lohnentwicklung (%)</label>
+                <span className="font-mono text-slate-200">{state.globalAssumptions.wageGrowthRate}%</span>
+              </div>
+              <input
+                id="wage-growth-rate"
+                type="number"
+                step="0.1"
+                min="0"
+                max="10"
+                value={state.globalAssumptions.wageGrowthRate}
+                onChange={e => {
+                  const val = parseFloat(e.target.value) || 0;
+                  updateState(prev => ({
+                    ...prev,
+                    globalAssumptions: {
+                      ...prev.globalAssumptions,
+                      wageGrowthRate: val
+                    }
+                  }));
+                }}
+                disabled={!state.globalAssumptions.applyMischindex}
+                className="w-full border border-slate-800 rounded bg-slate-950 text-slate-100 px-3 py-2 font-mono text-sm focus:ring-emerald-500 focus:border-emerald-500 disabled:opacity-50"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
